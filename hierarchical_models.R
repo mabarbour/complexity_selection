@@ -57,33 +57,6 @@ gall_selection.df %>%
   geom_jitter(alpha = 0.5, width = 0.05, aes(size = n)) + 
   stat_summary(fun.data = "mean_cl_boot", size = 1.5)
 
-# Gall Density
-gall_selection.df %>%
-  group_by(Genotype, Plant_Position) %>%
-  summarise_at(vars(Density_per_100_shoots), mean) %>%
-  ggplot(., aes(x = Genotype, y = Density_per_100_shoots)) + 
-  geom_jitter(alpha = 0.5, width = 0.05) + 
-  stat_summary(fun.data = "mean_cl_boot", color = "red", size = 1.5) 
-
-# Number of Individuals per gall
-gall_selection.df %>%
-  group_by(Genotype, Plant_Position, Gall_Number) %>%
-  summarise_at(vars(gall_individuals), mean) %>%
-  group_by(Genotype, Plant_Position) %>%
-  summarise_at(vars(gall_individuals), funs(mean, n())) %>%
-  ggplot(., aes(x = Genotype, y = mean)) + 
-  geom_jitter(alpha = 0.5, width = 0.05, aes(size = n)) + 
-  stat_summary(fun.data = "mean_cl_boot", color = "red", size = 1.5)
-
-# Gall Size
-gall_selection.df %>%
-  group_by(Genotype, Plant_Position, Gall_Number) %>%
-  summarise_at(vars(Gall_Height_mm), mean) %>%
-  group_by(Genotype, Plant_Position) %>%
-  summarise_at(vars(Gall_Height_mm), funs(mean, n())) %>%
-  ggplot(., aes(x = Genotype, y = mean)) + 
-  geom_jitter(alpha = 0.5, width = 0.05, aes(size = n)) + 
-  stat_summary(fun.data = "mean_cl_boot", color = "red", size = 1.5)
 
 # Pupation rates
 gall_selection.df %>%
@@ -197,6 +170,74 @@ gall_selection.df %>%
   geom_smooth(method = "gam", method.args = list(family = "binomial")) #+ # binomial_smooth() + 
 #facet_wrap(~Genotype) 
 
+
+## PCA
+pca.df <- gall_selection.df %>%
+  group_by(Treatment.focus, Genotype, Plant_Position, Gall_Number) %>%
+  summarise_at(vars(Gall_Height_mm, gall_individuals, Density_per_100_shoots), mean) %>%
+  group_by(Treatment.focus, Genotype, Plant_Position) %>%
+  summarise_at(vars(Gall_Height_mm, gall_individuals, Density_per_100_shoots), funs(mean, sd, sum, n())) %>%
+  ungroup()
+
+ggplot(pca.df, aes(x = Genotype, y = Gall_Height_mm_sd/Gall_Height_mm_mean)) + geom_boxplot() # gall size in Genotype J is much more variable
+ggplot(pca.df, aes(x = Genotype, y = gall_individuals_sd/gall_individuals_mean)) + geom_boxplot() # not much difference in variability
+
+ggplot(pca.df, aes(x = Gall_Height_mm_mean)) + geom_density()
+ggplot(pca.df, aes(x = gall_individuals_mean)) + geom_density() + scale_x_log10() # skewed, log transformation best
+ggplot(pca.df, aes(x = Density_per_100_shoots_mean)) + geom_density() + scale_x_sqrt() # skewed, sqrt transformation best
+
+pca.df <- pca.df %>%
+  mutate(log.gall_individuals_mean = log(gall_individuals_mean),
+         sqrt.Density_per_100_shoots_mean = sqrt(Density_per_100_shoots_mean)) %>%
+  mutate(sc.log.gall_individuals_mean = (log.gall_individuals_mean - mean(log.gall_individuals_mean))/sd(log.gall_individuals_mean),
+         sc.sqrt.Density_per_100_shoots_mean = (sqrt.Density_per_100_shoots_mean - mean(sqrt.Density_per_100_shoots_mean))/sd(sqrt.Density_per_100_shoots_mean),
+         sc.Gall_Height_mm_mean = (Gall_Height_mm_mean - mean(Gall_Height_mm_mean))/sd(Gall_Height_mm_mean))
+
+library(GGally)
+ggcorr(select(pca.df, Gall_Height_mm_mean, gall_individuals_mean, Density_per_100_shoots_mean))
+ggcorr(select(pca.df, Gall_Height_mm_mean, log.gall_individuals_mean, sqrt.Density_per_100_shoots_mean))
+
+ggplot(pca.df, aes(x = Gall_Height_mm_mean, y = gall_individuals_mean)) + geom_point() + geom_smooth(method = "lm") + scale_y_log10()
+ggplot(pca.df, aes(x = Gall_Height_mm_mean, y = Density_per_100_shoots_mean)) + geom_point() + geom_smooth(method = "lm") + scale_y_sqrt()
+ggplot(pca.df, aes(x = gall_individuals_mean, y = Density_per_100_shoots_mean)) + geom_point() + geom_smooth(method = "lm") + scale_y_sqrt() + scale_x_log10()
+
+
+gall_pca <- princomp(~Gall_Height_mm_mean + log.gall_individuals_mean + sqrt.Density_per_100_shoots_mean, data = pca.df, cor = TRUE)
+summary(gall_pca)
+biplot(gall_pca, choices = c(1,2))
+biplot(gall_pca, choices = c(1,3))
+loadings(gall_pca)
+
+pca.df <- cbind.data.frame(pca.df, gall_pca$scores)
+
+pupa.df <- gall_selection.df %>%
+  group_by(Treatment.focus, Genotype, Plant_Position) %>%
+  summarise_at(vars(pupa, total), sum) %>%
+  ungroup() %>%
+  left_join(., pca.df)
+
+library(lme4)
+library(piecewiseSEM)
+pupa.surv <- glmer(pupa/total ~ Comp.1*Comp.2*Comp.3*Treatment.focus + (1 | Genotype), data = pupa.df, family = "binomial", weights = total)
+summary(pupa.surv)
+sem.model.fits(pupa.surv)
+library(visreg)
+
+visreg2d(pupa.surv, xvar = "Comp.1", yvar = "Comp.2", scale = "response", cond = list(Treatment.focus = "Control"))
+visreg2d(pupa.surv, xvar = "Comp.1", yvar = "Comp.2", scale = "response", cond = list(Treatment.focus = "Ectoparasitoid exclusion"), plot.type = "persp")
+
+pupa.surv2 <- glmer(pupa/total ~ sc.Gall_Height_mm_mean*sc.log.gall_individuals_mean*sc.sqrt.Density_per_100_shoots_mean*Treatment.focus + (1 | Genotype), 
+                    data = pupa.df, family = "binomial", weights = total, control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=2e4)))
+summary(pupa.surv2)
+sem.model.fits(pupa.surv2)
+vcov(pupa.surv2)
+library(visreg)
+
+visreg2d(pupa.surv2, yvar = "sc.log.gall_individuals_mean", xvar = "sc.sqrt.Density_per_100_shoots_mean", scale = "response", cond = list(Treatment.focus = "Control"))
+visreg2d(pupa.surv2, yvar = "sc.log.gall_individuals_mean", xvar = "sc.sqrt.Density_per_100_shoots_mean", scale = "response", cond = list(Treatment.focus = "Ectoparasitoid exclusion"))
+
+visreg2d(pupa.surv2, xvar = "sc.log.gall_individuals_mean", yvar = "sc.Gall_Height_mm_mean", scale = "response", cond = list(Treatment.focus = "Control"))
+visreg2d(pupa.surv2, xvar = "sc.log.gall_individuals_mean", yvar = "sc.Gall_Height_mm_mean", scale = "response", cond = list(Treatment.focus = "Ectoparasitoid exclusion"))
 
 ################### MAYBE USEFUL BELOW ###############################
 # Does the effect of gall size on pupation rates vary among genotypes?
