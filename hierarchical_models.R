@@ -49,15 +49,49 @@ gall_selection.df <- mutate(gall_selection.df,
 car::scatterplotMatrix(select(gall_selection.df, sc.sqrt.size, sc.log.indiv, sc.sqrt.density)) # closer correspondence between loess and linear fits
 car::scatterplotMatrix(select(gall_selection.df, Gall_Height_mm, gall_individuals, Density_per_100_shoots)) # similar pattern, but more deviance between loess and linear fits
 
+# PCA
+gall_pca <- princomp(select(gall_selection.df, sc.sqrt.size, sc.log.indiv, sc.sqrt.density), cor = TRUE)
+summary(gall_pca)
+biplot(gall_pca, choices = c(1,2))
+biplot(gall_pca, choices = c(1,3))
+biplot(gall_pca, choices = c(2,3))
+gall_pca$scores
+
+gall_selection.df <- cbind.data.frame(gall_selection.df, gall_pca$scores)
+
 ## SPECIFYING PRIORS ----
+
+glmer.gall_fitness <- glmer(gall_survival ~ Comp.1*Comp.2*Comp.3*Treatment.focus + 
+                          (1 | Genotype/Plant_Position/Gall_Number/Gall_ID),
+                        data = gall_selection.df,
+                        family = binomial(link = "logit"))
 
 ## BAYESIAN MODEL ---- 
 options(mc.cores = parallel::detectCores()) # use all available cores
 
+brm.gall_formula <- brmsformula(gall_survival ~ sc.sqrt.size*sc.log.indiv*sc.sqrt.density*Treatment.focus + 
+                                  (1 | Genotype/Plant_Position/Gall_Number/Gall_ID))
+get_prior(brm.gall_formula, data = gall_selection.df)
+
+uninf_priors <- c(set_prior("normal(0,2)", class = "b"), set_prior("normal(0,2)", class = "sd"))
+
+brm.gall_fitness <- brm(gall_survival ~ Comp.1*Comp.2*Comp.3*Treatment.focus + 
+                          (1 | Genotype/Plant_Position/Gall_Number/Gall_ID),
+                        data = gall_selection.df,
+                        prior = uninf_priors,
+                        family = bernoulli(link = "logit"),
+                        algorithm = "sampling",
+                        control = list(adapt_delta = 0.99),
+                        chains = 4)
+summary(brm.gall_fitness)
+
 brm.gall_fitness <- brm(gall_survival ~ sc.sqrt.size*sc.log.indiv*sc.sqrt.density*Treatment.focus + 
                           (1 | Genotype/Plant_Position/Gall_Number/Gall_ID),
                         data = gall_selection.df,
+                        prior = gall_priors,
                         family = bernoulli(link = "logit"),
-                        algorithm = "meanfield")
+                        algorithm = "sampling",
+                        control = list(adapt_delta = 0.95),
+                        chains = 4)
 summary(brm.gall_fitness)
 
