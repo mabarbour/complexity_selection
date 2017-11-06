@@ -328,3 +328,94 @@ ecto.base_density + binomial_smooth() + facet_wrap(~size.cut)
 # difficult to interpret...
 ecto.base_density + binomial_smooth(formula = y ~ poly(x, 2)) + facet_grid(indiv.cut~size.cut)
 ecto.base_density + binomial_smooth() + facet_grid(indiv.cut~size.cut)
+
+
+#### PLANT-LEVEL GALL SURVIVAL ----
+mean.narm <- function(x) mean(x, na.rm = TRUE)
+sum.narm <- function(x) sum(x, na.rm = TRUE)
+
+plant_level.info <- gall_selection.df %>%
+  group_by(Treatment.focus, Genotype, Plant_Position, Gall_Number) %>%
+  summarise_at(vars(Density_per_100_shoots, gall_individuals, Gall_Height_mm), mean.narm) %>%
+  group_by(Treatment.focus, Genotype, Plant_Position) %>%
+  summarise_at(vars(Density_per_100_shoots, gall_individuals, Gall_Height_mm), mean.narm) %>%
+  ungroup()
+
+plant_level.parasitism <- parasitism.df %>%
+  group_by(Treatment.focus, Genotype, Plant_Position) %>%
+  summarise_at(vars(pupa, platy, ectos, platy.ectos, total), sum.narm) %>%
+  ungroup()
+
+plant_level.df <- left_join(plant_level.info, plant_level.parasitism)
+
+plant_level.df$density.cut <- cut(plant_level.df$Density_per_100_shoots, 
+                                  quantile(plant_level.df$Density_per_100_shoots, c(0,0.5,1)),
+                                  include.lowest = T)
+plant_level.df$size.cut <- cut(plant_level.df$Gall_Height_mm, 
+                                  quantile(plant_level.df$Gall_Height_mm, c(0,0.5,1)),
+                                  include.lowest = T)
+plant_level.df$indiv.cut <- cut(plant_level.df$gall_individuals, 
+                                  quantile(plant_level.df$gall_individuals, c(0,0.5,1)),
+                                  include.lowest = T)
+
+## GALL SIZE 
+base_size <- ggplot(plant_level.df, aes(x = log(Gall_Height_mm), y = pupa/total, color = Treatment.focus, size = total, weight = total)) + 
+  geom_point(alpha = 0.5) 
+
+# interesting, effect of exclusion increases with gall size...opposite of individual level pattern
+base_size + binomial_smooth(formula = y ~ poly(x, 2)) 
+base_size + binomial_smooth() 
+
+# treatment effect goes away at high gall densities
+base_size + binomial_smooth(formula = y ~ poly(x, 2)) + facet_wrap(~density.cut)
+base_size + binomial_smooth() + facet_wrap(~density.cut)
+
+# interactive effect with many individuals
+base_size + binomial_smooth(formula = y ~ poly(x, 2)) + facet_wrap(~indiv.cut)
+base_size + binomial_smooth() + facet_wrap(~indiv.cut)
+
+# no clear 4-way interaction
+base_size + binomial_smooth(formula = y ~ poly(x, 2)) + facet_grid(density.cut~indiv.cut)
+base_size + binomial_smooth() + facet_grid(density.cut~indiv.cut)
+
+
+## GALL NEIGHBORS
+
+base_indiv <- ggplot(plant_level.df, aes(x = log(gall_individuals), y = pupa/total, color = Treatment.focus, size = total, weight = total)) + 
+  geom_point(alpha = 0.5)
+
+# similar relationship at individual level
+base_indiv + binomial_smooth(formula = y ~ poly(x, 2)) 
+base_indiv + binomial_smooth() 
+
+# effect of treatment reverses at high densities
+base_indiv + binomial_smooth(formula = y ~ poly(x, 2)) + facet_wrap(~density.cut)
+base_indiv + binomial_smooth() + facet_wrap(~density.cut)
+
+# effect of treatment reverses at large gall sizes
+base_indiv + binomial_smooth(formula = y ~ poly(x, 2)) + facet_wrap(~size.cut)
+base_indiv + binomial_smooth() + facet_wrap(~size.cut)
+
+# hmmm. Effect of neighbors is qualitatively changes when we remove ectoparasitoids, but primarily in large galls at low densities.
+base_indiv + binomial_smooth(formula = y ~ poly(x, 2)) + facet_grid(density.cut~size.cut)
+base_indiv + binomial_smooth() + facet_grid(density.cut~size.cut)
+
+## GALL DENSITY 
+base_density <- ggplot(plant_level.df, aes(x = log(Density_per_100_shoots+1), y = pupa/total, color = Treatment.focus, size = total, weight = total)) + 
+  geom_point(alpha = 0.5) 
+
+# same relationship at individual level
+base_density + binomial_smooth(formula = y ~ poly(x, 2))
+base_density + binomial_smooth() 
+
+# ?
+base_density + binomial_smooth(formula = y ~ poly(x, 2)) + facet_wrap(~indiv.cut)
+base_density + binomial_smooth() + facet_wrap(~indiv.cut)
+
+# ?
+base_density + binomial_smooth(formula = y ~ poly(x, 2)) + facet_wrap(~size.cut)
+base_density + binomial_smooth() + facet_wrap(~size.cut)
+
+# ?
+base_density + binomial_smooth(formula = y ~ poly(x, 2)) + facet_grid(indiv.cut~size.cut)
+base_density + binomial_smooth() + facet_grid(indiv.cut~size.cut)
