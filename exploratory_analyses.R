@@ -363,8 +363,8 @@ base_size <- ggplot(plant_level.df, aes(x = log(Gall_Height_mm), y = pupa/total,
   geom_point(alpha = 0.5) 
 
 # interesting, effect of exclusion increases with gall size...opposite of individual level pattern
-base_size + binomial_smooth(formula = y ~ poly(x, 2)) 
-base_size + binomial_smooth() 
+base_size + binomial_smooth(formula = y ~ poly(x, 2)) + facet_wrap(~Genotype)
+base_size + binomial_smooth() + facet_wrap(~Genotype)
 
 # treatment effect goes away at high gall densities
 base_size + binomial_smooth(formula = y ~ poly(x, 2)) + facet_wrap(~density.cut)
