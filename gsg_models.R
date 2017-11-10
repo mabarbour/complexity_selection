@@ -52,6 +52,11 @@ plant_level.df <- left_join(plant_level.info, plant_level.parasitism) %>%
   mutate(gall_survival = pupa/total,
          log1.density = log(Density_per_100_shoots+1))
 
+left_join(select(gall_selection.df, Treatment.focus, Genotype, Plant_Position, gall.size = Gall_Height_mm), 
+          select(gall_level.df, Treatment.focus, Genotype, Plant_Position, polygall.size = Gall_Height_mm)) %>%
+  ggplot(., aes(x = polygall.size, y = gall.size)) + geom_point() + geom_smooth(method = "lm")
+            
+  
 
 ## SELECTION ON GALL SIZE
 # treating each individual gall chamber as an independent data point
