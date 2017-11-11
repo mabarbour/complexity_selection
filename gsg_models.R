@@ -19,7 +19,7 @@ gall_selection.df <- read_csv("gall_selection_data.csv") %>%
   mutate(gall_survival = ifelse(pupa > 0, 1, 0),
          log.size = log(Gall_Height_mm))
 
-## SUMMARISE AT GALL & PLANT LEVEL ----
+## SUMMARISE DATA AT GALL & PLANT LEVEL ----
 mean.narm <- function(x) mean(x, na.rm = TRUE)
 
 gall_level.info <- gall_selection.df %>%
@@ -52,11 +52,127 @@ plant_level.df <- left_join(plant_level.info, plant_level.parasitism) %>%
   mutate(gall_survival = pupa/total,
          log1.density = log(Density_per_100_shoots+1))
 
-left_join(select(gall_selection.df, Treatment.focus, Genotype, Plant_Position, gall.size = Gall_Height_mm), 
-          select(gall_level.df, Treatment.focus, Genotype, Plant_Position, polygall.size = Gall_Height_mm)) %>%
-  ggplot(., aes(x = polygall.size, y = gall.size)) + geom_point() + geom_smooth(method = "lm")
-            
-  
+# wow, still a ton of variability in gall size at the polygall level
+gall.size.df <- left_join(select(gall_selection.df, Treatment.focus, Genotype, Plant_Position, gall.size = Gall_Height_mm), 
+          select(gall_level.df, Treatment.focus, Genotype, Plant_Position, polygall.size = Gall_Height_mm)) 
+ggplot(gall.size.df, aes(x = polygall.size, y = gall.size)) + 
+  geom_point() + geom_smooth(method = "lm")   
+summary(lm(gall.size ~ polygall.size, data = gall.size.df)) # only explains about 10% of the variance
+
+## FULL MODEL
+control.df <- as.data.frame(filter(gall_selection.df, Treatment.focus == "Control")) %>%
+  mutate(Gall_Height_mm = scale(Gall_Height_mm),
+         gall_individuals = scale(gall_individuals),
+         Density_per_100_shoots = scale(Density_per_100_shoots))
+gppr.test <- gppr(y = "gall_survival", xterms = c("Gall_Height_mm","gall_individuals","Density_per_100_shoots"), 
+                  data = control.df, nterms = 1)
+gppr.test$ppr$alpha
+gppr.test$ppr$beta
+plot(gppr.test$ppr, ask = T)
+
+cor.test(term1, term2)
+gppr.test$ppr$alpha
+term1.calc <- control.df$Gall_Height_mm*gppr.test$ppr$alpha[1] + control.df$gall_individuals*gppr.test$ppr$alpha[2] + control.df$Density_per_100_shoots*gppr.test$ppr$alpha[3]
+control.df$term1 <- term1[ ,1]
+
+test.gam <- gam(gall_survival ~ s(term1), data = control.df, family = "binomial")
+summary(test.gam)
+plot(test.gam, shift = mean(predict(test.gam)),
+     trans = function(x) {exp(x)/(1+exp(x))})
+ggplot(control.df, aes(x = term1, y = gall_survival)) + geom_point() + binomial_smooth() + gam_smooth(formula = y ~ s(x), color = "red")
+
+binomial_smooth <- function(...) {
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), ...)
+}
+gam_smooth <- function(...) {
+  geom_smooth(method = "gam", method.args = list(family = "binomial"), ...)
+}
+
+# why does this work when standardized = F but not T? Maybe I should standardize prior to going into the model.
+gradients.test <- gppr.gradients(gppr.test, phenotype = c("Gall_Height_mm", "gall_individuals"), covariates = "Density_per_100_shoots", se.method = 'n', standardized = F)
+gradients.test
+
+treatment.df <- as.data.frame(filter(gall_selection.df, Treatment.focus == "Ectoparasitoid exclusion")) %>%
+  mutate(Gall_Height_mm = scale(Gall_Height_mm),
+         gall_individuals = scale(gall_individuals),
+         Density_per_100_shoots = scale(Density_per_100_shoots))
+gppr.treat.test <- gppr(y = "gall_survival", xterms = c("Gall_Height_mm","gall_individuals","Density_per_100_shoots"), 
+                  data = treatment.df, nterms = 3)
+gppr.treat.test$ppr$alpha
+gppr.treat.test$ppr$beta
+plot(gppr.treat.test$ppr, ask = T)
+
+treatment.df$term1 <- treatment.df$Gall_Height_mm*gppr.treat.test$ppr$alpha[1] + treatment.df$gall_individuals*gppr.treat.test$ppr$alpha[2] + treatment.df$Density_per_100_shoots*gppr.treat.test$ppr$alpha[3]
+treatment.df$term2 <- treatment.df$Gall_Height_mm*gppr.treat.test$ppr$alpha[4] + treatment.df$gall_individuals*gppr.treat.test$ppr$alpha[5] + treatment.df$Density_per_100_shoots*gppr.treat.test$ppr$alpha[6]
+treatment.df$term3 <- treatment.df$Gall_Height_mm*gppr.treat.test$ppr$alpha[7] + treatment.df$gall_individuals*gppr.treat.test$ppr$alpha[8] + treatment.df$Density_per_100_shoots*gppr.treat.test$ppr$alpha[9]
+
+
+treat.test <- gam(gall_survival ~ s(term3), treatment.df, family = "binomial")
+summary(treat.test)
+plot(treat.test, shift = mean(predict(test.gam)),
+     trans = function(x) {exp(x)/(1+exp(x))})
+ggplot(treatment.df, aes(x = term3, y = gall_survival)) + geom_point() + binomial_smooth(color = "red") #+ gam_smooth(formula = y ~ s(x))
+
+soay.gppr <- gppr(y = "W", xterms = c("WEIGHT","HINDLEG","HORNLEN","lnKeds"), 
+                  data = SoayLambs, nterms = 2)
+soay.gppr$ppr$alpha
+soay.gppr$ppr$beta
+
+SoayLambs$term1 <- SoayLambs$WEIGHT*soay.gppr$ppr$alpha[1] + SoayLambs$HINDLEG*soay.gppr$ppr$alpha[2] + SoayLambs$HORNLEN*soay.gppr$ppr$alpha[3] + SoayLambs$lnKeds*soay.gppr$ppr$alpha[4] 
+major.gam <- gam(W ~ s(term1), SoayLambs, family = "binomial")
+summary(major.gam)
+gam.gradients(major.gam, phenotype = "term1", se.method = 'n')
+plot(major.gam, se = T, seWithMean = T, rug = F, shift = mean(predict(major.gam)),
+     trans = function(x) {exp(x)/(1+exp(x))})
+
+test <- gppr.gradients(soay.gppr, phenotype = c("HINDLEG","WEIGHT"), covariates = c("HORNLEN","lnKeds"), se.method = 'n')
+test
+# CONTROL
+z.gam <- gamm(gall_survival ~ (Gall_Height_mm + gall_individuals + Density_per_100_shoots)^2,
+             random = list(Genotype=~1, Plant_Position=~1, Gall_Number=~1),
+             data = filter(gall_selection.df, Treatment.focus == "Control"), 
+             family = binomial(link = "logit"), 
+             method = "GCV.Cp")
+summary(z.gam$gam)
+plot(z.gam$gam, se = T, seWithMean = T, rug = F, shift = mean(predict(z.gam$gam)),
+     trans = function(x) {exp(x)/(1+exp(x))})
+# not informative # vis.gam(z.gam$gam, view = c("gall_individuals", "Gall_Height_mm"), type = "response", plot.type = "contour")
+# not informative # vis.gam(z.gam$gam, view = c("Density_per_100_shoots", "Gall_Height_mm"), type = "response", plot.type = "contour")
+# not informative # vis.gam(z.gam$gam, view = c("Density_per_100_shoots","gall_individuals"), type = "response", plot.type = "contour")
+
+gradient.size_indiv <- gam.gradients(z.gam$gam, phenotype = c("Gall_Height_mm", "gall_individuals"), covariates = "Density_per_100_shoots", standardized = T)
+gradient.size_indiv$ests
+
+gradient.size_density <- gam.gradients(z.gam$gam, phenotype = c("Gall_Height_mm", "Density_per_100_shoots"), covariates = "gall_individuals", standardized = T)
+gradient.size_density$ests
+
+gradient.indiv_density <- gam.gradients(z.gam$gam, phenotype = c("gall_individuals", "Density_per_100_shoots"), covariates = "Gall_Height_mm", standardized = T)
+gradient.indiv_density$ests
+
+# TREATMENT
+z.gam.treat <- gamm(gall_survival ~ Gall_Height_mm + gall_individuals + Density_per_100_shoots,
+              random = list(Genotype=~1, Plant_Position=~1, Gall_Number=~1),
+              data = filter(gall_selection.df, Treatment.focus == "Ectoparasitoid exclusion"), 
+              family = binomial(link = "logit"), 
+              method = "GCV.Cp")
+summary(z.gam.treat$gam)
+plot(z.gam.treat$gam, se = T, seWithMean = T, rug = F, shift = mean(predict(z.gam.treat$gam)),
+     trans = function(x) {exp(x)/(1+exp(x))})
+vis.gam(z.gam.treat$gam, view = c("gall_individuals", "Gall_Height_mm"), type = "response", plot.type = "contour")
+vis.gam(z.gam.treat$gam, view = c("Density_per_100_shoots", "Gall_Height_mm"), type = "response", plot.type = "contour")
+vis.gam(z.gam.treat$gam, view = c("Density_per_100_shoots","gall_individuals"), type = "response", plot.type = "contour")
+
+gradient.size_indiv <- gam.gradients(z.gam.treat$gam, 
+                                     phenotype = c("Gall_Height_mm", "gall_individuals"), 
+                                     covariates = "Density_per_100_shoots", 
+                                     standardized = T)
+gradient.size_indiv$ests
+
+gradient.size_density <- gam.gradients(z.gam.treat$gam, phenotype = c("Gall_Height_mm", "Density_per_100_shoots"), covariates = "gall_individuals", standardized = T)
+gradient.size_density$ests
+
+gradient.indiv_density <- gam.gradients(z.gam.treat$gam, phenotype = c("gall_individuals", "Density_per_100_shoots"), covariates = "Gall_Height_mm", standardized = T)
+gradient.indiv_density$ests
 
 ## SELECTION ON GALL SIZE
 # treating each individual gall chamber as an independent data point
