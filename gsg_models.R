@@ -65,28 +65,36 @@ control.df <- as.data.frame(filter(gall_selection.df, Treatment.focus == "Contro
          gall_individuals = scale(gall_individuals),
          Density_per_100_shoots = scale(Density_per_100_shoots))
 gppr.test <- gppr(y = "gall_survival", xterms = c("Gall_Height_mm","gall_individuals","Density_per_100_shoots"), 
-                  data = control.df, nterms = 1)
+                  data = control.df, nterms = 2)
 gppr.test$ppr$alpha
 gppr.test$ppr$beta
 plot(gppr.test$ppr, ask = T)
 
-cor.test(term1, term2)
-gppr.test$ppr$alpha
-term1.calc <- control.df$Gall_Height_mm*gppr.test$ppr$alpha[1] + control.df$gall_individuals*gppr.test$ppr$alpha[2] + control.df$Density_per_100_shoots*gppr.test$ppr$alpha[3]
-control.df$term1 <- term1[ ,1]
+control.df$term1 <- control.df$Gall_Height_mm*gppr.test$ppr$alpha[1] + control.df$gall_individuals*gppr.test$ppr$alpha[2] + control.df$Density_per_100_shoots*gppr.test$ppr$alpha[3]
+control.df$term2 <- control.df$Gall_Height_mm*gppr.test$ppr$alpha[4] + control.df$gall_individuals*gppr.test$ppr$alpha[5] + control.df$Density_per_100_shoots*gppr.test$ppr$alpha[6]
 
-test.gam <- gam(gall_survival ~ s(term1), data = control.df, family = "binomial")
-summary(test.gam)
-plot(test.gam, shift = mean(predict(test.gam)),
+
+test.gam <- gamm(gall_survival ~ s(term2), 
+                 random = list(Genotype=~1, Plant_Position=~1, Gall_Number=~1),
+                 data = control.df, 
+                 family = "binomial")
+summary(test.gam$gam)
+plot(test.gam$gam, shift = mean(predict(test.gam$gam)),
      trans = function(x) {exp(x)/(1+exp(x))})
-ggplot(control.df, aes(x = term1, y = gall_survival)) + geom_point() + binomial_smooth() + gam_smooth(formula = y ~ s(x), color = "red")
 
-binomial_smooth <- function(...) {
-  geom_smooth(method = "glm", method.args = list(family = "binomial"), ...)
-}
-gam_smooth <- function(...) {
-  geom_smooth(method = "gam", method.args = list(family = "binomial"), ...)
-}
+term1.control.gradient <- gam.gradients(test.gam$gam, phenotype = "term1")
+term1.control.gradient$ests
+
+cont.gam <- gamm(gall_survival ~ s(Gall_Height_mm) + s(gall_individuals, k = 9) + s(Density_per_100_shoots), 
+                 random = list(Genotype=~1, Plant_Position=~1, Gall_Number=~1),
+                 data = control.df, 
+                 family = "binomial")
+summary(cont.gam$gam)
+plot(cont.gam$gam, shift = mean(predict(cont.gam$gam)),
+     trans = function(x) {exp(x)/(1+exp(x))})
+
+cont.gam.grad <- gam.gradients(cont.gam$gam, phenotype = "Gall_Height_mm", covariates = c("gall_individuals","Density_per_100_shoots"))
+cont.gam.grad$ests
 
 # why does this work when standardized = F but not T? Maybe I should standardize prior to going into the model.
 gradients.test <- gppr.gradients(gppr.test, phenotype = c("Gall_Height_mm", "gall_individuals"), covariates = "Density_per_100_shoots", se.method = 'n', standardized = F)
@@ -103,15 +111,29 @@ gppr.treat.test$ppr$beta
 plot(gppr.treat.test$ppr, ask = T)
 
 treatment.df$term1 <- treatment.df$Gall_Height_mm*gppr.treat.test$ppr$alpha[1] + treatment.df$gall_individuals*gppr.treat.test$ppr$alpha[2] + treatment.df$Density_per_100_shoots*gppr.treat.test$ppr$alpha[3]
-treatment.df$term2 <- treatment.df$Gall_Height_mm*gppr.treat.test$ppr$alpha[4] + treatment.df$gall_individuals*gppr.treat.test$ppr$alpha[5] + treatment.df$Density_per_100_shoots*gppr.treat.test$ppr$alpha[6]
-treatment.df$term3 <- treatment.df$Gall_Height_mm*gppr.treat.test$ppr$alpha[7] + treatment.df$gall_individuals*gppr.treat.test$ppr$alpha[8] + treatment.df$Density_per_100_shoots*gppr.treat.test$ppr$alpha[9]
 
-
-treat.test <- gam(gall_survival ~ s(term3), treatment.df, family = "binomial")
-summary(treat.test)
-plot(treat.test, shift = mean(predict(test.gam)),
+treat.test <- gamm(gall_survival ~ s(term1), 
+                   random = list(Genotype=~1, Plant_Position=~1, Gall_Number=~1),
+                   data = treatment.df, 
+                   family = "binomial")
+summary(treat.test$gam)
+plot(treat.test$gam, shift = mean(predict(treat.test$gam)),
      trans = function(x) {exp(x)/(1+exp(x))})
-ggplot(treatment.df, aes(x = term3, y = gall_survival)) + geom_point() + binomial_smooth(color = "red") #+ gam_smooth(formula = y ~ s(x))
+term1.gradient <- gam.gradients(treat.test$gam, phenotype = "term1")
+term1.gradient$ests
+
+treat.gam <- gamm(gall_survival ~ s(Gall_Height_mm) + s(gall_individuals, k = 9) + s(Density_per_100_shoots), 
+                 random = list(Genotype=~1, Plant_Position=~1, Gall_Number=~1),
+                 data = treatment.df, 
+                 family = "binomial")
+summary(treat.gam)#$gam)
+plot(treat.gam, shift = mean(predict(treat.gam)),
+     trans = function(x) {exp(x)/(1+exp(x))})
+
+treat.gam.grad <- gam.gradients(treat.gam, phenotype = c("Gall_Height_mm","Density_per_100_shoots"), covariates = "gall_individuals")
+treat.gam.grad$ests
+
+vis.gam(treat.gam$gam, view = c("Gall_Height_mm","Density_per_100_shoots"), type = "response", plot.type = "contour")
 
 soay.gppr <- gppr(y = "W", xterms = c("WEIGHT","HINDLEG","HORNLEN","lnKeds"), 
                   data = SoayLambs, nterms = 2)
