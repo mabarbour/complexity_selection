@@ -14,10 +14,117 @@ gall_selection.df <- read_csv("gall_selection_data.csv") %>%
   unite(Gall_ID, Gall_Number, Gall_Letter, remove = FALSE) %>%
   
   # subset data for analysis
-  filter(phenology == "early", Location == "tree",
+  filter(phenology == "early", Location == "tree", 
          platy > 0 | ectos > 0 | pupa > 0) %>%          # eliminate unknown sources of mortality
   mutate(gall_survival = ifelse(pupa > 0, 1, 0),
-         log.size = log(Gall_Height_mm))
+         sc.Gall_Height_mm = scale(Gall_Height_mm),
+         sc.gall_individuals = scale(gall_individuals),
+         sc.Density_per_100_shoots = scale(Density_per_100_shoots))
+
+## ANALYSIS ----
+summary(gall_selection.df$sc.gall_individuals)
+ggplot(gall_selection.df, aes(x = sc.Gall_Height_mm, y = gall_survival, color = Treatment.focus)) +
+  geom_point() + binomial_smooth() +
+  facet_wrap(~cut(sc.gall_individuals, breaks = c(-5,0,5)))
+
+summary(gall_selection.df$sc.Density_per_100_shoots)
+ggplot(gall_selection.df, aes(x = sc.Gall_Height_mm, y = gall_survival, color = Treatment.focus)) +
+  geom_point() + binomial_smooth() +
+  facet_wrap(~cut(sc.Density_per_100_shoots, breaks = c(-5,0,5)))
+
+summary(gall_selection.df$sc.Gall_Height_mm)
+ggplot(gall_selection.df, aes(x = sc.gall_individuals, y = gall_survival, color = Treatment.focus)) +
+  geom_point() + binomial_smooth() +
+  facet_wrap(~cut(sc.Gall_Height_mm, breaks = c(-5,0,5)))
+
+summary(gall_selection.df$sc.Density_per_100_shoots)
+ggplot(gall_selection.df, aes(x = sc.gall_individuals, y = gall_survival, color = Treatment.focus)) +
+  geom_point() + binomial_smooth() +
+  facet_wrap(~cut(sc.Density_per_100_shoots, breaks = c(-5,0,5)))
+
+summary(gall_selection.df$sc.gall_individuals)
+ggplot(gall_selection.df, aes(x = sc.Density_per_100_shoots, y = gall_survival, color = Treatment.focus)) +
+  geom_point() + binomial_smooth() +
+  facet_wrap(~cut(sc.gall_individuals, breaks = c(-5,0,5)))
+
+summary(gall_selection.df$sc.Gall_Height_mm)
+ggplot(gall_selection.df, aes(x = sc.Density_per_100_shoots, y = gall_survival, color = Treatment.focus)) +
+  geom_point() + binomial_smooth() +
+  facet_wrap(~cut(sc.Gall_Height_mm, breaks = c(-5,0,5)))
+
+binomial_smooth <- function(...) {
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), ...)
+}
+
+viridis6 <- function() {
+  # colours taken from the viridis package
+  c("#440154", "#414487", "#2A788E", "#22A884", "#7AD151", "#FDE725")
+}
+
+control.gamm <- gamm(gall_survival ~ s(sc.Gall_Height_mm) + s(sc.gall_individuals, k = 9) + s(sc.Density_per_100_shoots),
+                          random = list(Genotype=~1, Plant_Position=~1, Gall_Number=~1),
+                          data = filter(gall_selection.df, Treatment.focus == "Control"),
+                          family = "binomial",
+                          method = "GCV.Cp")
+summary(control.gamm$gam)
+summary(control.gamm$lme)
+#plot(control.gamm$gam, shift = mean(predict(control.gamm$gam)), trans = function(x) {exp(x)/(1+exp(x))})
+
+gam.gradients(control.gamm$gam, phenotype = c("sc.Gall_Height_mm","sc.gall_individuals"), covariates = "sc.Density_per_100_shoots", se.method = 'n')
+gam.gradients(control.gamm$gam, phenotype = c("sc.Density_per_100_shoots","sc.gall_individuals"), covariates = "sc.Gall_Height_mm", se.method = 'n')
+gam.gradients(control.gamm$gam, phenotype = c("sc.Gall_Height_mm","sc.Density_per_100_shoots"), covariates = "sc.gall_individuals", se.method = 'n')
+
+
+control.fl <- fitness.landscape(control.gamm$gam, phenotype = c("sc.Gall_Height_mm","sc.gall_individuals"), covariates = "sc.Density_per_100_shoots", PI.method = 'n')
+control.fl_df <- data.frame(control.fl$points, Wbar = control.fl$Wbar)
+ggplot(control.fl_df, aes(x = Var1, y = Var2, fill = Wbar)) + geom_raster() + scale_fill_gradientn(colors = viridis6())
+
+control.fl.2 <- fitness.landscape(control.gamm$gam, phenotype = c("sc.Density_per_100_shoots","sc.gall_individuals"), covariates = "sc.Gall_Height_mm", PI.method = 'n')
+control.fl.2_df <- data.frame(control.fl.2$points, Wbar = control.fl.2$Wbar)
+ggplot(control.fl.2_df, aes(x = Var1, y = Var2, fill = Wbar)) + geom_raster() + scale_fill_gradientn(colors = viridis6())
+
+control.fl.3 <- fitness.landscape(control.gamm$gam, phenotype = c("sc.Gall_Height_mm","sc.Density_per_100_shoots"), covariates = "sc.gall_individuals", PI.method = 'n')
+control.fl.3_df <- data.frame(control.fl.3$points, Wbar = control.fl.3$Wbar)
+ggplot(control.fl.3_df, aes(x = Var1, y = Var2, fill = Wbar)) + geom_raster() + scale_fill_gradientn(colors = viridis6())
+
+
+treatment.gamm <- gamm(gall_survival ~ s(sc.Gall_Height_mm) + s(sc.gall_individuals, k = 9) + s(sc.Density_per_100_shoots),
+                     random = list(Genotype=~1, Plant_Position=~1, Gall_Number=~1),
+                     data = filter(gall_selection.df, Treatment.focus == "Ectoparasitoid exclusion"),
+                     family = "binomial",
+                     method = "GCV.Cp")
+summary(treatment.gamm$gam)
+summary(treatment.gamm$lme)
+#plot(treatment.gamm$gam, shift = mean(predict(treatment.gamm$gam)), trans = function(x) {exp(x)/(1+exp(x))})
+
+gam.gradients(treatment.gamm$gam, phenotype = c("sc.Gall_Height_mm","sc.gall_individuals"), covariates = "sc.Density_per_100_shoots", se.method = 'n')
+gam.gradients(treatment.gamm$gam, phenotype = c("sc.Density_per_100_shoots","sc.gall_individuals"), covariates = "sc.Gall_Height_mm", se.method = 'n')
+gam.gradients(treatment.gamm$gam, phenotype = c("sc.Gall_Height_mm","sc.Density_per_100_shoots"), covariates = "sc.gall_individuals", se.method = 'n')
+
+treatment.fl <- fitness.landscape(treatment.gamm$gam, phenotype = c("sc.Gall_Height_mm","sc.gall_individuals"), covariates = "sc.Density_per_100_shoots", PI.method = 'n')
+treatment.fl_df <- data.frame(treatment.fl$points, Wbar = treatment.fl$Wbar)
+ggplot(treatment.fl_df, aes(x = Var1, y = Var2, fill = Wbar)) + geom_raster() + scale_fill_gradientn(colors = viridis6())
+
+treatment.fl.2 <- fitness.landscape(treatment.gamm$gam, phenotype = c("sc.Density_per_100_shoots","sc.gall_individuals"), covariates = "sc.Gall_Height_mm", PI.method = 'n')
+treatment.fl.2_df <- data.frame(treatment.fl.2$points, Wbar = treatment.fl.2$Wbar)
+ggplot(treatment.fl.2_df, aes(x = Var1, y = Var2, fill = Wbar)) + geom_raster() + scale_fill_gradientn(colors = viridis6())
+
+treatment.fl.3 <- fitness.landscape(treatment.gamm$gam, phenotype = c("sc.Gall_Height_mm","sc.Density_per_100_shoots"), covariates = "sc.gall_individuals", PI.method = 'n')
+treatment.fl.3_df <- data.frame(treatment.fl.3$points, Wbar = treatment.fl.3$Wbar)
+ggplot(treatment.fl.3_df, aes(x = Var1, y = Var2, fill = Wbar)) + geom_raster() + scale_fill_gradientn(colors = viridis6())
+
+## STEEPNESS OF FITNESS LANDSCAPE
+sd(control.fl_df$Wbar)/mean(control.fl_df$Wbar) # 0.26
+sd(control.fl.2_df$Wbar)/mean(control.fl.2_df$Wbar) # 0.01
+sd(control.fl.3_df$Wbar)/mean(control.fl.3_df$Wbar) # 0.26
+mean(c(0.26,0.01,0.26))
+
+sd(treatment.fl_df$Wbar)/mean(treatment.fl_df$Wbar) # 0.18
+sd(treatment.fl.2_df$Wbar)/mean(treatment.fl.2_df$Wbar) # 0.14
+sd(treatment.fl.3_df$Wbar)/mean(treatment.fl.3_df$Wbar) # 0.21
+mean(c(0.18,0.14,0.21))
+
+## OLD BUT MAYBE USEFUL ----
 
 ## SUMMARISE DATA AT GALL & PLANT LEVEL ----
 mean.narm <- function(x) mean(x, na.rm = TRUE)
@@ -85,12 +192,48 @@ plot(test.gam$gam, shift = mean(predict(test.gam$gam)),
 term1.control.gradient <- gam.gradients(test.gam$gam, phenotype = "term1")
 term1.control.gradient$ests
 
-cont.gam <- gamm(gall_survival ~ s(Gall_Height_mm) + s(gall_individuals, k = 9) + s(Density_per_100_shoots), 
-                 random = list(Genotype=~1, Plant_Position=~1, Gall_Number=~1),
+library(lme4)
+cont.glmer <- glmer(gall_survival ~ (Gall_Height_mm + gall_individuals + Density_per_100_shoots)^2 + (1|Genotype/Plant_Position/Gall_Number),
+                    data = control.df,
+                    family = "binomial",
+                    control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun=2e5)))
+summary(cont.glmer)
+
+treat.glmer <- glmer(gall_survival ~ Gall_Height_mm*gall_individuals*Density_per_100_shoots + (1|Genotype/Plant_Position/Gall_Number),
+                    data = treatment.df,
+                    family = "binomial",
+                    control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun=2e5)))
+summary(treat.glmer)
+
+all.glmer <- glmer(gall_survival ~ Treatment.focus*(scale(Gall_Height_mm) + scale(log(gall_individuals)) + scale(sqrt(Density_per_100_shoots)))^2 + (1|Genotype/Plant_Position/Gall_Number),
+                     data = gall_selection.df,
+                     family = "binomial",
+                     control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun=2e5)))
+summary(all.glmer)
+
+# why does the plant level data differ so much???
+plant.all.glmer <- glm(gall_survival ~ Treatment.focus*(scale(Gall_Height_mm) + scale(gall_individuals) + scale(Density_per_100_shoots))^2,# + (1|Genotype),
+                         data = plant_level.df,
+                         family = "binomial",
+                         weights = total)#,
+                        # control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun=2e5)))
+summary(plant.all.glmer)
+
+plant.gam <-  gam(gall_survival ~ s(scale(Gall_Height_mm)) + s(scale(gall_individuals)) + s(scale(Density_per_100_shoots)),# + (1|Genotype),
+                  data = filter(plant_level.df, Treatment.focus == "Control"),
+                  family = "binomial",
+                  weights = total,
+                  method = "GCV.Cp")
+summary(plant.gam)
+plot(plant.gam, shift = mean(predict(plant.gam)),
+     trans = function(x) {exp(x)/(1+exp(x))})
+
+cont.gam <- gam(gall_survival ~ s(Gall_Height_mm) + s(Gall_Height_mm, by = gall_individuals) + s(gall_individuals, k = 9) + s(Density_per_100_shoots), 
+                 #random = list(Genotype=~1, Plant_Position=~1, Gall_Number=~1),
                  data = control.df, 
                  family = "binomial")
-summary(cont.gam$gam)
-plot(cont.gam$gam, shift = mean(predict(cont.gam$gam)),
+summary(cont.gam)
+plot(cont.gam, shift = mean(predict(cont.gam)),
      trans = function(x) {exp(x)/(1+exp(x))})
 
 cont.gam.grad <- gam.gradients(cont.gam$gam, phenotype = "Gall_Height_mm", covariates = c("gall_individuals","Density_per_100_shoots"))
