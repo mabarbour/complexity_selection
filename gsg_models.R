@@ -18,59 +18,139 @@ gall_selection.df <- read_csv("gall_selection_data.csv") %>%
   filter(phenology == "early", Location == "tree", 
          platy > 0 | ectos > 0 | pupa > 0) %>%          # eliminate unknown sources of mortality
   mutate(gall_survival = as.numeric(ifelse(pupa > 0, 1, 0)),
-         sc.Gall_Height_mm = scale(Gall_Height_mm),
-         sc.gall_individuals = scale(gall_individuals),
-         sc.Density_per_100_shoots = scale(Density_per_100_shoots))
+         sc.Gall_Height_mm = as.numeric(scale(Gall_Height_mm)),
+         sc.gall_individuals = as.numeric(scale(gall_individuals)),
+         sc.Density_per_100_shoots = as.numeric(scale(Density_per_100_shoots)))
 
 ## GENERALIZED PROJECTION PURSUIT REGRESSION ANALYSIS ----
 
 # CONTROL TREES
 control.df <- as.data.frame(filter(gall_selection.df, Treatment.focus == "Control"))
 control.gppr <- gppr(y = "gall_survival", xterms = c("sc.Gall_Height_mm","sc.gall_individuals","sc.Density_per_100_shoots"), 
-                  data = control.df, nterms = 1)
-control.gppr$ppr$alpha
+                  data = control.df, nterms = 2)
+control.gppr$ppr$alpha # Gall_Height_mm is the major contributor to this axis of selection. 
 control.gppr$ppr$beta
 
 # se.method = 'boot.para' takes a while so be prepared. Note that it detected non-linear selection on gall height, which is worth following up on...
-gppr.gradients(mod=control.gppr,phenotype=c("sc.Gall_Height_mm","sc.gall_individuals"), covariates = "sc.Density_per_100_shoots", se.method='n',standardize=FALSE)
-gppr.gradients(mod=control.gppr,phenotype=c("sc.Gall_Height_mm","sc.Density_per_100_shoots"), covariates = "sc.gall_individuals", se.method='n',standardize=FALSE)
+# strong evidence for directional selection for larger galls, and some evidence for non-linear selection on gall size (diversifying???)
+gppr.gradients(mod=control.gppr,phenotype=c("sc.Gall_Height_mm","sc.gall_individuals"), covariates = "sc.Density_per_100_shoots", se.method='boot.para',standardize=FALSE, parallel = 'multicore', ncpus = 32)$ests
+gppr.gradients(mod=control.gppr,phenotype=c("sc.Gall_Height_mm","sc.Density_per_100_shoots"), covariates = "sc.gall_individuals", se.method='boot.para',standardize=FALSE, parallel = 'multicore', ncpus = 32)$ests
+gppr.gradients(mod=control.gppr,phenotype=c("sc.gall_individuals","sc.Density_per_100_shoots"), covariates = "sc.Gall_Height_mm", se.method='boot.para',standardize=FALSE, parallel = 'multicore', ncpus = 32)$ests
+
 # redundant # gppr.gradients(mod=control.gppr,phenotype=c("sc.gall_individuals","sc.Density_per_100_shoots"), covariates = "sc.Gall_Height_mm", se.method='n',standardize=FALSE)
 
 control.df$term1 <- control.gppr$ppr$alpha[1]*control.df$sc.Gall_Height_mm + control.gppr$ppr$alpha[2]*control.df$sc.gall_individuals + control.gppr$ppr$alpha[3]*control.df$sc.Density_per_100_shoots
-#control.df$term2 <- control.gppr$ppr$alpha[4]*control.df$sc.Gall_Height_mm + control.gppr$ppr$alpha[5]*control.df$sc.gall_individuals + control.gppr$ppr$alpha[6]*control.df$sc.Density_per_100_shoots
+control.df$term2 <- control.gppr$ppr$alpha[4]*control.df$sc.Gall_Height_mm + control.gppr$ppr$alpha[5]*control.df$sc.gall_individuals + control.gppr$ppr$alpha[6]*control.df$sc.Density_per_100_shoots
+plot(term2 ~ term1, control.df)
+cor.test(control.df$term1, control.df$term2) # essentially redundant
 
-control.major.gam <- gamm4(gall_survival ~ s(term1), random = ~(1|Genotype/Plant_Position/Gall_Number),
+control.major.gam <- gam(gall_survival ~ s(term1), #random = ~(1|Genotype/Plant_Position/Gall_Number),
                            data = control.df, family = "binomial")
-summary(control.major.gam$gam)
-summary(control.major.gam$mer)
-plot(control.major.gam$gam, seWithMean = T, shift = mean(predict(control.major.gam$gam)), trans = function(x) {exp(x)/(1+exp(x))})
+summary(control.major.gam)#$gam)
+#summary(control.major.gam$mer)
+#plot(control.major.gam$gam, seWithMean = T, shift = mean(predict(control.major.gam$gam)), trans = function(x) {exp(x)/(1+exp(x))})
+plot(control.major.gam, seWithMean = T, shift = mean(predict(control.major.gam)), trans = function(x) {exp(x)/(1+exp(x))})
 
-# CREATE AIC
+#gam.gradients(mod = control.major.gam$gam, phenotype = c("term1"), se.method = 'n', standardized = T)
 
-gam.gradients(mod = control.major.gam$gam, phenotype = c("term1"), se.method = 'n', standardized = T)
+# in combination with the strong loading of Gall_Height_mm, there appears to be a strong directional selection gradient acting primarily on gall size in the complex food web.
+gam.gradients(mod = control.major.gam, phenotype = c("term1"), se.method = 'boot.para', standardized = T, parallel = 'multicore', ncpus = 32)
 
+control.Gall_Height.gam <- gam(gall_survival ~ s(Gall_Height_mm), #random = ~(1|Genotype/Plant_Position/Gall_Number),
+                         data = control.df, family = "binomial")
+# still don't understand the non-linear form of selection going on here...
+gam.gradients(mod = control.Gall_Height.gam, phenotype = c("Gall_Height_mm"), se.method = 'boot.para', standardized = T, parallel = 'multicore', ncpus = 32)$ests
+
+
+ggplot(control.df, aes(x = sc.Gall_Height_mm, y = sc.Density_per_100_shoots)) +
+  geom_point(shape = 1)
+ggplot(control.df, aes(x = sc.Gall_Height_mm, y = sc.gall_individuals)) +
+  geom_jitter(shape = 1, height = 0.05)
+ggplot(control.df, aes(x = sc.Density_per_100_shoots, y = sc.gall_individuals)) +
+  geom_jitter(shape = 1, height = 0.05)
 
 
 # ECTOPARSITOID EXCLUSION TREES
 treatment.df <- as.data.frame(filter(gall_selection.df, Treatment.focus == "Ectoparasitoid exclusion"))
 treatment.gppr <- gppr(y = "gall_survival", xterms = c("sc.Gall_Height_mm","sc.gall_individuals","sc.Density_per_100_shoots"), 
-                     data = treatment.df, nterms = 1)
-treatment.gppr$ppr$alpha
+                     data = treatment.df, nterms = 2)
+treatment.gppr$ppr$alpha # strong loadings of all three traits, with gall height acting in opposing directions to gall individuals and gall density
 treatment.gppr$ppr$beta
 
-gppr.gradients(mod=treatment.gppr,phenotype=c("sc.Gall_Height_mm","sc.gall_individuals"), covariates = "sc.Density_per_100_shoots", se.method='n',standardize=FALSE)
-gppr.gradients(mod=treatment.gppr,phenotype=c("sc.Gall_Height_mm","sc.Density_per_100_shoots"), covariates = "sc.gall_individuals", se.method='n',standardize=FALSE)
+# INTERESTING, CALCULATING GRADIENTS WITH 1 OR 2 TERMS MAKES A BIG DIFFERENCE IN TERMS OF SIGNIFICANCE. BUT WITH 2, THE SE SEEM UNECESSARILY LARGE, POSSIBLE DU TO CORRELATIONS???
+gppr.gradients(mod=treatment.gppr,phenotype=c("sc.Gall_Height_mm","sc.gall_individuals"), covariates = "sc.Density_per_100_shoots", se.method='boot.para',standardize=FALSE, parallel = 'multicore', ncpus = 32)$ests
+gppr.gradients(mod=treatment.gppr,phenotype=c("sc.Gall_Height_mm","sc.Density_per_100_shoots"), covariates = "sc.gall_individuals", se.method='boot.para',standardize=FALSE, parallel = 'multicore', ncpus = 32)$ests
+gppr.gradients(mod=treatment.gppr,phenotype=c("sc.gall_individuals","sc.Density_per_100_shoots"), covariates = "sc.Gall_Height_mm", se.method='boot.para',standardize=FALSE, parallel = 'multicore', ncpus = 32)$ests
+
 
 treatment.df$term1 <- treatment.gppr$ppr$alpha[1]*treatment.df$sc.Gall_Height_mm + treatment.gppr$ppr$alpha[2]*treatment.df$sc.gall_individuals + treatment.gppr$ppr$alpha[3]*treatment.df$sc.Density_per_100_shoots
-#treatment.df$term2 <- treatment.gppr$ppr$alpha[4]*treatment.df$sc.Gall_Height_mm + treatment.gppr$ppr$alpha[5]*treatment.df$sc.gall_individuals + treatment.gppr$ppr$alpha[6]*treatment.df$sc.Density_per_100_shoots
+treatment.df$term2 <- treatment.gppr$ppr$alpha[4]*treatment.df$sc.Gall_Height_mm + treatment.gppr$ppr$alpha[5]*treatment.df$sc.gall_individuals + treatment.gppr$ppr$alpha[6]*treatment.df$sc.Density_per_100_shoots
+plot(term2 ~ term1, treatment.df)
+cor.test(treatment.df$term1, treatment.df$term2) # essentially redundant
 
-treatment.major.gam <- gamm4(gall_survival ~ s(term1), random = ~(1|Genotype/Plant_Position/Gall_Number),
+
+treatment.major.gam <- gam(gall_survival ~ s(term1), #random = ~(1|Genotype/Plant_Position/Gall_Number),
                            data = treatment.df, family = "binomial")
-summary(treatment.major.gam$gam)
-summary(treatment.major.gam$mer)
-plot(treatment.major.gam$gam, seWithMean = T, shift = mean(predict(treatment.major.gam$gam)), trans = function(x) {exp(x)/(1+exp(x))})
+summary(treatment.major.gam)#$gam)
+#summary(treatment.major.gam$mer)
+#plot(treatment.major.gam$gam, seWithMean = T, shift = mean(predict(treatment.major.gam$gam)), trans = function(x) {exp(x)/(1+exp(x))})
+plot(treatment.major.gam, seWithMean = T, shift = mean(predict(treatment.major.gam)), trans = function(x) {exp(x)/(1+exp(x))})
 
-gam.gradients(mod = treatment.major.gam$gam, phenotype = c("term1"), se.method = 'n', standardized = T)
+#gam.gradients(mod = treatment.major.gam$gam, phenotype = c("term1"), se.method = 'n', standardized = T)
+gam.gradients(mod = treatment.major.gam, phenotype = c("term1"), se.method = 'boot.para', standardized = T, parallel = 'multicore', ncpus = 32)
+
+treatment.all.gam <- gam(gall_survival ~ s(sc.Gall_Height_mm) + s(sc.gall_individuals) + s(sc.Density_per_100_shoots), #random = ~(1|Genotype/Plant_Position/Gall_Number),
+                           data = treatment.df, family = "binomial")
+plot(treatment.all.gam, seWithMean = T, shift = mean(predict(treatment.all.gam)), trans = function(x) {exp(x)/(1+exp(x))})
+
+gam.gradients(mod=treatment.all.gam,phenotype=c("sc.Gall_Height_mm","sc.gall_individuals"), covariates = "sc.Density_per_100_shoots", se.method='boot.para',standardize=FALSE, parallel = 'multicore', ncpus = 32)$ests
+gam.gradients(mod=treatment.all.gam,phenotype=c("sc.Gall_Height_mm","sc.Density_per_100_shoots"), covariates = "sc.gall_individuals", se.method='boot.para',standardize=FALSE, parallel = 'multicore', ncpus = 32)$ests
+gam.gradients(mod=treatment.all.gam,phenotype=c("sc.gall_individuals","sc.Density_per_100_shoots"), covariates = "sc.Gall_Height_mm", se.method='boot.para',standardize=FALSE, parallel = 'multicore', ncpus = 32)$ests
+
+vis.gam(treatment.all.gam, view = c("sc.Gall_Height_mm","sc.gall_individuals"), type = "response", plot.type = "contour")
+vis.gam(treatment.all.gam, view = c("sc.Gall_Height_mm","sc.Density_per_100_shoots"), type = "response", plot.type = "contour")
+vis.gam(treatment.all.gam, view = c("sc.gall_individuals","sc.Density_per_100_shoots"), type = "response", plot.type = "contour")
+
+treatment.all.FL <- fitness.landscape(mod=treatment.all.gam,phenotype=c("sc.Gall_Height_mm","sc.gall_individuals"), covariates = "sc.Density_per_100_shoots", parallel = 'multicore', ncpus = 32)
+treatment.all.FL.2 <- fitness.landscape(mod=treatment.all.gam,phenotype=c("sc.Gall_Height_mm","sc.Density_per_100_shoots"), covariates = "sc.gall_individuals", parallel = 'multicore', ncpus = 32)
+treatment.all.FL.3 <- fitness.landscape(mod=treatment.all.gam,phenotype=c("sc.gall_individuals","sc.Density_per_100_shoots"), covariates = "sc.Gall_Height_mm", parallel = 'multicore', ncpus = 32)
+
+viridis6 <- function() {
+  # colours taken from the viridis package
+  c("#440154", "#414487", "#2A788E", "#22A884", "#7AD151", "#FDE725")
+}
+
+ggplot(treatment.df, aes(x = sc.Gall_Height_mm, y = sc.Density_per_100_shoots)) +
+  geom_point(shape = 1)
+ggplot(treatment.df, aes(x = sc.Gall_Height_mm, y = sc.gall_individuals)) +
+  geom_jitter(shape = 1, height = 0.05)
+ggplot(treatment.df, aes(x = sc.Density_per_100_shoots, y = sc.gall_individuals)) +
+  geom_jitter(shape = 1, height = 0.05)
+
+treatment.all.FL_df <- data.frame(treatment.all.FL$points, Wbar = treatment.all.FL$Wbar) %>%
+  rename(sc.Gall_Height_mm = Var1, sc.gall_individuals = Var2)
+ggplot(treatment.all.FL_df, aes(x = sc.Gall_Height_mm, y = sc.gall_individuals, fill = Wbar)) + geom_raster() + 
+  scale_fill_gradientn(colors = viridis6()) +
+  geom_jitter(data = filter(treatment.df, 
+                           sc.Gall_Height_mm < 1 & sc.Gall_Height_mm > -1 & sc.gall_individuals < 1 & sc.gall_individuals > -1), 
+             aes(x = sc.Gall_Height_mm, y = sc.gall_individuals), inherit.aes = F, height = 0.05, shape = 1)
+
+treatment.all.FL.2_df <- data.frame(treatment.all.FL.2$points, Wbar = treatment.all.FL.2$Wbar) %>%
+  rename(sc.Gall_Height_mm = Var1, sc.Density_per_100_shoots = Var2)
+ggplot(treatment.all.FL.2_df, aes(x = sc.Gall_Height_mm, y = sc.Density_per_100_shoots, fill = Wbar)) + geom_raster() + 
+  scale_fill_gradientn(colors = viridis6()) +
+  geom_point(data = filter(treatment.df, 
+                            sc.Gall_Height_mm < 1 & sc.Gall_Height_mm > -1 & sc.Density_per_100_shoots < 1 & sc.Density_per_100_shoots > -1), 
+              aes(x = sc.Gall_Height_mm, y = sc.Density_per_100_shoots), inherit.aes = F, shape = 1)
+
+treatment.all.FL.3_df <- data.frame(treatment.all.FL.3$points, Wbar = treatment.all.FL.3$Wbar) %>%
+  rename(sc.gall_individuals = Var1, sc.Density_per_100_shoots = Var2)
+ggplot(treatment.all.FL.3_df, aes(x = sc.gall_individuals, y = sc.Density_per_100_shoots, fill = Wbar)) + geom_raster() + 
+  scale_fill_gradientn(colors = viridis6()) + 
+  geom_jitter(data = filter(treatment.df, 
+                           sc.gall_individuals < 1 & sc.gall_individuals > -1 & sc.Density_per_100_shoots < 1 & sc.Density_per_100_shoots > -1), 
+             aes(x = sc.gall_individuals, y = sc.Density_per_100_shoots), width = 0.05, inherit.aes = F, shape = 1)
+
 
 # unconditional part not working # predict(treatment.major.gam$gam, unconditional = TRUE)
 
@@ -218,7 +298,24 @@ gall_level.df <- left_join(gall_level.info, gall_level.parasitism) %>%
 
 plant_level.df <- left_join(plant_level.info, plant_level.parasitism) %>%
   mutate(gall_survival = pupa/total,
-         log1.density = log(Density_per_100_shoots+1))
+         sc.Gall_Height_mm = scale(Gall_Height_mm),
+         sc.gall_individuals = scale(gall_individuals),
+         sc.Density_per_100_shoots = scale(Density_per_100_shoots))
+
+plant.cont.glmer <- glm(gall_survival ~ Treatment.focus*(sc.Gall_Height_mm + sc.gall_individuals + sc.Density_per_100_shoots)^2,# + (1|Genotype/Plant_Position/Gall_Number),
+                          data = gall_selection.df,
+                          family = "binomial")#, control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun=2e5)))#,
+                          #weights = total)
+summary(plant.cont.glmer)
+
+plant.cont.gam <- gam(gall_survival ~ s(sc.Gall_Height_mm), by = sc.gall_individuals)+ s(Density_per_100_shoots),
+                      #random = ~(1|Genotype),
+                      data = filter(plant_level.df, Treatment.focus == "Ectoparasitoid exclusion"),
+                      family = "binomial",
+                      weights = filter(plant_level.df, Treatment.focus == "Ectoparasitoid exclusion")$total)
+summary(plant.cont.gam$gam)
+plot(plant.cont.gam$gam, seWithMean = T, shift = mean(predict(plant.cont.gam$gam)), trans = function(x) {exp(x)/(1+exp(x))})
+vis.gam(plant.cont.gam$gam, view = c("sc.Gall_Height_mm","sc.gall_individuals"), type = "response", plot.type = "contour")
 
 # wow, still a ton of variability in gall size at the polygall level
 gall.size.df <- left_join(select(gall_selection.df, Treatment.focus, Genotype, Plant_Position, gall.size = Gall_Height_mm), 
