@@ -1,7 +1,8 @@
+
 ## LOAD REQUIRED LIBRARIES & SET OPTIONS ----
 library(tidyverse)
 library(mgcv)
-library(gamm4)
+#library(gamm4)
 library(gsg)
 
 ## LOAD & MANAGE DATASET ----
@@ -24,11 +25,30 @@ gall_selection.df <- read_csv("gall_selection_data.csv") %>%
 
 ## GENERALIZED PROJECTION PURSUIT REGRESSION ANALYSIS ----
 
+control.ecto.gppr <- gppr(y = "ectos", 
+                     xterms = c("sc.Gall_Height_mm","sc.gall_individuals","sc.Density_per_100_shoots"), 
+                     data = control.df, nterms = 1)
+control.ecto.gppr$ppr$alpha
+control.ecto.gppr$ppr$beta
+
+control.platy.gppr <- gppr(y = "platy", 
+                          xterms = c("sc.Gall_Height_mm","sc.gall_individuals","sc.Density_per_100_shoots"), 
+                          data = control.df, nterms = 2) # perhaps 2 terms is needed...check correlation
+control.platy.gppr$ppr$alpha
+control.platy.gppr$ppr$beta
+
+treatment.platy.gppr <- gppr(y = "platy", 
+                           xterms = c("sc.Gall_Height_mm","sc.gall_individuals","sc.Density_per_100_shoots"), 
+                           data = treatment.df, nterms = 1)
+treatment.platy.gppr$ppr$alpha
+treatment.platy.gppr$ppr$beta
+
 # CONTROL TREES
 control.df <- as.data.frame(filter(gall_selection.df, Treatment.focus == "Control"))
-control.gppr <- gppr(y = "gall_survival", xterms = c("sc.Gall_Height_mm","sc.gall_individuals","sc.Density_per_100_shoots"), 
-                  data = control.df, nterms = 2)
-control.gppr$ppr$alpha # Gall_Height_mm is the major contributor to this axis of selection. 
+control.gppr <- gppr(y = "gall_survival", 
+                     xterms = c("sc.Gall_Height_mm","sc.gall_individuals","sc.Density_per_100_shoots"), 
+                     data = control.df, nterms = 1)
+control.gppr$ppr$alpha  
 control.gppr$ppr$beta
 
 # se.method = 'boot.para' takes a while so be prepared. Note that it detected non-linear selection on gall height, which is worth following up on...
@@ -37,18 +57,16 @@ gppr.gradients(mod=control.gppr,phenotype=c("sc.Gall_Height_mm","sc.gall_individ
 gppr.gradients(mod=control.gppr,phenotype=c("sc.Gall_Height_mm","sc.Density_per_100_shoots"), covariates = "sc.gall_individuals", se.method='boot.para',standardize=FALSE, parallel = 'multicore', ncpus = 32)$ests
 gppr.gradients(mod=control.gppr,phenotype=c("sc.gall_individuals","sc.Density_per_100_shoots"), covariates = "sc.Gall_Height_mm", se.method='boot.para',standardize=FALSE, parallel = 'multicore', ncpus = 32)$ests
 
-# redundant # gppr.gradients(mod=control.gppr,phenotype=c("sc.gall_individuals","sc.Density_per_100_shoots"), covariates = "sc.Gall_Height_mm", se.method='n',standardize=FALSE)
-
 control.df$term1 <- control.gppr$ppr$alpha[1]*control.df$sc.Gall_Height_mm + control.gppr$ppr$alpha[2]*control.df$sc.gall_individuals + control.gppr$ppr$alpha[3]*control.df$sc.Density_per_100_shoots
-control.df$term2 <- control.gppr$ppr$alpha[4]*control.df$sc.Gall_Height_mm + control.gppr$ppr$alpha[5]*control.df$sc.gall_individuals + control.gppr$ppr$alpha[6]*control.df$sc.Density_per_100_shoots
-plot(term2 ~ term1, control.df)
-cor.test(control.df$term1, control.df$term2) # essentially redundant
+# control.df$term2 <- control.gppr$ppr$alpha[4]*control.df$sc.Gall_Height_mm + control.gppr$ppr$alpha[5]*control.df$sc.gall_individuals + control.gppr$ppr$alpha[6]*control.df$sc.Density_per_100_shoots
+# plot(term2 ~ term1, control.df)
+# cor.test(control.df$term1, control.df$term2) 
 
 control.major.gam <- gam(gall_survival ~ s(term1), #random = ~(1|Genotype/Plant_Position/Gall_Number),
                            data = control.df, family = "binomial")
 summary(control.major.gam)#$gam)
-#summary(control.major.gam$mer)
-#plot(control.major.gam$gam, seWithMean = T, shift = mean(predict(control.major.gam$gam)), trans = function(x) {exp(x)/(1+exp(x))})
+# summary(control.major.gam$mer)
+# plot(control.major.gam$gam, seWithMean = T, shift = mean(predict(control.major.gam$gam)), trans = function(x) {exp(x)/(1+exp(x))})
 plot(control.major.gam, seWithMean = T, shift = mean(predict(control.major.gam)), trans = function(x) {exp(x)/(1+exp(x))})
 
 #gam.gradients(mod = control.major.gam$gam, phenotype = c("term1"), se.method = 'n', standardized = T)
@@ -73,7 +91,7 @@ ggplot(control.df, aes(x = sc.Density_per_100_shoots, y = sc.gall_individuals)) 
 # ECTOPARSITOID EXCLUSION TREES
 treatment.df <- as.data.frame(filter(gall_selection.df, Treatment.focus == "Ectoparasitoid exclusion"))
 treatment.gppr <- gppr(y = "gall_survival", xterms = c("sc.Gall_Height_mm","sc.gall_individuals","sc.Density_per_100_shoots"), 
-                     data = treatment.df, nterms = 2)
+                     data = treatment.df, nterms = 1)
 treatment.gppr$ppr$alpha # strong loadings of all three traits, with gall height acting in opposing directions to gall individuals and gall density
 treatment.gppr$ppr$beta
 
@@ -84,9 +102,9 @@ gppr.gradients(mod=treatment.gppr,phenotype=c("sc.gall_individuals","sc.Density_
 
 
 treatment.df$term1 <- treatment.gppr$ppr$alpha[1]*treatment.df$sc.Gall_Height_mm + treatment.gppr$ppr$alpha[2]*treatment.df$sc.gall_individuals + treatment.gppr$ppr$alpha[3]*treatment.df$sc.Density_per_100_shoots
-treatment.df$term2 <- treatment.gppr$ppr$alpha[4]*treatment.df$sc.Gall_Height_mm + treatment.gppr$ppr$alpha[5]*treatment.df$sc.gall_individuals + treatment.gppr$ppr$alpha[6]*treatment.df$sc.Density_per_100_shoots
-plot(term2 ~ term1, treatment.df)
-cor.test(treatment.df$term1, treatment.df$term2) # essentially redundant
+# treatment.df$term2 <- treatment.gppr$ppr$alpha[4]*treatment.df$sc.Gall_Height_mm + treatment.gppr$ppr$alpha[5]*treatment.df$sc.gall_individuals + treatment.gppr$ppr$alpha[6]*treatment.df$sc.Density_per_100_shoots
+# plot(term2 ~ term1, treatment.df)
+# cor.test(treatment.df$term1, treatment.df$term2) 
 
 
 treatment.major.gam <- gam(gall_survival ~ s(term1), #random = ~(1|Genotype/Plant_Position/Gall_Number),
