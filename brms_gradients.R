@@ -1,6 +1,6 @@
 
 predict(control.major.brm, summary = T)[ ,"Estimate"]
-predict(control.major.gam$gam)
+control.major.gam$gam$model
 
 ## TEST FUNCTION FOR CALCULATING GRADIENTS WITH BRMS
 
