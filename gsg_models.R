@@ -55,11 +55,17 @@ summary(control.major.gam)#$gam)
 plot(control.major.gam$gam, residuals = T, pch = 19, cex = 0.3, seWithMean = T, shift = mean(predict(control.major.gam$gam)), trans = function(x) {exp(x)/(1+exp(x))})
 
 rsd <- residuals(control.major.gam$gam)
-plot(rsd ~ cut(control.df$sc.Gall_Height_mm, breaks = c(-5,-1,1,5)))
-plot(rsd ~ cut(control.df$sc.gall_individuals, breaks = c(-5,-1,1,5)))
-plot(rsd ~ cut(control.df$sc.Density_per_100_shoots, breaks = c(-5,-1,1,5)))
+plot(rsd ~ cut(control.df$sc.Gall_Height_mm, breaks = c(-5,-2,-1,1,2,5)))
+plot(rsd ~ cut(control.df$sc.gall_individuals, breaks = c(-5,-2,-1,1,2,5)))
+plot(rsd ~ cut(control.df$sc.Density_per_100_shoots, breaks = c(-5,-2,-1,1,2,5)))
 
-gam.gradients(mod = control.major.gam$gam, phenotype = c("term1"), se.method = 'boot.para', standardized = T, parallel = 'multicore', ncpus = 32)
+control.major.gradients <- gam.gradients(mod = control.major.gam$gam, phenotype = c("term1"), refit.smooth = T, se.method = 'boot.para', standardized = T, parallel = 'multicore', ncpus = 32)
+control.major.gradients$ests
+hist(control.major.gradients$boot[,1])
+abline(v = control.major.gradients$ests[1,1])
+
+hist(control.major.gradients$boot[,2])
+abline(v = control.major.gradients$ests[2,1])
 
 library(brms)
 control.major.brm <- brm(gall_survival ~ s(term1), #random = ~(1|Genotype/Plant_Position/Gall_Number),
@@ -156,7 +162,10 @@ treatment.gppr$ppr$beta
 # INTERESTING, CALCULATING GRADIENTS WITH 1 OR 2 TERMS MAKES A BIG DIFFERENCE IN TERMS OF SIGNIFICANCE. BUT WITH 2, THE SE SEEM UNECESSARILY LARGE, POSSIBLE DU TO CORRELATIONS???
 gppr.size_indiv <- gppr.gradients(mod=treatment.gppr,phenotype=c("sc.Gall_Height_mm","sc.gall_individuals"), covariates = "sc.Density_per_100_shoots", se.method='boot.para',standardize=FALSE, parallel = 'multicore', ncpus = 32)#$ests
 
-gppr.size_indiv$ests$estimates
+gppr.size_indiv$ests$estimates[4]
+median(gppr.size_indiv$boot[ ,4])
+hist(gppr.size_indiv$boot[ ,4])
+abline(v=gppr.size_indiv$ests$estimates[4])
 sd(gppr.size_indiv$boot[ ,5])
 length(which(gppr.size_indiv$boot[ ,5] > gppr.size_indiv$ests$estimates[5]))/1000 # 97% of bootsrapped values are greater than the estimate
 quantile(gppr.size_indiv$boot[ ,5], probs = c(0.975,0.025)) # hmmm, estimates falls within 95% interval...
@@ -177,22 +186,30 @@ treatment.df$term1 <- treatment.gppr$ppr$alpha[1]*treatment.df$sc.Gall_Height_mm
 # cor.test(treatment.df$term1, treatment.df$term2) 
 
 
-treatment.major.gam <- gam(gall_survival ~ s(term1), #random = ~(1|Genotype/Plant_Position/Gall_Number),
+treatment.major.gam <- gamm4(gall_survival ~ s(term1), random = ~(1|Genotype/Plant_Position/Gall_Number),
                            data = treatment.df, family = "binomial")
-summary(treatment.major.gam)#$gam)
-#summary(treatment.major.gam$mer)
-#plot(treatment.major.gam$gam, seWithMean = T, shift = mean(predict(treatment.major.gam$gam)), trans = function(x) {exp(x)/(1+exp(x))})
-plot(treatment.major.gam, seWithMean = T, shift = mean(predict(treatment.major.gam)), trans = function(x) {exp(x)/(1+exp(x))})
+summary(treatment.major.gam$gam)
+summary(treatment.major.gam$mer)
+plot(treatment.major.gam$gam, seWithMean = T, shift = mean(predict(treatment.major.gam$gam)), trans = function(x) {exp(x)/(1+exp(x))})
+#plot(treatment.major.gam, seWithMean = T, shift = mean(predict(treatment.major.gam)), trans = function(x) {exp(x)/(1+exp(x))})
 
 #gam.gradients(mod = treatment.major.gam$gam, phenotype = c("term1"), se.method = 'n', standardized = T)
-gam.gradients(mod = treatment.major.gam, phenotype = c("term1"), se.method = 'boot.para', standardized = T, parallel = 'multicore', ncpus = 32)
+treatment.major.gradients <- gam.gradients(mod = treatment.major.gam$gam, phenotype = c("term1"), refit.smooth = T, se.method = 'boot.para', standardized = T, parallel = 'multicore', ncpus = 32)
+treatment.major.gradients$ests
+mean(treatment.major.gradients$boot[,1])
+mean(treatment.major.gradients$boot[,2])
+hist(treatment.major.gradients$boot[,2])
 
-treatment.all.gam <- gam(gall_survival ~ s(sc.Gall_Height_mm) + s(sc.gall_individuals) + s(sc.Density_per_100_shoots), #random = ~(1|Genotype/Plant_Position/Gall_Number),
+treatment.all.gam <- gamm4(gall_survival ~ s(sc.Gall_Height_mm) + s(sc.gall_individuals) + s(sc.Density_per_100_shoots), 
+                           random = ~(1|Genotype/Plant_Position/Gall_Number),
                            data = treatment.df, family = "binomial")
-plot(treatment.all.gam, seWithMean = T, shift = mean(predict(treatment.all.gam)), trans = function(x) {exp(x)/(1+exp(x))})
+plot(treatment.all.gam$gam, seWithMean = T, shift = mean(predict(treatment.all.gam$gam)), trans = function(x) {exp(x)/(1+exp(x))})
 
-gam.gradients(mod=treatment.all.gam,phenotype=c("sc.Gall_Height_mm","sc.gall_individuals"), covariates = "sc.Density_per_100_shoots", se.method='boot.para',standardize=FALSE, parallel = 'multicore', ncpus = 32)$ests
-gam.gradients(mod=treatment.all.gam,phenotype=c("sc.Gall_Height_mm","sc.Density_per_100_shoots"), covariates = "sc.gall_individuals", se.method='boot.para',standardize=FALSE, parallel = 'multicore', ncpus = 32)$ests
+treatment.size_indiv.gradients <- gam.gradients(mod=treatment.all.gam$gam,phenotype=c("sc.Gall_Height_mm","sc.gall_individuals"), refit.smooth = T, covariates = "sc.Density_per_100_shoots", se.method='boot.para',standardize=FALSE, parallel = 'multicore', ncpus = 32)
+treatment.size_indiv.gradients$ests
+hist(treatment.size_indiv.gradients$boot[ ,4])
+
+gam.gradients(mod=treatment.all.gam$gam,phenotype=c("sc.Gall_Height_mm","sc.Density_per_100_shoots"), covariates = "sc.gall_individuals", se.method='boot.para',standardize=FALSE, parallel = 'multicore', ncpus = 32)$ests
 gam.gradients(mod=treatment.all.gam,phenotype=c("sc.gall_individuals","sc.Density_per_100_shoots"), covariates = "sc.Gall_Height_mm", se.method='boot.para',standardize=FALSE, parallel = 'multicore', ncpus = 32)$ests
 
 vis.gam(treatment.all.gam, view = c("sc.Gall_Height_mm","sc.gall_individuals"), type = "response", plot.type = "contour")

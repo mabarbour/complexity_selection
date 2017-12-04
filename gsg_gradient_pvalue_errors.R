@@ -11,10 +11,15 @@ d<-as.data.frame(list(W=W,z=z))
 
 # characterize the fitness function
 library(mgcv)
+library(gsg)
 ff<-gam(W~s(z),family='poisson',data=d)
 
 # derive selection gradients
 gradients <- gam.gradients(mod=ff,phenotype="z",se.method='boot.para',standardized=FALSE)
+
+# I'm an idiot. The current method is correct.
+hist(gradients$boot[ ,1])
+abline(v = gradients$ests[1,1])
 
 ## CURRENT METHOD ----
 # Bootstrapped estimates are compared to zero, not the observed estimate.
