@@ -7,6 +7,8 @@ library(gamm4) # for generalized additive mixed models #
 library(gsg)
 library(cowplot) # pretty default ggplots
 
+#################   BE CAREFUL IN HOW DATA IS SUBSETTED !!! ###################
+
 ## LOAD & MANAGE DATASET ----
 
 gall_selection.df <- read_csv("gall_selection_data.csv") %>%
@@ -19,7 +21,7 @@ gall_selection.df <- read_csv("gall_selection_data.csv") %>%
   unite(Gall_ID, Gall_Number, Gall_Letter, remove = FALSE) %>%
   
   # subset data for analysis
-  filter(phenology == "early", Location == "tree") %>% , 
+  filter(phenology == "early", Location == "tree",
          platy > 0 | ectos > 0 | pupa > 0) %>%          # eliminate unknown sources of mortality
   mutate(gall_survival = as.numeric(ifelse(pupa > 0, 1, 0)),
          egg_parasitoid = as.numeric(ifelse(platy > 0, 1, 0)),
@@ -67,6 +69,42 @@ ggplot_uniFL <- function(FL.df) {
     geom_line() + 
     geom_ribbon(aes(ymin = lower_2.5, ymax = upper_97.5), alpha = 0.5)
 }
+
+## FULL MODEL ----
+full.component.gam <- gamm.model(gall_survival ~ 
+                                   Treatment.focus +
+                                   s(sc.Gall_Height_mm, by=Treatment.focus) + 
+                                   s(sc.gall_individuals, by=Treatment.focus, k=9) + 
+                                   s(sc.Density_per_100_shoots, by=Treatment.focus),
+                                 data = gall_selection.df)
+
+
+summary(full.component.gam$gam)
+summary(full.component.gam$mer)
+concurvity(full.component.gam$gam)
+gamm.plot(full.component.gam, pages=1)
+
+## I don't know if this will work for interaction variables...maybe need to subset somehow...
+# selection gradients
+full.height_indiv.gam <- gradient.calc(mod = full.component.gam$gam, phenotype = c("sc.Gall_Height_mm"), covariates = c("sc.gall_individuals","sc.Density_per_100_shoots","Treatment.focus"))
+full.height_indiv.gam$ests
+
+#full.height_density.gam <- gradient.calc(mod = full.component.gam$gam, phenotype = c("sc.Gall_Height_mm","sc.Density_per_100_shoots"), covariates = "sc.gall_individuals")
+#full.height_density.gam$ests
+
+#full.density_indiv.gam <- gradient.calc(mod = full.component.gam$gam, phenotype = c("sc.gall_individuals","sc.Density_per_100_shoots"), covariates = "sc.Gall_Height_mm")
+#full.density_indiv.gam$ests
+
+## DATA DISTRIBUTIONS
+ggplot(distinct(gall_selection.df, Plant_Position, Density_per_100_shoots, Treatment.focus),
+       aes(x = Density_per_100_shoots, fill = Treatment.focus)) +
+  geom_density(alpha=0.5)
+ggplot(distinct(gall_selection.df, Gall_Number, gall_individuals, Treatment.focus),
+       aes(x = gall_individuals, fill = Treatment.focus)) +
+  geom_density(alpha=0.5)
+ggplot(gall_selection.df,
+       aes(x = Gall_Height_mm, fill = Treatment.focus)) +
+  geom_density(alpha=0.5)
 
 ## GALLS ON CONTROL TREES ----
 
@@ -117,6 +155,7 @@ control.height_density.gam$ests
 
 control.density_indiv.gam <- gradient.calc(mod = control.component.gam$gam, phenotype = c("gall_individuals","Density_per_100_shoots"), covariates = "Gall_Height_mm")
 control.density_indiv.gam$ests
+
 
 # fitness landscapes
 
@@ -341,6 +380,11 @@ summary(control.ecto.component.gam$mer)
 concurvity(control.ecto.component.gam$gam)
 gamm.plot(control.ecto.component.gam, pages=1)
 
+control.ecto.noplaty.component.gam <- gamm.model(ectos ~ s(Gall_Height_mm) + s(gall_individuals, k=9) + s(Density_per_100_shoots), data = filter(control.df, ectos > 0 | pupa > 0))
+summary(control.ecto.noplaty.component.gam$gam)
+summary(control.ecto.noplaty.component.gam$mer)
+concurvity(control.ecto.noplaty.component.gam$gam)
+gamm.plot(control.ecto.noplaty.component.gam, pages=1)
 
 ## PLATYGASTER ON CONTROL TREES ----
 #control.platy.gppr <- gppr(y = "egg_parasitoid", xterms = c("sc.Gall_Height_mm","sc.gall_individuals","sc.Density_per_100_shoots"), data = control.df, nterms = 1) 
@@ -361,7 +405,10 @@ summary(control.platy.component.gam$gam)
 summary(control.platy.component.gam$mer)
 gamm.plot(control.platy.component.gam, pages=1)
 
-
+control.platy.noectos.component.gam <- gamm.model(egg_parasitoid ~ s(Gall_Height_mm) + s(gall_individuals, k=9) + s(Density_per_100_shoots), data = filter(control.df, platy > 0 | pupa > 0))
+summary(control.platy.noectos.component.gam$gam)
+summary(control.platy.noectos.component.gam$mer)
+gamm.plot(control.platy.noectos.component.gam, pages=1)
 
 
 ## PLATYGASTER ON ECTOPARASITOID EXCLUSION TREES ----
@@ -380,6 +427,11 @@ summary(treatment.platy.component.gam$gam)
 summary(treatment.platy.component.gam$mer)
 gamm.plot(treatment.platy.component.gam, pages=1)
 
+
+test.platy.component.gam <- gamm.model(egg_parasitoid ~ s(Gall_Height_mm, by=Treatment.focus) + s(gall_individuals, by=Treatment.focus) + s(Density_per_100_shoots, by=Treatment.focus), data = gall_selection.df)
+summary(test.platy.component.gam$gam)
+summary(test.platy.component.gam$mer)
+gamm.plot(test.platy.component.gam, pages=1)
 
 ## PLOTS COMPARING EGG AND LARVAL PARASITOIDS ON CONTROL TREES 
 
@@ -452,5 +504,5 @@ fitness.ptoid.density <- ggplot(predict.ptoid.density.df, aes(x = Density_per_10
   scale_y_continuous(limits=c(0,1), breaks = c(0,0.25,0.5,0.75,1.0)) + 
   scale_x_continuous(limits=c(mean_Density_per_100_shoots-sd_Density_per_100_shoots, mean_Density_per_100_shoots+sd_Density_per_100_shoots))
 
-fitness.ptoid.plot_subGalls <- plot_grid(fitness.ptoid.height, fitness.ptoid.indiv, fitness.ptoid.density, nrow=1)
-save_plot("ptoid_selection_gradients_allGalls.pdf", fitness.ptoid.plot_subGalls, base_width = 11, base_height = 8.5)
+fitness.ptoid.plot_allGalls <- plot_grid(fitness.ptoid.height, fitness.ptoid.indiv, fitness.ptoid.density, nrow=1)
+save_plot("ptoid_selection_gradients_allGalls.pdf", fitness.ptoid.plot_allGalls, base_width = 11, base_height = 8.5)
