@@ -70,6 +70,14 @@ ggplot_uniFL <- function(FL.df) {
     geom_ribbon(aes(ymin = lower_2.5, ymax = upper_97.5), alpha = 0.5)
 }
 
+## RAW DATA SUMMARIES ----
+sum(filter(gall_selection.df, Treatment.focus == "Ectoparasitoid exclusion")$pupa) # 372
+sum(filter(gall_selection.df, Treatment.focus == "Ectoparasitoid exclusion")$platy) # 230
+sum(filter(gall_selection.df, Treatment.focus == "Ectoparasitoid exclusion")$ectos) # 17
+sum(filter(gall_selection.df, Treatment.focus == "Control")$ectos) # 168
+sum(filter(gall_selection.df, Treatment.focus == "Control")$platy) # 217
+sum(filter(gall_selection.df, Treatment.focus == "Control")$pupa) # 323
+
 ## FULL MODEL ----
 full.component.gam <- gamm.model(gall_survival ~ 
                                    Treatment.focus +
