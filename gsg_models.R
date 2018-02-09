@@ -79,23 +79,23 @@ sum(filter(gall_selection.df, Treatment.focus == "Control")$platy) # 217
 sum(filter(gall_selection.df, Treatment.focus == "Control")$pupa) # 323
 
 ## FULL MODEL ----
-full.component.gam <- gamm.model(gall_survival ~ 
-                                   Treatment.focus +
-                                   s(sc.Gall_Height_mm, by=Treatment.focus) + 
-                                   s(sc.gall_individuals, by=Treatment.focus, k=9) + 
-                                   s(sc.Density_per_100_shoots, by=Treatment.focus),
-                                 data = gall_selection.df)
+#full.component.gam <- gamm.model(gall_survival ~ 
+#                                   Treatment.focus +
+#                                   s(sc.Gall_Height_mm, by=Treatment.focus) + 
+#                                   s(sc.gall_individuals, by=Treatment.focus, k=9) + 
+#                                   s(sc.Density_per_100_shoots, by=Treatment.focus),
+#                                 data = gall_selection.df)
 
 
-summary(full.component.gam$gam)
-summary(full.component.gam$mer)
-concurvity(full.component.gam$gam)
-gamm.plot(full.component.gam, pages=1)
+#summary(full.component.gam$gam)
+#summary(full.component.gam$mer)
+#concurvity(full.component.gam$gam)
+#gamm.plot(full.component.gam, pages=1)
 
 ## I don't know if this will work for interaction variables...maybe need to subset somehow...
 # selection gradients
-full.height_indiv.gam <- gradient.calc(mod = full.component.gam$gam, phenotype = c("sc.Gall_Height_mm"), covariates = c("sc.gall_individuals","sc.Density_per_100_shoots","Treatment.focus"))
-full.height_indiv.gam$ests
+#full.height_indiv.gam <- gradient.calc(mod = full.component.gam$gam, phenotype = c("sc.Gall_Height_mm"), covariates = c("sc.gall_individuals","sc.Density_per_100_shoots","Treatment.focus"))
+#full.height_indiv.gam$ests
 
 #full.height_density.gam <- gradient.calc(mod = full.component.gam$gam, phenotype = c("sc.Gall_Height_mm","sc.Density_per_100_shoots"), covariates = "sc.gall_individuals")
 #full.height_density.gam$ests
@@ -114,6 +114,12 @@ ggplot(gall_selection.df,
        aes(x = Gall_Height_mm, fill = Treatment.focus)) +
   geom_density(alpha=0.5)
 
+pc_galls <- princomp(select(gall_selection.df, sc.Gall_Height_mm, sc.gall_individuals, sc.Density_per_100_shoots))
+biplot(pc_galls)
+pc_galls$scores
+
+gall_selection.df <- data.frame(gall_selection.df, pc_galls$scores)
+
 ## GALLS ON CONTROL TREES ----
 
 # subset data
@@ -129,6 +135,32 @@ control.df <- as.data.frame(filter(gall_selection.df, Treatment.focus == "Contro
 # control.df$term2 <- control.gppr$ppr$alpha[4]*control.df$sc.Gall_Height_mm + control.gppr$ppr$alpha[5]*control.df$sc.gall_individuals + control.gppr$ppr$alpha[6]*control.df$sc.Density_per_100_shoots
 # plot(term2 ~ term1, control.df)
 # cor.test(control.df$term1, control.df$term2) 
+
+control.pc.gam <- gamm.model(gall_survival ~ s(Comp.1) + s(Comp.2) + s(Comp.3), data = control.df)
+summary(control.pc.gam$gam)
+summary(control.pc.gam$mer)
+concurvity(control.pc.gam$gam)
+gamm.plot(control.pc.gam, pages=1)
+
+vis.gam(control.pc.gam$gam, view = c("Comp.1","Comp.2"), type = "response", color="topo", theta=45, ticktype="detailed")
+vis.gam(control.pc.gam$gam, view = c("Comp.1","Comp.3"), type = "response", color="topo", theta=45, ticktype="detailed")
+
+
+treatment.pc.gam <- gamm.model(gall_survival ~ s(Comp.1) + s(Comp.2) + s(Comp.3), data = treatment.df)
+summary(treatment.pc.gam$gam)
+summary(treatment.pc.gam$mer)
+concurvity(treatment.pc.gam$gam)
+gamm.plot(treatment.pc.gam, pages=1)
+
+vis.gam(treatment.pc.gam$gam, view = c("Comp.1","Comp.2"), type = "response", color="topo", theta=45, ticktype="detailed")
+vis.gam(treatment.pc.gam$gam, view = c("Comp.1","Comp.3"), type = "response", color="topo", theta=45, ticktype="detailed")
+vis.gam(treatment.pc.gam$gam, view = c("Comp.1","Comp.2"), type = "response", plot.type="contour")
+vis.gam(treatment.pc.gam$gam, view = c("Comp.1","Comp.3"), type = "response", plot.type="contour", color="topo")
+
+
+library(visreg)
+devtools::install_github("pbreheny/visreg")
+visreg(treatment.pc.gam$gam, xvar="Comp.1",  scale="response")
 
 # GAMM
 #control.major.gam <- gamm.model(gall_survival ~ s(term1), data = control.df)
@@ -174,7 +206,69 @@ control.density_indiv.gam$ests
 #  geom_jitter(shape = 1, height = 0.05)
 #ggplot(control.df, aes(x = sc.Density_per_100_shoots, y = sc.gall_individuals)) +
 #  geom_jitter(shape = 1, height = 0.05)
+#pcs <- princomp(x = select(gall_selection.df, Gall_Height_mm, gall_individuals, Density_per_100_shoots), cor=TRUE)
+#summary(pcs)
+#loadings(pcs)
+#pcs$scores
+#pc.all <- data.frame(gall_selection.df, pcs$scores)
+#pc.all$Treatment.focus <- C(pc.all$Treatment.focus, "contr.sum")
 
+#library(lme4)
+#library(lmerTest)
+#comp.1 <- lmer(Comp.1 ~ Treatment.focus + (1|Genotype/Plant_Position/Gall_Number), pc.all)
+#summary(comp.1)
+#comp.2 <- lmer(Comp.2 ~ Treatment.focus + (1|Genotype/Plant_Position/Gall_Number), pc.all)
+#summary(comp.2)
+
+#pc.all.component.gam <- gamm.model(gall_survival ~ Treatment.focus + s(Comp.1, by=Treatment.focus) + s(Comp.2, by=Treatment.focus) + s(Comp.3, by=Treatment.focus), data = pc.all)
+#summary(pc.all.component.gam$gam)
+#summary(pc.all.component.gam$mer)
+#concurvity(pc.all.component.gam$gam)
+#gamm.plot(pc.all.component.gam, pages = 1)
+#vis.gam(pc.all.component.gam$gam, view = c("Comp.1","Comp.2"),cond = list(Treatment.focus = "Control"), type = "response", plot.type = "contour")
+#vis.gam(pc.all.component.gam$gam, view = c("Comp.1","Comp.2"),cond = list(Treatment.focus = "Ectoparasitoid exclusion"), type = "response", plot.type = "contour")
+#vis.gam(pc.all.component.gam$gam, view = c("Comp.2","Comp.3"),cond = list(Treatment.focus = "Control"), type = "response", plot.type = "contour")
+#vis.gam(pc.all.component.gam$gam, view = c("Comp.2","Comp.3"),cond = list(Treatment.focus = "Ectoparasitoid exclusion"), type = "response", plot.type = "contour")
+#loadings(pcs)
+
+
+#pcs <- princomp(x = select(control.df, Gall_Height_mm, gall_individuals, Density_per_100_shoots), cor=TRUE)
+#summary(pcs)
+#loadings(pcs)
+#pcs$scores
+#pc.control <- data.frame(control.df, pcs$scores)
+
+#pc.control.component.gam <- gamm.model(gall_survival ~ s(Comp.1) + s(Comp.2), data = pc.control)
+#summary(pc.control.component.gam$gam)
+#summary(pc.control.component.gam$mer)
+#concurvity(pc.control.component.gam$gam)
+#gamm.plot(pc.control.component.gam, pages = 1)
+#vis.gam(pc.control.component.gam$gam, view = c("Comp.1","Comp.2"), type = "response", plot.type = "contour")
+#loadings(pcs)
+
+
+#control.density <- control.df %>%
+#  group_by(Plant_Position) %>%
+#  summarise(total_galls = n(), gall_survival = sum(gall_survival)/total_galls,  Density_per_100_shoots = mean(Density_per_100_shoots)) %>%
+#  ungroup()
+#control.density.gam <- gam(gall_survival ~ s(Density_per_100_shoots), data = control.density, weights = control.density$total_galls, family = binomial(link = logit))
+#summary(control.density.gam)
+#plot(control.density.gam, seWithMean=T, shift = mean(predict(control.density.gam)), trans = function(x) {exp(x)/(1+exp(x))})
+#gradient.calc(mod=control.density.gam, phenotype="Density_per_100_shoots")
+
+#control.indiv <- control.df %>%
+#  group_by(Plant_Position, Gall_Number) %>%
+#  summarise(total_galls = n(), gall_survival = sum(gall_survival)/total_galls,  gall_individuals = mean(gall_individuals)) %>%
+#  ungroup()
+#control.indiv.gam <- gamm4(gall_survival ~ s(gall_individuals, k=9), random=~(1|Plant_Position), data = control.indiv, weights = control.indiv$total_galls, family = binomial(link = logit))
+#summary(control.indiv.gam$gam)
+#plot(control.indiv.gam$gam, seWithMean=T, shift = mean(predict(control.indiv.gam$gam)), trans = function(x) {exp(x)/(1+exp(x))})
+#gradient.calc(mod=control.indiv.gam$gam, phenotype="gall_individuals")
+
+#control.size.gam <- gamm4(gall_survival ~ s(Gall_Height_mm), random=~(1|Plant_Position/Gall_Number), data = control.df, family = binomial(link = logit))
+#summary(control.size.gam$gam)
+#plot(control.size.gam$gam, seWithMean=T, shift = mean(predict(control.size.gam$gam)), trans = function(x) {exp(x)/(1+exp(x))})
+#gradient.calc(mod=control.size.gam$gam, phenotype="Gall_Height_mm")
 
 ## GALLS ON ECTOPARSITOID EXCLUSION TREES ----
 
@@ -208,15 +302,53 @@ treatment.df <- as.data.frame(filter(gall_selection.df, Treatment.focus == "Ecto
 #hist(treatment.major.gradients$boot[,2])
 #abline(v = treatment.major.gradients$ests[2,1], col = "red", lty = 2)
 
+#treatment.density <- treatment.df %>%
+#  group_by(Genotype, Plant_Position) %>%
+#  summarise(total_galls = n(), gall_survival = sum(gall_survival)/total_galls,  Density_per_100_shoots = mean(Density_per_100_shoots)) %>%
+#  ungroup()
+#treatment.density.gam <- gam(gall_survival ~ s(Density_per_100_shoots), random = ~(1|Genotype), data = treatment.density, weights = treatment.density$total_galls, family = binomial(link = logit))
+#summary(treatment.density.gam)
+#plot(treatment.density.gam, seWithMean=T, shift = mean(predict(treatment.density.gam)), trans = function(x) {exp(x)/(1+exp(x))})
+#gradient.calc(mod=treatment.density.gam, phenotype="Density_per_100_shoots")$ests
+
+#treatment.indiv <- treatment.df %>%
+#  group_by(Genotype, Plant_Position, Gall_Number) %>%
+#  summarise(total_galls = n(), gall_survival = sum(gall_survival)/total_galls,  gall_individuals = mean(gall_individuals)) %>%
+#  ungroup()
+#treatment.indiv.gam <- gamm4(gall_survival ~ s(gall_individuals), random=~(1|Genotype/Plant_Position), data = treatment.indiv, weights = treatment.indiv$total_galls, family = binomial(link = logit))
+#summary(treatment.indiv.gam$gam)
+#plot(treatment.indiv.gam$gam, seWithMean=T, shift = mean(predict(treatment.indiv.gam$gam)), trans = function(x) {exp(x)/(1+exp(x))})
+#gradient.calc(mod=treatment.indiv.gam$gam, phenotype="gall_individuals")$ests
+
+#treatment.size.gam <- gamm4(gall_survival ~ s(Gall_Height_mm), random=~(1|Genotype/Plant_Position/Gall_Number), data = treatment.df, family = binomial(link = logit))
+#summary(treatment.size.gam$gam)
+#plot(treatment.size.gam$gam, seWithMean=T, shift = mean(predict(treatment.size.gam$gam)), trans = function(x) {exp(x)/(1+exp(x))})
+#gradient.calc(mod=treatment.size.gam$gam, phenotype="Gall_Height_mm")$ests
+
 # GAMM components
+#pcs <- princomp(x = select(treatment.df, Gall_Height_mm, gall_individuals, Density_per_100_shoots), cor=TRUE)
+#summary(pcs)
+#loadings(pcs)
+#pcs$scores
+#pc.treatment <- data.frame(treatment.df, pcs$scores)
+
+#pc.treatment.component.gam <- gamm.model(gall_survival ~ s(Comp.1) + s(Comp.2), data = pc.treatment)
+#summary(pc.treatment.component.gam$gam)
+#summary(pc.treatment.component.gam$mer)
+#concurvity(pc.treatment.component.gam$gam)
+#gamm.plot(pc.treatment.component.gam, pages = 1)
+#vis.gam(pc.treatment.component.gam$gam, view = c("Comp.1","Comp.2"), type = "response", plot.type = "contour")
+#loadings(pcs)
+
 treatment.component.gam <- gamm.model(gall_survival ~ s(Gall_Height_mm) + s(gall_individuals) + s(Density_per_100_shoots), data = treatment.df)
 summary(treatment.component.gam$gam)
 summary(treatment.component.gam$mer)
 concurvity(treatment.component.gam$gam)
 gamm.plot(treatment.component.gam, pages = 1)
-#vis.gam(treatment.component.gam$gam, view = c("sc.Gall_Height_mm","sc.gall_individuals"), type = "response", plot.type = "contour")
-#vis.gam(treatment.component.gam$gam, view = c("sc.Gall_Height_mm","sc.Density_per_100_shoots"), type = "response", plot.type = "contour")
-#vis.gam(treatment.component.gam$gam, view = c("sc.gall_individuals","sc.Density_per_100_shoots"), type = "response", plot.type = "contour")
+
+#vis.gam(treatment.component.gam$gam, view = c("Gall_Height_mm","gall_individuals"), type = "response", plot.type = "contour")
+#vis.gam(treatment.component.gam$gam, view = c("Gall_Height_mm","Density_per_100_shoots"), type = "response", plot.type = "contour")
+#vis.gam(treatment.component.gam$gam, view = c("gall_individuals","Density_per_100_shoots"), type = "response", plot.type = "contour")
 
 
 # selection gradients
@@ -370,6 +502,64 @@ fitness.density <- ggplot(predict.density.df, aes(x = Density_per_100_shoots, y 
 
 fitness.plot_subGalls <- plot_grid(fitness.height, fitness.indiv, fitness.density, nrow=1)
 save_plot("selection_gradients_subGalls.pdf", fitness.plot_subGalls, base_width = 11, base_height = 8.5)
+
+# plot based on principal components
+gall_pcs <- princomp(select(gall_selection.df, Gall_Height_mm, gall_individuals, Density_per_100_shoots), cor=TRUE)
+biplot(gall_pcs)
+
+gall_loadings <- as.data.frame(gall_pcs$loadings[ ,1:2])
+scores_Comp.1 <- gall_loadings$Comp.1[1]*scale(gall_selection.df$Gall_Height_mm) + gall_loadings$Comp.1[2]*scale(gall_selection.df$gall_individuals) + gall_loadings$Comp.1[3]*scale(gall_selection.df$Density_per_100_shoots)
+scores_Comp.2 <- gall_loadings$Comp.2[1]*scale(gall_selection.df$Gall_Height_mm) + gall_loadings$Comp.2[2]*scale(gall_selection.df$gall_individuals) + gall_loadings$Comp.2[3]*scale(gall_selection.df$Density_per_100_shoots)
+
+sc.gall_size <- scale(gall_selection.df$Gall_Height_mm)
+sc.gall_size * attr(sc.gall_size,"scaled:scale") + attr(sc.gall_size,"scaled:center") - gall_selection.df$Gall_Height_mm # confirms that this is the correct way to transform between scaled and original form
+
+sc.indiv <- scale(gall_selection.df$gall_individuals)
+sc.density <- scale(gall_selection.df$Density_per_100_shoots)
+
+
+gall_trait_combos <- expand.grid(seq((mean_Gall_Height_mm-sd_Gall_Height_mm), (mean_Gall_Height_mm+sd_Gall_Height_mm), length.out = 50), 
+            seq((mean_gall_individuals-sd_gall_individuals), (mean_gall_individuals+sd_gall_individuals), length.out = 50),
+            seq((mean_Density_per_100_shoots-sd_Density_per_100_shoots), (mean_Density_per_100_shoots+sd_Density_per_100_shoots), length.out = 50))
+colnames(gall_trait_combos) <- c("Gall_Height_mm","gall_individuals","Density_per_100_shoots")
+
+predict.control <- predict(control.component.gam$gam, newdata = gall_trait_combos, type = "response", se.fit = TRUE)
+predict.control.df <- cbind.data.frame(predict.control, gall_trait_combos)
+
+predict.treatment <- predict(treatment.component.gam$gam, newdata = gall_trait_combos, type = "response", se.fit = TRUE)
+predict.treatment.df <- cbind.data.frame(predict.treatment, gall_trait_combos)
+
+predict.combo.df <- bind_rows(mutate(predict.control.df, treatment = "Complex", standard.fit = fit/mean(fit)-1),
+                              mutate(predict.treatment.df, treatment = "Simple", standard.fit = fit/mean(fit)-1))
+
+predict.combo.df$Comp.1 <- gall_loadings$Comp.1[1]*(predict.combo.df$Gall_Height_mm - attr(sc.gall_size,"scaled:center"))/attr(sc.gall_size,"scaled:scale") + 
+  gall_loadings$Comp.1[2]*(predict.combo.df$gall_individuals - attr(sc.indiv,"scaled:center"))/attr(sc.indiv,"scaled:scale") +
+  gall_loadings$Comp.1[3]*(predict.combo.df$Density_per_100_shoots - attr(sc.density,"scaled:center"))/attr(sc.density,"scaled:scale") 
+
+predict.combo.df$Comp.2 <- gall_loadings$Comp.2[1]*(predict.combo.df$Gall_Height_mm - attr(sc.gall_size,"scaled:center"))/attr(sc.gall_size,"scaled:scale") + 
+  gall_loadings$Comp.2[2]*(predict.combo.df$gall_individuals - attr(sc.indiv,"scaled:center"))/attr(sc.indiv,"scaled:scale") +
+  gall_loadings$Comp.2[3]*(predict.combo.df$Density_per_100_shoots - attr(sc.density,"scaled:center"))/attr(sc.density,"scaled:scale") 
+
+ggplot(predict.combo.df, aes(x=Comp.1, y=Comp.2, z=standard.fit, color=standard.fit)) + 
+  geom_point(size=10) +
+  scale_color_gradientn(colors = viridis6()) +
+  facet_wrap(~treatment)
+
+ggplot(predict.combo.df, aes(x=Gall_Height_mm, y=gall_individuals, z=standard.fit, color=standard.fit)) + 
+  geom_point(size=10) +
+  scale_color_gradientn(colors = viridis6()) +
+  facet_wrap(~treatment)
+
+ggplot(predict.combo.df, aes(x=gall_individuals, y=Density_per_100_shoots, z=standard.fit, color=standard.fit)) + 
+  geom_point(size=10) +
+  scale_color_gradientn(colors = viridis6()) +
+  facet_wrap(~treatment)
+
+ggplot(predict.combo.df, aes(x=Gall_Height_mm, y=Density_per_100_shoots, z=standard.fit, color=standard.fit)) + 
+  geom_point(size=10) +
+  scale_color_gradientn(colors = viridis6()) +
+  facet_wrap(~treatment)
+
 
 ## ECTOPARASITOIDS ON CONTROL TREES ----
 #control.ecto.gppr <- gppr(y = "ectos", xterms = c("sc.Gall_Height_mm","sc.gall_individuals","sc.Density_per_100_shoots"), data = control.df, nterms = 1)
