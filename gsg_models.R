@@ -1,33 +1,38 @@
 
 ## LOAD REQUIRED LIBRARIES & SET OPTIONS ----
-
+library(raster)
 library(tidyverse)
+library(FD)
 library(mgcv)
 library(gamm4) # for generalized additive mixed models #
 library(gsg)
+#library(lme4)
 library(cowplot) # pretty default ggplots
+#library(visreg) # quick visualizations of model outputs
+#library(brms)
+library(belg) # calculating configurational entropy of a 2D landscape
 
 #################   BE CAREFUL IN HOW DATA IS SUBSETTED !!! ###################
 
 ## LOAD & MANAGE DATASET ----
 
 gall_selection.df <- read_csv("gall_selection_data.csv") %>%
-  mutate(Plant_Position = as.factor(Plant_Position),
-         Gall_Number = as.factor(Gall_Number),
-         Treatment.focus = as.factor(Treatment.focus),
-         Treatment = as.factor(Treatment),
-         Genotype = as.factor(Genotype),
-         Gall_Letter = as.factor(Gall_Letter)) %>%
+  mutate(Plant_Position = as.character(Plant_Position),
+         Gall_Number = as.character(Gall_Number),
+         Treatment.focus = as.character(Treatment.focus),
+         Treatment = as.character(Treatment),
+         Genotype = as.character(Genotype),
+         Gall_Letter = as.character(Gall_Letter)) %>%
   unite(Gall_ID, Gall_Number, Gall_Letter, remove = FALSE) %>%
   
   # subset data for analysis
   filter(phenology == "early", Location == "tree",
-         platy > 0 | ectos > 0 | pupa > 0) %>%          # eliminate unknown sources of mortality
+         platy > 0 | ectos > 0 | pupa > 0) %>%                  # eliminate unknown sources of mortality
   mutate(gall_survival = as.numeric(ifelse(pupa > 0, 1, 0)),
          egg_parasitoid = as.numeric(ifelse(platy > 0, 1, 0)),
-         sc.Gall_Height_mm = as.numeric(scale(sqrt(Gall_Height_mm))),
-         sc.gall_individuals = as.numeric(scale(log(gall_individuals))),
-         sc.Density_per_100_shoots = as.numeric(scale(sqrt(Density_per_100_shoots))))
+         sc.Gall_Height_mm = as.numeric(scale(Gall_Height_mm)), # sqrt()
+         sc.gall_individuals = as.numeric(scale(gall_individuals)), # log()
+         sc.Density_per_100_shoots = as.numeric(scale(Density_per_100_shoots))) # sqrt()
 
 ## GENERALIZED ADDITIVE MIXED MODELS + GENERALIZED PROJECTION PURSUIT REGRESSION ----
 
@@ -77,6 +82,435 @@ sum(filter(gall_selection.df, Treatment.focus == "Ectoparasitoid exclusion")$ect
 sum(filter(gall_selection.df, Treatment.focus == "Control")$ectos) # 168
 sum(filter(gall_selection.df, Treatment.focus == "Control")$platy) # 217
 sum(filter(gall_selection.df, Treatment.focus == "Control")$pupa) # 323
+
+## TEST OLS ----
+gall.lm <- glm(gall_survival ~ (Treatment.focus + sc.Gall_Height_mm + sc.gall_individuals + sc.Density_per_100_shoots)^2 + 
+                I(sc.Gall_Height_mm^2) + I(sc.gall_individuals^2) + I(sc.Density_per_100_shoots^2),
+               family=binomial,
+              data = gall_selection.df)
+summary(gall.lm)
+library(visreg)
+visreg(gall.lm)
+visreg(gall.lm, xvar = "sc.Gall_Height_mm", by = "Treatment.focus", scale = "response")
+visreg(gall.lm, xvar = "sc.gall_individuals", by = "Treatment.focus", scale = "response")
+visreg(gall.lm, xvar = "sc.Density_per_100_shoots", by = "Treatment.focus", scale = "response")
+visreg2d(gall.lm, xvar = "sc.Gall_Height_mm", yvar = "sc.gall_individuals")
+
+## GAMM ----
+gall_selection.df <- mutate(gall_selection.df, Treatment.focus=factor(Treatment.focus)) # need to convert to factor 'by' to recognize it in gam 
+gall.gamm <- gamm.model(gall_survival ~ sc.Gall_Height_mm:sc.gall_individuals +
+                          sc.Gall_Height_mm:sc.Density_per_100_shoots +
+                          sc.gall_individuals:sc.Density_per_100_shoots +
+                          s(sc.Gall_Height_mm) +
+                          s(sc.gall_individuals, k=9) + 
+                          s(sc.Density_per_100_shoots), 
+                        data = filter(gall_selection.df, Treatment.focus=="Control"))
+summary(gall.gamm$gam)
+summary(gall.gamm$mer)
+concurvity(gall.gamm$gam) # potential issue with Treatment.focus=Control and s(sc.Density_per_100_shoots)
+gamm.plot(gall.gamm, pages=1)
+#plot(gall.gamm, se = 1, seWithMean = TRUE, rug = FALSE, shift = mean(predict(gall.gamm)), trans = function(x){exp(x)/(1+exp(x))})  
+
+gradient.calc(mod = gall.gamm,#$gam, 
+              phenotype = c("sc.Gall_Height_mm"), 
+              covariates = c("sc.Gall_Height_mm","sc.gall_individuals","sc.Density_per_100_shoots"))
+
+with(gall_selection.df, cor.test(sc.Density_per_100_shoots, sc.Gall_Height_mm))
+with(gall_selection.df, cor.test(sc.gall_individuals, sc.Gall_Height_mm))
+with(gall_selection.df, cor.test(sc.Density_per_100_shoots, sc.gall_individuals))
+
+nrow(filter(gall_selection.df, Treatment.focus=="Control"))
+nrow(filter(gall_selection.df, Treatment.focus=="Ectoparasitoid exclusion"))
+
+## TEST EFFECTS OF FOOD-WEB COMPLEXITY ON RELATIONSHIP BETWEEN GALL PHENOTYPES AND SURVIVAL ----
+
+gall.model <- glmer(gall_survival ~ Treatment.focus*sc.Gall_Height_mm*sc.gall_individuals*sc.Density_per_100_shoots +
+                      (1|Genotype/Plant_Position/Gall_Number),
+                    data = gall_selection.df, 
+                    family = binomial(link = "logit"),
+                    control = glmerControl(optimizer = "bobyqa"))
+summary(gall.model)
+visreg(gall.model, xvar = "Treatment.focus", gg=TRUE) #, scale = 'response')
+visreg(gall.model, xvar = "sc.Gall_Height_mm", gg=TRUE) #, scale = 'response')
+visreg(gall.model, xvar = "sc.Gall_Height_mm", by = "Treatment.focus", gg=TRUE) #, scale = 'response')
+visreg(gall.model, xvar = "sc.gall_individuals", by = "Treatment.focus", gg=TRUE) #, scale = 'response')
+visreg(gall.model, xvar = "sc.Density_per_100_shoots", by = "Treatment.focus", gg=TRUE) #, scale = 'response')
+
+visreg2d(gall.model, xvar = "sc.Gall_Height_mm", yvar = "sc.Density_per_100_shoots") # cond = list(Treatment.focus="Control")
+
+# bayesian models
+gall.brm <- brm(gall_survival ~ Treatment.focus + 
+                  s(sc.Gall_Height_mm, by=Treatment.focus) + 
+                  s(sc.gall_individuals, by=Treatment.focus) + 
+                  s(sc.Density_per_100_shoots, by=Treatment.focus) +
+                  (sc.Gall_Height_mm + sc.gall_individuals + sc.Density_per_100_shoots)^2 + #Treatment.focus*sc.Gall_Height_mm*sc.gall_individuals*sc.Density_per_100_shoots +
+                  (1|Genotype/Plant_Position/Gall_Number),
+                  data = gall_selection.df, 
+                  family = bernoulli(link="logit"),
+                  prior = c(prior(normal(0,1), class="b"), prior(normal(0,1), class="sd")))
+summary(gall.brm)
+
+size.treat <- plot(
+  marginal_effects(gall.brm, 
+                   effects = c("sc.Gall_Height_mm"), 
+                   conditions = data.frame(Treatment.focus=c("Control","Ectoparasitoid exclusion"), 
+                                           row.names = c("Complex","Simple"))),
+  plot = FALSE)[[1]][[1]]
+
+ind.treat <- plot(
+  marginal_effects(gall.brm, 
+                   effects = c("sc.gall_individuals"), 
+                   conditions = data.frame(Treatment.focus=c("Control","Ectoparasitoid exclusion"), 
+                                           row.names = c("Complex","Simple"))),
+  plot = FALSE)[[1]][[1]]
+
+dens.treat <- plot(
+  marginal_effects(gall.brm, 
+                   effects = c("sc.Density_per_100_shoots"), 
+                   conditions = data.frame(Treatment.focus=c("Control","Ectoparasitoid exclusion"), 
+                                           row.names = c("Complex","Simple"))),
+  plot = FALSE)[[1]][[1]]
+
+surf.size.dens <- marginal_effects(gall.brm, 
+                      effects = c("sc.Gall_Height_mm:sc.Density_per_100_shoots"), 
+                      conditions=data.frame(Treatment.focus=c("Control","Ectoparasitoid exclusion"), row.names = c("Complex","Simple")),
+                      surface=TRUE)
+plot(surf.size.dens, stype="raster")
+surf.size.ind <- marginal_effects(gall.brm, 
+                      effects = c("sc.Gall_Height_mm:sc.gall_individuals"), 
+                      conditions=data.frame(Treatment.focus=c("Control","Ectoparasitoid exclusion"), row.names = c("Complex","Simple")),
+                      surface=TRUE)
+plot(surf.size.ind, stype="raster")
+surf.ind.dens <- marginal_effects(gall.brm, 
+                      effects = c("sc.gall_individuals:sc.Density_per_100_shoots"), 
+                      conditions=data.frame(Treatment.focus=c("Control","Ectoparasitoid exclusion"), row.names = c("Complex","Simple")),
+                      surface=TRUE)
+plot(surf.size.ind, stype="raster")
+
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+
+## PLOT SELECTION GRADIENTS ----
+plot.size.treat <- ggplot(size.treat, aes(x=sc.Gall_Height_mm, y=estimate__)) +
+  geom_line(aes(color=cond__), show.legend = F) +
+  geom_ribbon(aes(ymin=lower__, ymax=upper__, fill=cond__), alpha=0.5, show.legend = F) +
+  facet_wrap(~cond__) + 
+  xlab("Gall diameter (SD)") +
+  ylab("") +#ylab("Survival probability") +
+  scale_color_manual(values=cbPalette[c(3,2)], name="Food-web treatment", labels=c("Simple","Complex")) +
+  scale_fill_manual(values=cbPalette[c(3,2)], name="Food-web treatment", labels=c("Simple","Complex")) +
+  theme_cowplot(font_size = 12)
+
+plot.ind.treat <- ggplot(ind.treat, aes(x=sc.gall_individuals, y=estimate__)) +
+  geom_line(aes(color=cond__), show.legend = F) +
+  geom_ribbon(aes(ymin=lower__, ymax=upper__, fill=cond__), alpha=0.5, show.legend = F) +
+  facet_wrap(~cond__) + 
+  xlab("No. of larvae per gall (SD)") +
+  ylab("") +#ylab("Survival probability") +
+  scale_color_manual(values=cbPalette[c(3,2)], name="Food-web treatment", labels=c("Simple","Complex")) +
+  scale_fill_manual(values=cbPalette[c(3,2)], name="Food-web treatment", labels=c("Simple","Complex")) +
+  theme_cowplot(font_size = 12) +
+  theme(strip.background = element_blank(), strip.text.x = element_blank(), legend.position = "none") 
+
+plot.dens.treat <- ggplot(dens.treat, aes(x=sc.Density_per_100_shoots, y=estimate__)) +
+  geom_line(aes(color=cond__), show.legend = F) +
+  geom_ribbon(aes(ymin=lower__, ymax=upper__, fill=cond__), alpha=0.5, show.legend = F) +
+  facet_wrap(~cond__) + 
+  xlab("No. of larvae per 100 shoots (SD)") +
+  ylab("") +#ylab("Survival probability") +
+  scale_color_manual(values=cbPalette[c(3,2)], name="Food-web treatment", labels=c("Simple","Complex")) +
+  scale_fill_manual(values=cbPalette[c(3,2)], name="Food-web treatment", labels=c("Simple","Complex")) +
+  theme_cowplot(font_size = 12) +
+  theme(strip.background = element_blank(), strip.text.x = element_blank(), legend.position = "none")
+
+selection_gradients <- plot_grid(plot.size.treat, plot.ind.treat, plot.dens.treat, ncol = 1)
+yaxis_gradients <- ggdraw() + draw_label("Survival probability", angle=90, vjust = 1)
+plot.selection_gradients <- plot_grid(yaxis_gradients, selection_gradients, ncol=2, rel_widths =c(0.05, 1)) 
+save_plot(filename = "figures/selection_gradients.pdf", plot = plot.selection_gradients, base_width = 8.5, base_height = 8.5)
+
+# restrict to +/- 1 SD
+selection_gradients_restrict <- plot_grid(plot.size.treat + coord_cartesian(xlim=c(-1,1)), 
+                                          plot.ind.treat + coord_cartesian(xlim=c(-1,1)),
+                                          plot.dens.treat + coord_cartesian(xlim=c(-1,1)), ncol = 1)
+plot.selection_gradients_restrict <- plot_grid(yaxis_gradients, selection_gradients_restrict, ncol=2, rel_widths =c(0.05, 1)) 
+plot.selection_gradients_restrict
+save_plot(filename = "figures/selection_gradients_restrict.pdf", plot = plot.selection_gradients_restrict, base_width = 8.5, base_height = 8.5)
+
+
+## PLOT FITNESS LANDSCAPES ----
+plot.surf.ind.dens <- plot(surf.ind.dens, stype="raster")[[1]] +
+  xlab("No. of larvae per gall (SD)") +
+  ylab("") + #ylab("No. of larvae per 100 shoots (SD)") +
+  scale_fill_gradientn(colors = brms:::viridis6(), name = "Survival probability") +
+  theme_cowplot(font_size = 12) 
+#save_plot(filename = "figures/surf.ind.dens.pdf", plot = plot.surf.ind.dens, base_width = 8.5, base_height = 6)
+
+plot.surf.size.ind <- plot(surf.size.ind, stype="raster")[[1]] +
+  xlab("Gall diameter (SD)") +
+  ylab("No. of larvae per gall (SD)") +
+  scale_fill_gradientn(colors = brms:::viridis6(), name = "Survival probability") +
+  theme_cowplot(font_size = 12) +
+  theme(strip.background = element_blank(), strip.text.x = element_blank(), legend.position = "none")
+#save_plot(filename = "figures/surf.size.ind.pdf", plot = plot.surf.size.ind, base_width = 8.5, base_height = 6)
+
+plot.surf.size.dens <- plot(surf.size.dens, stype="raster")[[1]] +
+  xlab("") + #xlab("Gall diameter (SD)") +
+  ylab("No. of larvae per 100 shoots (SD)") +
+  scale_fill_gradientn(colors = brms:::viridis6(), name = "Survival probability") +
+  theme_cowplot(font_size = 12)
+#save_plot(filename = "figures/surf.size.dens.pdf", plot = plot.surf.size.dens, base_width = 8.5, base_height = 6)
+
+# possible solution to non-optimal alignment: https://stackoverflow.com/questions/48000292/center-align-legend-title-and-legend-keys-in-ggplot2-for-long-legend-titles
+surf.legend <- get_legend(plot.surf.size.dens)
+
+plot.fitness_landscapes <- plot_grid(
+          plot.surf.size.dens + theme(legend.position = "none"),
+          plot.surf.ind.dens + theme(legend.position = "none"), 
+          plot.surf.size.ind, 
+          NULL, 
+          nrow = 2, labels = c("A","B","C",""), label_size = 12, align="hv")
+plot.fitness_landscapes + draw_grob(surf.legend, x=0.65, y=-0.2)
+save_plot(filename = "figures/fitness_landscapes.pdf", plot = plot.fitness_landscapes + draw_grob(surf.legend, x=0.65, y=-0.2), base_width = 8.5, base_height = 6)
+
+# restrict to +/- 1 SD
+plot.fitness_landscapes_restrict <- plot_grid(
+  plot.surf.size.dens + theme(legend.position = "none") + coord_cartesian(xlim=c(-1,1), ylim=c(-1,1)),
+  plot.surf.ind.dens + theme(legend.position = "none") + coord_cartesian(xlim=c(-1,1), ylim=c(-1,1)), 
+  plot.surf.size.ind + coord_cartesian(xlim=c(-1,1), ylim=c(-1,1)), 
+  NULL, 
+  nrow = 2, labels = c("A","B","C",""), label_size = 12, align="hv")
+plot.fitness_landscapes_restrict + draw_grob(surf.legend, x=0.65, y=-0.2)
+save_plot(filename = "figures/fitness_landscapes_restrict.pdf", plot = plot.fitness_landscapes_restrict + draw_grob(surf.legend, x=0.65, y=-0.2), base_width = 8.5, base_height = 6)
+
+
+## EVERYTHING BELOW IS OLD ----
+## parasitism
+control.ectos <- gall_selection.df %>%
+  filter(Treatment.focus=="Control", pupa > 0 | ectos > 0) %>%
+  mutate(ptoid.treatment = as.numeric(ifelse(ectos > 0, 1, 0)))
+
+exclude.platy <- gall_selection.df %>%
+  filter(Treatment.focus=="Ectoparasitoid exclusion", pupa > 0 | platy > 0) %>%
+  mutate(ptoid.treatment = as.numeric(ifelse(platy > 0, 1, 0)))
+
+ptoid_df <- bind_rows(control.ectos, exclude.platy)
+
+ptoid.brm <- brm(ptoid.treatment ~ Treatment.focus*sc.Gall_Height_mm*sc.gall_individuals*sc.Density_per_100_shoots +
+                  (1|Genotype/Plant_Position/Gall_Number),
+                data = ptoid_df, 
+                family = bernoulli(link="logit"),
+                prior = c(prior(normal(0,1), class="b"), prior(normal(0,1), class="sd")))
+summary(ptoid.brm)
+
+plot(marginal_effects(ptoid.brm))
+
+ptoid.size.treat <- marginal_effects(ptoid.brm, effects = c("sc.Gall_Height_mm:Treatment.focus"))
+ptoid.ind.treat <- marginal_effects(ptoid.brm, effects = c("sc.gall_individuals:Treatment.focus"))
+ptoid.dens.treat <- marginal_effects(ptoid.brm, effects = c("sc.Density_per_100_shoots:Treatment.focus"))
+
+plot.ptoid.size.treat <- plot(ptoid.size.treat)[[1]] +
+  xlab("Gall diameter (SD)") +
+  ylab("Parasitism probability") +
+  scale_color_manual(values=cbPalette[2:3], name="Parasitoid guild", labels=c("Egg","Larva")) +
+  scale_fill_manual(values=cbPalette[2:3], name="Parasitoid guild", labels=c("Egg","Larva"))
+save_plot(filename = "figures/ptoid.size.treat.pdf", plot = plot.ptoid.size.treat, base_width = 8.5, base_height = 6)
+
+plot.ptoid.ind.treat <- plot(ptoid.ind.treat)[[1]] +
+  xlab("No. of larvae per gall (SD)") +
+  ylab("Parasitism probability") +
+  scale_color_manual(values=cbPalette[2:3], name="Parasitoid guild", labels=c("Egg","Larva")) +
+  scale_fill_manual(values=cbPalette[2:3], name="Parasitoid guild", labels=c("Egg","Larva"))
+save_plot(filename = "figures/ptoid.ind.treat.pdf", plot = plot.ptoid.ind.treat, base_width = 8.5, base_height = 6)
+
+plot.ptoid.dens.treat <- plot(ptoid.dens.treat)[[1]] +
+  xlab("No. of larvae per 100 shoots (SD)") +
+  ylab("Parasitism probability") +
+  scale_color_manual(values=cbPalette[2:3], name="Parasitoid guild", labels=c("Egg","Larva")) +
+  scale_fill_manual(values=cbPalette[2:3], name="Parasitoid guild", labels=c("Egg","Larva"))
+save_plot(filename = "figures/ptoid.dens.treat.pdf", plot = plot.ptoid.dens.treat, base_width = 8.5, base_height = 6)
+
+plot(marginal_effects(ptoid.brm, 
+                      effects = c("sc.Gall_Height_mm:sc.Density_per_100_shoots"), 
+                      conditions=data.frame(Treatment.focus=c("Control","Ectoparasitoid exclusion"), row.names = c("Ectos","Platy")),
+                      surface=TRUE), stype="raster")
+
+plot(marginal_effects(ptoid.brm, 
+                      effects = c("sc.Gall_Height_mm:sc.gall_individuals"), 
+                      conditions=data.frame(Treatment.focus=c("Control","Ectoparasitoid exclusion"), row.names = c("Ectos","Platy")),
+                      surface=TRUE), stype="raster")
+
+plot(marginal_effects(ptoid.brm, 
+                      effects = c("sc.gall_individuals:sc.Density_per_100_shoots"), 
+                      conditions=data.frame(Treatment.focus=c("Control","Ectoparasitoid exclusion"), row.names = c("Ectos","Platy")),
+                      surface=TRUE), stype="raster")
+
+## just first 2 PCs of gall trait variation
+pcs <- princomp(x = select(gall_selection.df, Gall_Height_mm, gall_individuals, Density_per_100_shoots), cor=TRUE)
+summary(pcs)
+loadings(pcs)
+biplot(pcs)
+pcs$scores
+pc.all <- data.frame(gall_selection.df, pcs$scores)
+
+## i think there are some potential biases with this approach. especially because the complex treatment
+## has likely shaped the selection gradient, its no wonder it is more in line with the different axes of phenotypic variation.
+gall.pc.brm <- brm(gall_survival ~ Treatment.focus*Comp.1*Comp.2*Comp.3 +
+                  (1|Genotype/Plant_Position/Gall_Number),
+                data = pc.all, 
+                family = bernoulli(link="logit"),
+                prior = c(prior(normal(0,1), class="b"), prior(normal(0,1), class="sd")))
+summary(gall.pc.brm)
+
+plot(marginal_effects(gall.pc.brm))
+
+surf.comps <- marginal_effects(gall.pc.brm, 
+                      effects = c("Comp.2:Comp.3"), 
+                      conditions=data.frame(Treatment.focus=c("Control","Ectoparasitoid exclusion"), row.names = c("Complex","Simple")),
+                      surface=TRUE)
+plot(surf.comps, stype="raster")
+
+complex.comps <- surf.comps[[1]] %>% 
+  filter(cond__=="Complex") %>%
+  select(Comp.1, Comp.2, estimate__) %>%
+  spread(Comp.2, estimate__)
+rownames(complex.comps) <- complex.comps$Comp.1
+mat.complex.comps <- as.matrix(complex.comps[ ,-1])
+rast.complex.comps <- raster(mat.complex.comps*100)
+plot(rast.complex.comps)
+entropy.complex.comps <- get_boltzmann(rast.complex.comps, relative=T); entropy.complex.comps
+
+simple.comps <- surf.comps[[1]] %>% 
+  filter(cond__=="Simple") %>%
+  select(Comp.1, Comp.2, estimate__) %>%
+  spread(Comp.2, estimate__)
+rownames(simple.comps) <- simple.comps$sc.gall_individuals
+mat.simple.comps <- as.matrix(simple.comps[ ,-1])
+rast.simple.comps <- raster(mat.simple.comps*100)
+plot(rast.simple.comps)
+entropy.simple.comps <- get_boltzmann(rast.simple.comps, relative=T); entropy.simple.comps
+
+entropy.simple.comps/entropy.complex.comps
+
+
+## EXPLORING HOW TO CHARACTERIZE THE FITNESS LANDSCAPE ----
+
+## test functional dispersion
+control.survivors <- filter(gall_selection.df, Treatment.focus=="Control", gall_survival==1) %>% 
+  select(Plant_Position, sc.Gall_Height_mm, sc.gall_individuals, sc.Density_per_100_shoots)
+test1 <- dbFD(control.survivors[ ,-1])
+plot(test1)
+
+treatment.survivors <- filter(gall_selection.df, Treatment.focus=="Ectoparasitoid exclusion", gall_survival==1) %>% 
+  select(Plant_Position, sc.Gall_Height_mm, sc.gall_individuals, sc.Density_per_100_shoots)
+test2 <- dbFD(treatment.survivors[ ,-1])
+
+rbind(as.data.frame(test1),as.data.frame(test2))
+
+test3 <- bind_rows(mutate(control.survivors[,-1], Treatment.focus="Control"),
+                   mutate(treatment.survivors[ ,-1], Treatment.focus="Ectoparasitoid exclusion"))
+library(vegan)
+test.adonis <- adonis(test3[ ,-4]~Treatment.focus, test3, method = "euclidean")
+test.adonis
+test.betadisp <- betadisper(vegdist(x = test3[ ,-4], method = "euclidean"), test3$Treatment.focus)
+plot(test.betadisp)
+
+trait_sampler <- select(gall_selection.df, sc.Gall_Height_mm, sc.gall_individuals, sc.Density_per_100_shoots)
+test1 <- sample_n(trait_sampler, size = 500, replace = FALSE)
+test1 <- data.frame(test1, Treatment.focus=rep(c("Control","Ectoparasitoid exclusion"),250))
+pp_1 <- t(posterior_predict(gall.brm, newdata=test1, re_formula=NA, nsamples = 1)); pp_1
+
+pps <- t(posterior_predict(gall.brm))
+
+
+# even standardize range values by max and min preserves the same effect on the landscape (differences aren't quite as large)
+range01 <- function(x){(x-min(x))/(max(x)-min(x))} 
+
+complex.ind.dens <- surf.ind.dens[[1]] %>% 
+  filter(cond__=="Complex") %>% #, sc.Density_per_100_shoots > -1 & sc.Density_per_100_shoots < 1, sc.gall_individuals > -1 & sc.gall_individuals < 1) %>%
+  select(sc.gall_individuals, sc.Density_per_100_shoots, estimate__) %>%
+  spread(sc.Density_per_100_shoots, estimate__)
+rownames(complex.ind.dens) <- complex.ind.dens$sc.gall_individuals
+mat.complex.ind.dens <- as.matrix(complex.ind.dens[ ,-1])
+rast.complex.ind.dens <- raster(mat.complex.ind.dens*100)
+plot(rast.complex.ind.dens)
+entropy.complex.ind.dens <- get_boltzmann(rast.complex.ind.dens, relative=F); entropy.complex.ind.dens
+
+source('Fontant_TED_index.R')
+
+simple.ind.dens <- surf.ind.dens[[1]] %>% 
+  filter(cond__=="Simple") %>% #, sc.Density_per_100_shoots > -1 & sc.Density_per_100_shoots < 1, sc.gall_individuals > -1 & sc.gall_individuals < 1) %>%
+  select(sc.gall_individuals, sc.Density_per_100_shoots, estimate__) %>%
+  spread(sc.Density_per_100_shoots, estimate__)
+rownames(simple.ind.dens) <- simple.ind.dens$sc.gall_individuals
+mat.simple.ind.dens <- as.matrix(simple.ind.dens[ ,-1])
+rast.simple.ind.dens <- raster(mat.simple.ind.dens*100)
+plot(rast.simple.ind.dens)
+entropy.simple.ind.dens <- get_boltzmann(rast.simple.ind.dens, relative=F); entropy.simple.ind.dens
+H <- vegan::diversity(as.vector(mat.simple.ind.dens))
+S <- vegan::specnumber(as.vector(mat.simple.ind.dens))
+J <- H/log(S); J
+0.9983521/0.9556607
+
+entropy.simple.ind.dens/entropy.complex.ind.dens # 3.7 times higher or 274%. when relative=T, 3.3 times higher or 226%
+# note that when I scale fitness to mean=0 and SD=1, then there is not longer a difference between landscapes.
+
+complex.size.ind <- surf.size.ind[[1]] %>% 
+  filter(cond__=="Complex") %>% #, sc.Gall_Height_mm > -1 & sc.Gall_Height_mm < 1, sc.gall_individuals > -1 & sc.gall_individuals < 1) %>%
+  select(sc.gall_individuals, sc.Gall_Height_mm, estimate__) %>%
+  spread(sc.Gall_Height_mm, estimate__)
+rownames(complex.size.ind) <- complex.size.ind$sc.gall_individuals
+mat.complex.size.ind <- as.matrix(complex.size.ind[ ,-1])
+rast.complex.size.ind <- raster(mat.complex.size.ind*100)
+plot(rast.complex.size.ind)
+entropy.complex.size.ind <- get_boltzmann(rast.complex.size.ind, relative=F); entropy.complex.size.ind
+
+simple.size.ind <- surf.size.ind[[1]] %>% 
+  filter(cond__=="Simple") %>% #, sc.Gall_Height_mm > -1 & sc.Gall_Height_mm < 1, sc.gall_individuals > -1 & sc.gall_individuals < 1) %>%
+  select(sc.gall_individuals, sc.Gall_Height_mm, estimate__) %>%
+  spread(sc.Gall_Height_mm, estimate__)
+rownames(simple.size.ind) <- simple.size.ind$sc.gall_individuals
+mat.simple.size.ind <- as.matrix(simple.size.ind[ ,-1])
+rast.simple.size.ind <- raster(mat.simple.size.ind*100)
+plot(rast.simple.size.ind)
+entropy.simple.size.ind <- get_boltzmann(rast.simple.size.ind, relative=F); entropy.simple.size.ind
+
+entropy.simple.size.ind/entropy.complex.size.ind # 1.14x higher or 14% higher. when relative=T, 1.15 times higher or 15%
+
+complex.size.dens <- surf.size.dens[[1]] %>% 
+  filter(cond__=="Complex") %>% #, sc.Gall_Height_mm > -1 & sc.Gall_Height_mm < 1, sc.Density_per_100_shoots > -1 & sc.Density_per_100_shoots < 1) %>%
+  select(sc.Density_per_100_shoots, sc.Gall_Height_mm, estimate__) %>%
+  spread(sc.Gall_Height_mm, estimate__)
+rownames(complex.size.dens) <- complex.size.dens$sc.gall_individuals
+mat.complex.size.dens <- as.matrix(complex.size.dens[ ,-1])
+rast.complex.size.dens <- raster(mat.complex.size.dens*100)
+plot(rast.complex.size.dens)
+entropy.complex.size.dens <- get_boltzmann(rast.complex.size.dens, relative=F); entropy.complex.size.dens
+
+simple.size.dens <- surf.size.dens[[1]] %>% 
+  filter(cond__=="Simple") %>% #, sc.Gall_Height_mm > -1 & sc.Gall_Height_mm < 1, sc.Density_per_100_shoots > -1 & sc.Density_per_100_shoots < 1) %>%
+  select(sc.Density_per_100_shoots, sc.Gall_Height_mm, estimate__) %>%
+  spread(sc.Gall_Height_mm, estimate__)
+rownames(simple.size.dens) <- simple.size.dens$sc.gall_individuals
+mat.simple.size.dens <- as.matrix(simple.size.dens[ ,-1])
+rast.simple.size.dens <- raster(mat.simple.size.dens*100)
+plot(rast.simple.size.dens)
+entropy.simple.size.dens <- get_boltzmann(rast.simple.size.dens, relative=F); entropy.simple.size.dens
+
+entropy.simple.size.dens/entropy.complex.size.dens # 20% higher. when relative=T, 1.10 times higher or 10%
+
+test_matrix <- mat.complex.ind.dens
+get_sample <- sample(test_matrix, size = length(test_matrix), replace = TRUE)
+convert_matrix <- matrix(get_sample, nrow = nrow(test_matrix), ncol = ncol(test_matrix))
+convert_raster <- raster(convert_matrix*100)
+get_boltzmann(convert_raster)
+plot(convert_raster)
+
+get_boltzmann(raster(test_matrix*100))
+plot(raster(test_matrix*100))
+
+get_boltzmann(convert_raster)/get_boltzmann(raster(test_matrix*100))
+
+## also explore relative entropy. I expect results will be the same, but just vary in magnitude.
 
 ## FULL MODEL ----
 #full.component.gam <- gamm.model(gall_survival ~ 
