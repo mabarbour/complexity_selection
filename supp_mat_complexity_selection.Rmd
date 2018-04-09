@@ -1,0 +1,318 @@
+---
+title: "Supplementary Material for Food-web complexity alters the fitness landscape of an insect herbivore"
+author: Matt Barbour
+output: html_notebook
+---
+
+Load dataset. This dataset is a subset that only includes larva that survive to pupation or turned into parasitoids. We omitted any data where larva mortality was unclear. This enabled us to focus on the selection pressures imposed by insect parasitoids rather than other sources.
+```{r Preliminaries, message=FALSE, warning=FALSE, include=FALSE}
+## LOAD REQUIRED LIBRARIES & SET OPTIONS ----
+library(tidyverse)
+library(cowplot) # pretty default ggplots
+library(broom) # for tidying multiple linear models
+library(mgcv) # generalized additive models
+library(gsg) # calculating selection gradients
+
+## LOAD & MANAGE DATASET ----
+
+gall_selection.df <- read_csv("gall_selection_data.csv") %>%
+  # convert appropriate variables to characters instead of integers
+  mutate(Plant_Position = as.character(Plant_Position),
+         Gall_Number = as.character(Gall_Number)) %>%
+  unite(Gall_ID, Gall_Number, Gall_Letter, remove = FALSE) %>%
+  
+  # subset data for analysis
+  filter(phenology == "early", Location == "tree",
+         platy > 0 | ectos > 0 | pupa > 0) %>%                  # eliminate unknown sources of mortality
+  mutate(gall_survival = as.numeric(ifelse(pupa > 0, 1, 0)),
+         egg_parasitoid = as.numeric(ifelse(platy > 0, 1, 0))) 
+
+## CREATE SEPARATE DATASETS FOR SELECTION ANALYSES ----
+control_df <- gall_selection.df %>%
+  filter(Treatment.focus == "Control") %>%
+  mutate(c.Gall_Height_mm = Gall_Height_mm - mean(Gall_Height_mm),
+         c.gall_individuals = gall_individuals - mean(gall_individuals),
+         c.Density_per_100_shoots = Density_per_100_shoots - mean(Density_per_100_shoots))
+
+treatment_df <- gall_selection.df %>%
+  filter(Treatment.focus == "Ectoparasitoid exclusion") %>%
+  mutate(c.Gall_Height_mm = Gall_Height_mm - mean(Gall_Height_mm),
+         c.gall_individuals = gall_individuals - mean(gall_individuals),
+         c.Density_per_100_shoots = Density_per_100_shoots - mean(Density_per_100_shoots))
+```
+
+```{r FUNCTIONS}
+gam.plot <- function(gam.model, ...) {
+  plot(gam.model, seWithMean = T, shift = mean(predict(gam.model)), trans = function(x) {exp(x)/(1+exp(x))}, ...)
+}
+
+# experimenting with boot.case gave bootstrapped distributions that weren't centered near the model mean estimate.
+# also, using 'refit.smooth = T' also generated some very skewed distributions
+# the recipe below provided the most sensible estimates for my data
+gradient.calc <- function(mod, phenotype, covariates = NULL) {
+  gam.gradients(mod, phenotype, covariates, parallel = 'multicore', ncpus = 32, 
+                refit.smooth = F, 
+                n.boot = 1000,
+                se.method = 'boot.para',
+                standardized = T)
+} 
+```
+
+Choosing the level of model complexity. We used AIC to pair down the complexity of the model. For both the control and treatment plants, there is support for maintaing the linear interaction between gall size and the number of individuals per gall. In both cases, AIC suggest that the models lacking linear interaction terms were more parsimonious, so we subsequently analyzed selection gradients with these models.
+
+```{r AIC MODEL COMPLEXITY}
+
+## CONTROL PLANTS ----
+gamm_full.control <- gamm.model(gall_survival ~ 
+                                  s(c.Gall_Height_mm) + 
+                                  s(c.gall_individuals, k=9) + 
+                                  s(c.Density_per_100_shoots) +
+                                  c.Gall_Height_mm:c.gall_individuals + 
+                                  c.Gall_Height_mm:c.Density_per_100_shoots + 
+                                  c.gall_individuals:c.Density_per_100_shoots,
+                                data = control_df)
+summary(gamm_full.control$gam)
+summary(gamm_full.control$mer)
+
+gamm_red.control <- gamm.model(gall_survival ~ 
+                                  s(c.Gall_Height_mm) + 
+                                  s(c.gall_individuals, k=9) + 
+                                  s(c.Density_per_100_shoots),
+                                data = control_df)
+summary(gamm_red.control$gam)
+summary(gamm_red.control$mer)
+
+AIC(gamm_full.control$mer, gamm_red.control$mer)
+
+## TREATMENT PLANTS ----
+gamm_full.treatment <- gamm.model(gall_survival ~ 
+                                  s(c.Gall_Height_mm) + 
+                                  s(c.gall_individuals, k=9) + 
+                                  s(c.Density_per_100_shoots) +
+                                  c.Gall_Height_mm:c.gall_individuals + 
+                                  c.Gall_Height_mm:c.Density_per_100_shoots + 
+                                  c.gall_individuals:c.Density_per_100_shoots,
+                                data = treatment_df)
+summary(gamm_full.treatment$gam)
+summary(gamm_full.treatment$mer)
+
+gamm_red.treatment <- gamm.model(gall_survival ~ 
+                                  s(c.Gall_Height_mm) + 
+                                  s(c.gall_individuals, k=9) + 
+                                  s(c.Density_per_100_shoots),
+                                data = treatment_df)
+summary(gamm_red.treatment$gam)
+summary(gamm_red.treatment$mer)
+
+AIC(gamm_full.treatment$mer, gamm_red.treatment$mer)
+```
+
+```{r SELECTION GRADIENTS}
+
+## GALL SIZE ----
+sg.size_control <- gradient.calc(mod = gamm_red.control$gam, 
+                                 phenotype = "c.Gall_Height_mm", 
+                                 covariates = c("c.gall_individuals","c.Density_per_100_shoots"))
+sg.size_treatment <- gradient.calc(mod = gamm_red.treatment$gam, 
+                                   phenotype = "c.Gall_Height_mm", 
+                                   covariates = c("c.gall_individuals","c.Density_per_100_shoots"))
+
+## GALL INDIVIDUALS ----
+sg.individuals_control <- gradient.calc(mod = gamm_red.control$gam, 
+                                        phenotype = "c.gall_individuals", 
+                                        covariates = c("c.Gall_Height_mm","c.Density_per_100_shoots"))
+sg.individuals_treatment <- gradient.calc(mod = gamm_red.treatment$gam, 
+                                          phenotype = "c.gall_individuals", 
+                                          covariates = c("c.Gall_Height_mm","c.Density_per_100_shoots"))
+
+## GALL DENSITY ----
+sg.density_control <- gradient.calc(mod = gamm_red.control$gam, 
+                                    phenotype = "c.Density_per_100_shoots", 
+                                    covariates = c("c.gall_individuals","c.Gall_Height_mm"))
+sg.density_treatment <- gradient.calc(mod = gamm_red.treatment$gam, 
+                                      phenotype = "c.Density_per_100_shoots", 
+                                      covariates = c("c.gall_individuals","c.Gall_Height_mm"))
+
+## PRINT TABLE ----
+rbind(
+  mutate(sg.size_control$ests, Food_Web_Treatment = "Complex"),
+  mutate(sg.size_treatment$ests, Food_Web_Treatment = "Simple"),
+  mutate(sg.individuals_control$ests, Food_Web_Treatment = "Complex"),
+  mutate(sg.individuals_treatment$ests, Food_Web_Treatment = "Simple"),
+  mutate(sg.density_control$ests, Food_Web_Treatment = "Complex"),
+  mutate(sg.density_treatment$ests, Food_Web_Treatment = "Simple")
+)
+
+round(rbind(
+  sg.size_control$ests,
+  sg.size_treatment$ests,
+  sg.individuals_control$ests,
+  sg.individuals_treatment$ests,
+  sg.density_control$ests,
+  sg.density_treatment$ests
+),3)
+
+## BOOTSTRAPPED INTERVALS ----
+bootstrap_df <- bind_rows(
+  data.frame(Bootstrap_Estimates = sg.size_control$boot[ ,1], Phenotype = "c.Gall_Height_mm", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.size_control$boot[ ,2], Phenotype = "c.Gall_Height_mm", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.size_treatment$boot[ ,1], Phenotype = "c.Gall_Height_mm", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.size_treatment$boot[ ,2], Phenotype = "c.Gall_Height_mm", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.individuals_control$boot[ ,1], Phenotype = "c.gall_individuals", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.individuals_control$boot[ ,2], Phenotype = "c.gall_individuals", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.individuals_treatment$boot[ ,1], Phenotype = "c.gall_individuals", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.individuals_treatment$boot[ ,2], Phenotype = "c.gall_individuals", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.density_control$boot[ ,1], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.density_control$boot[ ,2], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.density_treatment$boot[ ,1], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.density_treatment$boot[ ,2], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Gamma", Food_Web_Treatment = "Simple")
+)
+
+bootstrap_df %>%
+  ggplot(., aes(x=Phenotype, y=Bootstrap_Estimates, fill=Food_Web_Treatment)) +
+  geom_boxplot() +
+  geom_hline(yintercept=0, linetype="dotted") +
+  facet_wrap(~Selection_Type) +
+  coord_flip() 
+```
+
+Another decision we had to make was whether to calculate selection gradients with GAM or GAMMs. The problem with calculating selection gradients with GAMM is that the selection gradients can vary among environmental contexts that are being modelled by random intercepts. Since we did not alter random slopes, this would just cause variation in the selection gradients around the mean value, which is what our model tries to estimate. Therefore, we felt our GAMM model accurately reflects the selection that is happening at the population-level.
+
+GAM estimates of selection gradients differ from GAMM
+
+```{r COMPARE GAM WITH GAMM}
+
+## CONTROL PLANTS ----
+gam_red.control <- gam(gall_survival ~
+                         s(c.Gall_Height_mm) + 
+                         s(c.gall_individuals, k=9) +
+                         s(c.Density_per_100_shoots),
+                       data = control_df, family = binomial(link = "logit"))
+summary(gam_red.control)
+
+gam.plot(gam_red.control)
+gam.plot(gamm_red.control$gam)
+
+
+## TREATMENT PLANTS ----
+gam_red.treatment <- gam(gall_survival ~
+                         s(c.Gall_Height_mm) + 
+                         s(c.gall_individuals, k=9) +
+                         s(c.Density_per_100_shoots),
+                       data = treatment_df, family = binomial(link = "logit"))
+summary(gam_red.treatment)
+
+gam.plot(gam_red.treatment)
+gam.plot(gamm_red.treatment$gam)
+
+
+#### CALCULATE SELECTION GRADIENTS FROM GAM ----
+
+## GALL SIZE ----
+sg.gam.size_control <- gradient.calc(mod = gam_red.control, 
+                                 phenotype = "c.Gall_Height_mm", 
+                                 covariates = c("c.gall_individuals","c.Density_per_100_shoots"))
+sg.gam.size_treatment <- gradient.calc(mod = gam_red.treatment, 
+                                   phenotype = "c.Gall_Height_mm", 
+                                   covariates = c("c.gall_individuals","c.Density_per_100_shoots"))
+
+## GALL INDIVIDUALS ----
+sg.gam.individuals_control <- gradient.calc(mod = gam_red.control, 
+                                        phenotype = "c.gall_individuals", 
+                                        covariates = c("c.Gall_Height_mm","c.Density_per_100_shoots"))
+sg.gam.individuals_treatment <- gradient.calc(mod = gam_red.treatment, 
+                                          phenotype = "c.gall_individuals", 
+                                          covariates = c("c.Gall_Height_mm","c.Density_per_100_shoots"))
+
+## GALL DENSITY ----
+sg.gam.density_control <- gradient.calc(mod = gam_red.control, 
+                                    phenotype = "c.Density_per_100_shoots", 
+                                    covariates = c("c.gall_individuals","c.Gall_Height_mm"))
+sg.gam.density_treatment <- gradient.calc(mod = gam_red.treatment, 
+                                      phenotype = "c.Density_per_100_shoots", 
+                                      covariates = c("c.gall_individuals","c.Gall_Height_mm"))
+
+## PRINT TABLE ----
+rbind(
+  mutate(sg.gam.size_control$ests, Food_Web_Treatment = "Complex"),
+  mutate(sg.gam.size_treatment$ests, Food_Web_Treatment = "Simple"),
+  mutate(sg.gam.individuals_control$ests, Food_Web_Treatment = "Complex"),
+  mutate(sg.gam.individuals_treatment$ests, Food_Web_Treatment = "Simple"),
+  mutate(sg.gam.density_control$ests, Food_Web_Treatment = "Complex"),
+  mutate(sg.gam.density_treatment$ests, Food_Web_Treatment = "Simple")
+)
+
+round(rbind(
+  sg.gam.size_control$ests,
+  sg.gam.size_treatment$ests,
+  sg.gam.individuals_control$ests,
+  sg.gam.individuals_treatment$ests,
+  sg.gam.density_control$ests,
+  sg.gam.density_treatment$ests
+),3)
+
+## BOOTSTRAPPED INTERVALS ----
+gam.bootstrap_df <- bind_rows(
+  data.frame(Bootstrap_Estimates = sg.gam.size_control$boot[ ,1], Phenotype = "c.Gall_Height_mm", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.gam.size_control$boot[ ,2], Phenotype = "c.Gall_Height_mm", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.gam.size_treatment$boot[ ,1], Phenotype = "c.Gall_Height_mm", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.gam.size_treatment$boot[ ,2], Phenotype = "c.Gall_Height_mm", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.gam.individuals_control$boot[ ,1], Phenotype = "c.gall_individuals", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.gam.individuals_control$boot[ ,2], Phenotype = "c.gall_individuals", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.gam.individuals_treatment$boot[ ,1], Phenotype = "c.gall_individuals", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.gam.individuals_treatment$boot[ ,2], Phenotype = "c.gall_individuals", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.gam.density_control$boot[ ,1], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.gam.density_control$boot[ ,2], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.gam.density_treatment$boot[ ,1], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.gam.density_treatment$boot[ ,2], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Gamma", Food_Web_Treatment = "Simple")
+)
+
+gam.bootstrap_df %>%
+  ggplot(., aes(x=Phenotype, y=Bootstrap_Estimates, fill=Food_Web_Treatment)) +
+  geom_boxplot() +
+  geom_hline(yintercept=0, linetype="dotted") +
+  facet_wrap(~Selection_Type) +
+  coord_flip()
+
+```
+
+```{r}
+size_models <- gall_selection.df %>%
+  group_by(Treatment.focus, Genotype) %>%
+  do(model = lm(gall_survival ~ Gall_Height_mm, data = .)) %>%
+  tidy(model) %>%
+  ungroup()
+
+size_models %>%
+  ggplot(., aes(x=Genotype, y=estimate, fill=Treatment.focus)) +
+  geom_bar(stat="identity", position = "dodge") +
+  geom_errorbar(aes(ymax = estimate + std.error, ymin = estimate - std.error), #, color=Treatment.focus
+                width = 0.5, position = position_dodge(width = 0.8)) +
+  facet_wrap(~term, scales = "free_y")
+```
+
+```{r}
+size.grad_models <- gall_selection.df %>%
+  group_by(Treatment.focus, Genotype) %>%
+  do(model = lm(gall_survival/mean(gall_survival) ~ I(Gall_Height_mm - mean(Gall_Height_mm)), data = .)) %>%
+  tidy(model) %>%
+  ungroup()
+size.grad_models
+
+size.grad_models %>%
+  filter(term != "(Intercept)") %>%
+  ggplot(., aes(x=Genotype, y=estimate, fill=Treatment.focus)) +
+  geom_bar(stat="identity", position = "dodge") +
+  geom_errorbar(aes(ymax = estimate + std.error, ymin = estimate - std.error), #, color=Treatment.focus
+                width = 0.5, position = position_dodge(width = 0.8)) 
+
+size.grad_models %>%
+  filter(term != "(Intercept)") %>%
+  ggplot(., aes(x=Treatment.focus, y=estimate, fill=Genotype, group=Genotype)) +
+  geom_line() +
+  geom_point(shape=21, position = "dodge", size=4) +
+  geom_hline(yintercept=0, linetype="dotted")
+
+summary(lm(estimate ~ Treatment.focus, data = filter(size.grad_models, term != "(Intercept)")))
+```
+
