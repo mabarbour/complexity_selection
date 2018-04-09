@@ -1,14 +1,13 @@
 ---
-title: "Tutorial: Calculating Selection"
+title: "Tutorial: Quantifying Natural Selection"
 output: html_notebook
 ---
-
 
 ```{r Preliminaries, message=FALSE, warning=FALSE, include=FALSE}
 ## LOAD REQUIRED LIBRARIES & SET OPTIONS ----
 library(tidyverse)
 library(cowplot) # pretty default ggplots
-library(broom) # for tidying multiple linear models
+#library(broom) # for tidying multiple linear models
 
 ## LOAD & MANAGE DATASET ----
 
@@ -33,6 +32,202 @@ galls_after <- filter(gall_selection.df, gall_survival == 1) %>% mutate(Timing =
 
 gall_diffs.df <- bind_rows(galls_before, galls_after)
 ```
+
+Evolution by natural selection requires three basic ingredients: (1) variation in phenotypes; (2) variation in fitness; and (3) heritabile phenotypic variation. Although heritability is a key component to predicting evolutionary change, we can ignore it if we just focus on quantifying natural selection, which requires just the first two ingredients. 
+
+Perhaps the easiest way to quantify natural selection is by calculating the *selection differential* ($s$), which corresponds to the change in mean phenotype ($z$) after selection: $$s=\bar{z}^*-\bar{z}$$. For my galling insects, this is straightforward to measure. I calculate the mean phenotype of all galls and compare it to the mean phenotype of surviving insects. Below is an example with gall size:
+
+```{r figure: gall size selection differential, echo=FALSE, message=FALSE, warning=FALSE}
+size_means_diffs <- gall_diffs.df %>%
+  group_by(Timing, Treatment.focus) %>%
+  summarise_at(vars(Gall_Height_mm, gall_survival), funs(mean, var, sd)) 
+
+sd_size_before <- filter(size_means_diffs, Treatment.focus=="Control", Timing=="Before")$Gall_Height_mm_var
+
+size_differentials <- size_means_diffs %>%
+  select(Timing, Treatment.focus, Gall_Height_mm_mean) %>%
+  spread(Timing, Gall_Height_mm_mean) %>%
+  mutate(selection_differential = After - Before)
+
+s_size <- filter(size_differentials, Treatment.focus=="Control")$selection_differential
+sc_s_size <- s_size/sd_size_before
+
+gall_diffs.df %>%
+  filter(Treatment.focus == "Control") %>%
+  ggplot(., aes(x=Gall_Height_mm, fill=Timing)) +
+  geom_density(alpha=0.5) +
+  geom_vline(data=filter(size_means_diffs, Treatment.focus=="Control"), aes(xintercept=Gall_Height_mm_mean, color=Timing), linetype="dashed") #+
+  #facet_wrap(~Treatment.focus, ncol = 1)
+```
+
+
+
+Here, the $s=0.83$. Note that this selection differential is unstandardized. This makes it difficult to compare the strength of selection acting on different phenotypes both within and across studies. We can calculate the standardized selection differential as: $$S'=\frac{S}{\sigma_z}$$
+
+For gall size, $S'=0.18$.
+
+There is another way that we can express and visualize selection differentials, name as the covariance between phenotype and relative fitness: $$S=cov(w,z)$$
+
+where relative fitness is calculated as absolute fitness ($W$) divided by the mean fitness of the population: $$w=\frac{W}{\bar{W}}$$
+
+Let's visualize what this looks like with the gall data:
+
+```{r}
+W_bar_control <- filter(size_means_diffs, Treatment.focus=="Control", Timing=="Before")$gall_survival_mean
+control_df <- gall_selection.df %>%
+  filter(Treatment.focus=="Control") %>%
+  mutate(relative_fitness = gall_survival/W_bar_control)
+
+with(control_df, cov(relative_fitness, Gall_Height_mm))
+
+summary(lm(relative_fitness ~ I(Gall_Height_mm - mean(Gall_Height_mm)), control_df))
+
+0.83/sd(control_df$Gall_Height_mm) # standardized selection differential
+0.83/var(control_df$Gall_Height_mm) # selection gradient
+
+ggplot(control_df, aes(x=Gall_Height_mm, y=relative_fitness)) +
+  geom_jitter(height=0.1, shape=1) +
+  geom_smooth(method="lm") +
+  geom_hline(yintercept=1, linetype="dotted", color="grey") +
+  geom_vline(xintercept=filter(size_means_diffs, Treatment.focus=="Control", Timing=="Before")$Gall_Height_mm_mean, 
+             linetype="dotted", color="grey")
+```
+
+This gives us the same estimate of selection differential as before.
+
+
+## Calculating selection in different environments
+
+```{r}
+
+# (1) calculate relative fitness for each environment separately
+W_bar_treatment <- filter(size_means_diffs, Treatment.focus=="Ectoparasitoid exclusion", Timing=="Before")$gall_survival_mean; W_bar_treatment
+
+gall_selection.df <- gall_selection.df %>%
+  mutate(relative_fitness = ifelse(Treatment.focus=="Control", gall_survival/W_bar_control, gall_survival/W_bar_treatment))
+
+ggplot(gall_selection.df, aes(x=Gall_Height_mm, y=relative_fitness, color=Treatment.focus)) +
+  geom_jitter(height=0.1, shape=1) +
+  geom_smooth(method="lm") +
+  geom_hline(yintercept=1, linetype="dotted", color="grey") +
+  geom_vline(data = filter(size_means_diffs, Timing=="Before"), aes(xintercept=Gall_Height_mm_mean, color=Treatment.focus), linetype="dotted")
+```
+
+Let's dissect this a bit further...
+
+```{r}
+ggplot(gall_selection.df, aes(x=Gall_Height_mm, y=gall_survival, color=Treatment.focus)) +
+  geom_jitter(height=0.05, shape=1) +
+  geom_smooth(method="lm") +
+  #geom_hline(yintercept=1, linetype="dotted", color="grey") +
+  geom_vline(data = filter(size_means_diffs, Timing=="Before"), aes(xintercept=Gall_Height_mm_mean, color=Treatment.focus), linetype="dotted") +
+  scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1))
+
+summary(lm(gall_survival ~ Treatment.focus*I(Gall_Height_mm - mean(Gall_Height_mm)), gall_selection.df))
+```
+
+Interesting. So there doesn't appear to be a difference in the relationship between gall survival and gall size between treatments. Therefore, the differences in selection gradients between treatments is due to differences in relative fitness between environments. 
+
+So where do I go from here? In my view, the differences in relative fitness are an experimental artifact of the reduction in parasitoid diversity, and therefore, there hasn't been a chance for the parasitoid in the simple community to compensate in terms of its abundance over multiple generations and make up for the differences in relative fitness.
+
+Some exploratory analyses:
+
+```{r}
+with(control_df, cov(relative_fitness, Gall_Height_mm))
+
+summary(lm(relative_fitness ~ I(Gall_Height_mm - mean(Gall_Height_mm)), control_df))
+
+with(control_df, cov(relative_fitness, gall_individuals))
+
+# adding gall individuals
+summary(lm(relative_fitness ~ 
+             I(Gall_Height_mm - mean(Gall_Height_mm)) + 
+             I(gall_individuals - mean(gall_individuals)), 
+           control_df))
+
+# adding gall density
+summary(lm(relative_fitness ~ 
+             I(Gall_Height_mm - mean(Gall_Height_mm)) + 
+             I(gall_individuals - mean(gall_individuals)) +
+             I(Density_per_100_shoots - mean(Density_per_100_shoots)),
+           control_df))
+
+## treatment focus
+summary(lm(relative_fitness ~ I(Gall_Height_mm - mean(Gall_Height_mm)), 
+           filter(gall_selection.df, Treatment.focus=="Ectoparasitoid exclusion")))
+
+summary(lm(relative_fitness ~ 
+             I(Gall_Height_mm - mean(Gall_Height_mm)) + 
+             I(gall_individuals - mean(gall_individuals)), 
+           filter(gall_selection.df, Treatment.focus=="Ectoparasitoid exclusion")))
+
+summary(lm(relative_fitness ~ 
+             I(Gall_Height_mm - mean(Gall_Height_mm)) + 
+             I(gall_individuals - mean(gall_individuals)) +
+             I(Density_per_100_shoots - mean(Density_per_100_shoots)),
+           filter(gall_selection.df, Treatment.focus=="Ectoparasitoid exclusion")))
+
+## with treatment variable
+summary(lm(relative_fitness_adj ~ 
+             I(Gall_Height_mm - mean(Gall_Height_mm)) + Treatment.focus:I(Gall_Height_mm - mean(Gall_Height_mm)) +
+             I(gall_individuals - mean(gall_individuals)) + Treatment.focus:I(gall_individuals - mean(gall_individuals)) +
+             I(Density_per_100_shoots - mean(Density_per_100_shoots)) + Treatment.focus:I(Density_per_100_shoots - mean(Density_per_100_shoots)),
+           gall_selection.df))
+
+W_bar_platy_control <- mean(filter(gall_selection.df, Treatment.focus=="Control")$egg_parasitoid)
+W_bar_platy_treatment <- mean(filter(gall_selection.df, Treatment.focus=="Ectoparasitoid exclusion")$egg_parasitoid)
+
+W_bar_treatment_adj <- W_bar_treatment - (W_bar_platy_treatment - W_bar_platy_control); W_bar_treatment_adj
+
+gall_selection.df <- gall_selection.df %>%
+  mutate(relative_fitness_adj = ifelse(Treatment.focus=="Control", gall_survival/W_bar_control, gall_survival/W_bar_treatment_adj))
+
+summary(lm(relative_fitness_adj ~ 
+             scale(Gall_Height_mm) + Treatment.focus:scale(Gall_Height_mm) +
+             scale(gall_individuals) + Treatment.focus:scale(gall_individuals) +
+             scale(Density_per_100_shoots) + Treatment.focus:scale(Density_per_100_shoots),
+           gall_selection.df))
+
+summary(lm(relative_fitness ~ 
+             scale(Gall_Height_mm) + Treatment.focus:scale(Gall_Height_mm) +
+             scale(gall_individuals) + Treatment.focus:scale(gall_individuals) +
+             scale(Density_per_100_shoots) + Treatment.focus:scale(Density_per_100_shoots),
+           gall_selection.df))
+```
+
+GSG package
+```{r}
+library(gsg)
+library(mgcv)
+library(visreg)
+
+# experimenting with boot.case gave bootstrapped distributions that weren't centered near the model mean estimate.
+# also, using 'refit.smooth = T' also generated some very skewed distributions
+# the recipe below provided the most sensible estimates for my data
+gradient.calc <- function(mod, phenotype, covariates = NULL) {
+  gam.gradients(mod, phenotype, covariates, #parallel = 'multicore', ncpus = 32, 
+                refit.smooth = F, 
+                se.method = 'boot.para',
+                standardized = T)
+} 
+
+gam.size.control <- gam(gall_survival ~ s(Gall_Height_mm), data = filter(gall_selection.df, Treatment.focus=="Control"))
+summary(gam.size.control)
+visreg(gam.size.control)
+
+gradient.calc(gam.size.control, phenotype = "Gall_Height_mm")$ests
+
+gam.size.treatment <- gam(gall_survival ~ s(Gall_Height_mm) + s(gall_individuals, k=9) + s(Density_per_100_shoots), data = filter(gall_selection.df, Treatment.focus=="Ectoparasitoid exclusion"))
+summary(gam.size.treatment)
+visreg(gam.size.treatment)
+
+gradient.calc(gam.size.treatment, phenotype = "Gall_Height_mm", covariates = c("gall_individuals","Density_per_100_shoots"))$ests
+
+```
+
+
+
+Does the theory require multivariate normal phenotypes?
 
 Examine distributions of phenotypes
 ```{r}
@@ -147,24 +342,7 @@ Understanding the causes of selection in different environments is not straightf
 The most straightforward way to measure selection is the *selection differential*, which corresponds to the difference in mean phenotype before vs. after selection: $$s=\bar{z}^*-\bar{z}$$.
 
 
-```{r figure: gall size selection differential, echo=FALSE, message=FALSE, warning=FALSE}
-size_means_diffs <- gall_diffs.df %>%
-  group_by(Timing, Treatment.focus) %>%
-  summarise_at(vars(Gall_Height_mm, gall_survival), funs(mean, var, sd)) 
-size_means_diffs
 
-size_differentials <- size_means_diffs %>%
-  select(Timing, Treatment.focus, Gall_Height_mm_mean) %>%
-  spread(Timing, Gall_Height_mm) %>%
-  mutate(selection_differential = After - Before)
-size_differentials
-
-gall_diffs.df %>%
-  ggplot(., aes(x=Gall_Height_mm, fill=Timing)) +
-  geom_density(alpha=0.5) +
-  geom_vline(data=size_means_diffs, aes(xintercept=Gall_Height_mm_mean, color=Timing), linetype="dashed") +
-  facet_wrap(~Treatment.focus, ncol = 1)
-```
 
 We find that the selection differential on control trees ($s=$`r round(filter(size_differentials, Treatment.focus=="Control")$selection_differential,2)`) is 43% larger than on treatment trees ($s=$`r round(filter(size_differentials, Treatment.focus=="Ectoparasitoid exclusion")$selection_differential, 2)`). 
 

@@ -1,0 +1,274 @@
+Tutorial: Quantifying Natural Selection
+========================================================
+author: Matt Barbour
+date: April 4, 2018
+autosize: true
+
+Evolution by Natural Selection
+========================================================
+
+Requires 3 ingredients:
+
+- Variation in phenotypes
+- Variation in fitness
+- ~~Heritable phenotypic variation~~
+
+```{r Preliminaries, message=FALSE, warning=FALSE, include=FALSE}
+
+## LOAD REQUIRED LIBRARIES & SET OPTIONS ----
+library(tidyverse)
+library(cowplot) # pretty default ggplots
+library(visreg)
+library(broom) # for tidying multiple linear models
+library(mgcv)
+
+## LOAD & MANAGE DATASET ----
+
+gall_selection.df <- read_csv("gall_selection_data.csv") %>%
+  mutate(Plant_Position = as.character(Plant_Position),
+         Gall_Number = as.character(Gall_Number),
+         Treatment.focus = as.character(Treatment.focus),
+         Treatment = as.character(Treatment),
+         Genotype = as.character(Genotype),
+         Gall_Letter = as.character(Gall_Letter)) %>%
+  unite(Gall_ID, Gall_Number, Gall_Letter, remove = FALSE) %>%
+  
+  # subset data for analysis
+  filter(phenology == "early", Location == "tree",
+         
+  # eliminate unknown sources of mortality
+         platy > 0 | ectos > 0 | pupa > 0) %>%       
+  
+  mutate(gall_survival = as.numeric(ifelse(pupa > 0, 1, 0)),
+         egg_parasitoid = as.numeric(ifelse(platy > 0, 1, 0))) 
+
+# create a new dataset that compares phenotypic distributions before and after selection
+galls_before <- mutate(gall_selection.df, Timing="Before")
+galls_after <- filter(gall_selection.df, gall_survival == 1) %>% mutate(Timing = "After")
+
+gall_diffs.df <- bind_rows(galls_before, galls_after)
+```
+
+
+Quantifying Natural Selection
+========================================================
+
+Let's call the mean phenotype before selection $\bar{z}$ and the mean phenotype after selection $\bar{z}^*$, then
+
+**Directional selection differential**, $S=\bar{z}^*-\bar{z}$
+
+
+Directional Selection Differential
+========================================================
+
+
+```{r selection differential, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, paged.print=FALSE}
+size_means_diffs <- gall_diffs.df %>%
+  group_by(Timing, Treatment.focus) %>%
+  summarise_at(vars(Gall_Height_mm, gall_survival), funs(mean, var, sd)) 
+
+sd_size_before <- filter(size_means_diffs, Treatment.focus=="Control", Timing=="Before")$Gall_Height_mm_sd
+
+size_differentials <- size_means_diffs %>%
+  select(Timing, Treatment.focus, Gall_Height_mm_mean) %>%
+  spread(Timing, Gall_Height_mm_mean) %>%
+  mutate(selection_differential = After - Before)
+
+s_size <- filter(size_differentials, Treatment.focus=="Control")$selection_differential
+sc_s_size <- s_size/sd_size_before
+
+gall_diffs.df %>%
+  filter(Treatment.focus == "Control") %>%
+  ggplot(., aes(x=Gall_Height_mm, fill=Timing)) +
+  geom_density(alpha=0.5) +
+  geom_vline(data=filter(size_means_diffs, Treatment.focus=="Control"),
+             aes(xintercept=Gall_Height_mm_mean, color=Timing), linetype="dashed") +
+  geom_text(x = 14, y=0.18, label="S = 0.83", size = 6)
+```
+
+
+Selection Differentials and Gradients
+========================================================
+
+Let's call **absolute fitness** $W$ and **mean fitness** $\bar{W}$, then
+
+**Relative fitness**, $w=\frac{W}{\bar{W}}$
+
+**Selection differential**, $S=\bar{z}^*-\bar{z}=cov(w,z)$
+
+**Selection gradient**, $\beta=\frac{cov(w,z)}{var(z)}$
+
+
+
+Selection Gradient
+========================================================
+
+
+```{r covariance, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+W_bar_control <- filter(size_means_diffs, Treatment.focus=="Control", Timing=="Before")$gall_survival_mean
+
+control_df <- gall_selection.df %>%
+  filter(Treatment.focus=="Control") %>%
+  mutate(relative_fitness = gall_survival/W_bar_control,
+         c.Gall_Height_mm = Gall_Height_mm - mean(Gall_Height_mm))
+
+s_cov <- lm(relative_fitness ~ c.Gall_Height_mm, control_df) #I(Gall_Height_mm - mean(Gall_Height_mm)), control_df)
+
+visreg(s_cov, gg=TRUE) +
+  ylab("Relative fitness") +
+  xlab("Gall size (mm)") +
+  geom_hline(yintercept=1, linetype="dotted", color="grey") +
+  geom_vline(xintercept=0, linetype="dotted", color="grey")
+  #geom_vline(xintercept=filter(size_means_diffs, Treatment.focus=="Control", Timing=="Before")$Gall_Height_mm_mean, 
+  #           linetype="dotted", color="grey")
+```
+
+
+Measures of Directional Selection
+==============================================
+
+```{r table 1, echo=FALSE, fig.height=5, fig.width=5, message=FALSE, warning=FALSE, paged.print=FALSE}
+kable(
+  data.frame(
+    Intercept = coef(s_cov)[1],
+    Beta_z = coef(s_cov)[2],
+    std_Beta_z = coef(s_cov)[2]*sd(control_df$Gall_Height_mm),
+    S_z = coef(s_cov)[2]*var(control_df$Gall_Height_mm),
+    row.names = "Estimate"
+  ),
+  col.names = c("Intercept","B","B' = B * sd(z) = S'","S = B * var(z)"),
+  digits = 2
+)
+
+visreg(s_cov, gg=TRUE) +
+  ylab("Relative fitness") +
+  xlab("Gall size (mm)") +
+  geom_hline(yintercept=1, linetype="dotted", color="grey") +
+  geom_vline(xintercept=0, linetype="dotted", color="grey")
+
+gall_diffs.df %>%
+  filter(Treatment.focus == "Control") %>%
+  ggplot(., aes(x=Gall_Height_mm, fill=Timing)) +
+  geom_density(alpha=0.5) +
+  geom_vline(data=filter(size_means_diffs, Treatment.focus=="Control"),
+             aes(xintercept=Gall_Height_mm_mean, color=Timing), linetype="dashed") +
+  geom_text(x = 14, y=0.18, label="S = 0.83", size = 3)
+
+```
+
+
+
+Non-linear Selection
+==============================================
+
+```{r nonlinear, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+s_cov <- lm(relative_fitness ~ Gall_Height_mm, control_df)
+
+s_cov_quad <- lm(relative_fitness ~ Gall_Height_mm +
+                   I(Gall_Height_mm^2), control_df)
+visreg_quad <- visreg(s_cov_quad, plot=FALSE)
+
+s_cov_gam <- gam(relative_fitness ~ s(Gall_Height_mm,k=9), data = control_df)
+visreg_gam <- visreg(s_cov_gam, plot=FALSE)
+
+visreg(s_cov, gg=TRUE) +
+  ylab("Relative fitness") +
+  xlab("Gall size (mm)") +
+  geom_line(data = visreg_quad$fit, aes(x = Gall_Height_mm, y=visregFit), color="red") +
+  geom_line(data = visreg_gam$fit, aes(x = Gall_Height_mm, y=visregFit), color="orange") +
+  geom_hline(yintercept=1, linetype="dotted", color="grey") +
+  geom_vline(xintercept=filter(size_means_diffs, Treatment.focus=="Control", Timing=="Before")$Gall_Height_mm_mean, 
+             linetype="dotted", color="grey")
+
+```
+
+
+Multivariate Selection
+========================================================
+
+Selection differentials, $S$ = **direct and indirect** effects.
+
+Selection gradients, $\beta$ = **direct** effects
+
+```{r multivariate, echo=FALSE, fig.height=6, fig.width=6, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+s_cov_mult <- lm(relative_fitness ~ Gall_Height_mm + gall_individuals, control_df)
+visreg_mult <- visreg(s_cov_mult, xvar="Gall_Height_mm", plot=FALSE)
+
+visreg(s_cov, gg=TRUE) +
+  ylab("Relative fitness") +
+  xlab("Gall size (mm)") +
+  geom_line(data = visreg_mult$fit, aes(x = Gall_Height_mm, y=visregFit), color="black") +
+  geom_hline(yintercept=1, linetype="dotted", color="grey") +
+  geom_vline(xintercept=filter(size_means_diffs, Treatment.focus=="Control", Timing=="Before")$Gall_Height_mm_mean, 
+             linetype="dotted", color="grey")
+
+```
+
+
+Comparing Selection Gradients
+==============================================
+
+```{r comparing selection, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+W_bar_treatment <- filter(size_means_diffs, Treatment.focus=="Ectoparasitoid exclusion", Timing=="Before")$gall_survival_mean
+
+gall_selection.df <- gall_selection.df %>%
+  mutate(relative_fitness = ifelse(Treatment.focus=="Control", gall_survival/W_bar_control, gall_survival/W_bar_treatment))
+
+s_env <- lm(relative_fitness ~ I(Gall_Height_mm - mean(Gall_Height_mm)) +
+              Treatment.focus:I(Gall_Height_mm - mean(Gall_Height_mm)),
+            data = gall_selection.df)
+
+visreg(s_env, xvar="Gall_Height_mm", by="Treatment.focus", gg=TRUE, overlay=TRUE) +
+  ylab("Relative fitness (w)") +
+  xlab("Gall size (mm)") +
+  geom_hline(yintercept=1, linetype="dotted", color="grey") 
+```
+
+
+Comparing Selection Gradients
+==============================================
+
+```{r comparing selection 2, echo=FALSE, fig.height=8, fig.width=8, message=FALSE, warning=FALSE, paged.print=FALSE}
+s_env_2 <- lm(gall_survival ~ Treatment.focus*I(Gall_Height_mm - mean(Gall_Height_mm)),
+            data = gall_selection.df)
+
+visreg(s_env_2, xvar="Gall_Height_mm", by="Treatment.focus", gg=TRUE, overlay=TRUE) +
+  ylab("Absolute fitness (W)") +
+  xlab("Gall size (mm)") +
+  geom_vline(xintercept=8.515, color="red", linetype="solid", alpha=0.5) +
+  geom_vline(xintercept=8.511, color="blue", linetype="dotted")
+
+```
+
+
+Comparing Selection Gradients
+==============================================
+
+```{r table, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+s_env_control <- lm(gall_survival ~ I(Gall_Height_mm - mean(Gall_Height_mm)),
+            data = filter(gall_selection.df, Treatment.focus=="Control"))
+
+s_env_treatment <- lm(gall_survival ~ I(Gall_Height_mm - mean(Gall_Height_mm)),
+            data = filter(gall_selection.df, Treatment.focus=="Ectoparasitoid exclusion"))
+
+kable(
+  data.frame(
+    W_bar = c(coef(s_env_control)[1], coef(s_env_treatment)[1]),
+    b = c(coef(s_env_control)[2], coef(s_env_treatment)[2]),
+    B = c(coef(s_env_control)[2]/coef(s_env_control)[1], 
+          coef(s_env_treatment)[2]/coef(s_env_treatment)[1]),
+    B_prime = c(coef(s_env_control)[2]/coef(s_env_control)[1]*sd(filter(gall_selection.df, Treatment.focus=="Control")$Gall_Height_mm), 
+          coef(s_env_treatment)[2]/coef(s_env_treatment)[1]*sd(filter(gall_selection.df, Treatment.focus=="Ectoparasitoid exclusion")$Gall_Height_mm)),
+    S = c(coef(s_env_control)[2]/coef(s_env_control)[1]*var(filter(gall_selection.df, Treatment.focus=="Control")$Gall_Height_mm), 
+          coef(s_env_treatment)[2]/coef(s_env_treatment)[1]*var(filter(gall_selection.df, Treatment.focus=="Ectoparasitoid exclusion")$Gall_Height_mm)),
+    row.names = c("Complex", "Simple")
+  ),
+  col.names = c("W_bar","b","B = b / W_bar","B' = B * sd(z) = S'", "S = B * var(z)"),
+  digits = 2
+)
+```
+
