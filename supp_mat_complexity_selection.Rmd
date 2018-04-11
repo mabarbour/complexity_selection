@@ -12,6 +12,7 @@ library(cowplot) # pretty default ggplots
 library(broom) # for tidying multiple linear models
 library(mgcv) # generalized additive models
 library(gsg) # calculating selection gradients
+library(visreg)
 
 ## LOAD & MANAGE DATASET ----
 
@@ -276,22 +277,29 @@ gam.bootstrap_df %>%
 
 ```
 
+Analyze separate models for absolute fitness as a function of gall size for each treatment and genotype combination. 
 ```{r}
 size_models <- gall_selection.df %>%
   group_by(Treatment.focus, Genotype) %>%
-  do(model = lm(gall_survival ~ Gall_Height_mm, data = .)) %>%
+  do(model = lm(gall_survival ~ I(Gall_Height_mm-mean(Gall_Height_mm)), data = .)) %>%
   tidy(model) %>%
   ungroup()
 
 size_models %>%
   ggplot(., aes(x=Genotype, y=estimate, fill=Treatment.focus)) +
-  geom_bar(stat="identity", position = "dodge") +
   geom_errorbar(aes(ymax = estimate + std.error, ymin = estimate - std.error), #, color=Treatment.focus
-                width = 0.5, position = position_dodge(width = 0.8)) +
+                width = 0.5, position = position_dodge(width=0.8)) +
+  geom_point(shape=21, size = 2, position = position_dodge(width=0.8)) +
+  geom_hline(yintercept = 0, linetype="dotted") +
   facet_wrap(~term, scales = "free_y")
 ```
 
 ```{r}
+size.geno <- gall_selection.df %>%
+  group_by(Treatment.focus, Genotype) %>%
+  summarise_at(vars(Gall_Height_mm), funs(mean))
+size.geno
+
 size.grad_models <- gall_selection.df %>%
   group_by(Treatment.focus, Genotype) %>%
   do(model = lm(gall_survival/mean(gall_survival) ~ I(Gall_Height_mm - mean(Gall_Height_mm)), data = .)) %>%
@@ -302,17 +310,185 @@ size.grad_models
 size.grad_models %>%
   filter(term != "(Intercept)") %>%
   ggplot(., aes(x=Genotype, y=estimate, fill=Treatment.focus)) +
-  geom_bar(stat="identity", position = "dodge") +
   geom_errorbar(aes(ymax = estimate + std.error, ymin = estimate - std.error), #, color=Treatment.focus
-                width = 0.5, position = position_dodge(width = 0.8)) 
+                width = 0.5, position = position_dodge(width = 0.8)) +
+  geom_point(shape=21, size = 2, position = position_dodge(width=0.8)) +
+  geom_hline(yintercept = 0, linetype="dotted") 
 
 size.grad_models %>%
   filter(term != "(Intercept)") %>%
   ggplot(., aes(x=Treatment.focus, y=estimate, fill=Genotype, group=Genotype)) +
   geom_line() +
-  geom_point(shape=21, position = "dodge", size=4) +
+  geom_point(shape=21, size=4) +
   geom_hline(yintercept=0, linetype="dotted")
 
-summary(lm(estimate ~ Treatment.focus, data = filter(size.grad_models, term != "(Intercept)")))
+gall_selection.df$c.Gall_Height_mm <- with(gall_selection.df, Gall_Height_mm - mean(Gall_Height_mm))
+
+size_GxE_lms <- lm(gall_survival ~ (c.Gall_Height_mm+Genotype+Treatment.focus)^2, data = gall_selection.df, contrast = list(Genotype = "contr.sum"))
+summary(size_GxE_lms)
+anova(size_GxE_lms)
+
+table(gall_selection.df$Genotype, gall_selection.df$Treatment.focus)
+
+test <- size.grad_models %>%
+  filter(term != "(Intercept)") %>%
+  left_join(., size.geno) 
+
+cor.test(test$estimate, test$Gall_Height_mm)
 ```
 
+```{r}
+gall_agg <- gall_selection.df %>%
+  group_by(Genotype, Treatment.focus, Plant_Position, Gall_Number) %>%
+  summarise_at(vars(gall_individuals, gall_survival), funs(mean)) %>%
+  ungroup() %>%
+  mutate(c.gall_individuals = gall_individuals - mean(gall_individuals))
+
+ind_models <- gall_agg %>%
+  group_by(Treatment.focus, Genotype) %>%
+  do(model = lm(gall_survival ~ I(gall_individuals-mean(gall_individuals)), data = .)) %>%
+  tidy(model) %>%
+  ungroup()
+
+ind_models %>%
+  ggplot(., aes(x=Genotype, y=estimate, fill=Treatment.focus)) +
+  geom_errorbar(aes(ymax = estimate + std.error, ymin = estimate - std.error), #, color=Treatment.focus
+                width = 0.5, position = position_dodge(width=0.8)) +
+  geom_point(shape=21, size = 2, position = position_dodge(width=0.8)) +
+  geom_hline(yintercept = 0, linetype="dotted") +
+  facet_wrap(~term, scales = "free_y")
+
+ind.grad_models <- gall_agg %>%
+  group_by(Treatment.focus, Genotype) %>%
+  do(model = lm(gall_survival/mean(gall_survival) ~ I(gall_individuals - mean(gall_individuals)), data = .)) %>%
+  tidy(model) %>%
+  ungroup()
+ind.grad_models
+
+ind.grad_models %>%
+  filter(term != "(Intercept)") %>%
+  ggplot(., aes(x=Genotype, y=estimate, fill=Treatment.focus)) +
+  geom_errorbar(aes(ymax = estimate + std.error, ymin = estimate - std.error), #, color=Treatment.focus
+                width = 0.5, position = position_dodge(width = 0.8)) +
+  geom_point(shape=21, size = 2, position = position_dodge(width=0.8)) +
+  geom_hline(yintercept = 0, linetype="dotted") 
+```
+
+```{r}
+plant_agg <- gall_selection.df %>%
+  group_by(Genotype, Treatment.focus, Plant_Position) %>%
+  summarise_at(vars(Density_per_100_shoots, gall_survival), funs(mean)) %>%
+  ungroup() %>%
+  mutate(c.Density_per_100_shoots = Density_per_100_shoots - mean(Density_per_100_shoots))
+
+density.grad_models <- plant_agg %>%
+  group_by(Treatment.focus, Genotype) %>%
+  do(model = lm(gall_survival/mean(gall_survival) ~ I(Density_per_100_shoots - mean(Density_per_100_shoots)), data = .)) %>%
+  tidy(model) %>%
+  ungroup()
+density.grad_models
+
+density.grad_models %>%
+  filter(term != "(Intercept)") %>%
+  ggplot(., aes(x=Genotype, y=estimate, fill=Treatment.focus)) +
+  geom_errorbar(aes(ymax = estimate + std.error, ymin = estimate - std.error), #, color=Treatment.focus
+                width = 0.5, position = position_dodge(width = 0.8)) +
+  geom_point(shape=21, size = 2, position = position_dodge(width=0.8)) +
+  geom_hline(yintercept = 0, linetype="dotted") 
+```
+
+
+
+```{r}
+gall_selection.df$c.gall_individuals <- with(gall_selection.df, gall_individuals - mean(gall_individuals))
+
+ind_GxE_lms <- lm(gall_survival ~ c.gall_individuals*Genotype*Treatment.focus, data = gall_selection.df, contrast = list(Genotype = "contr.sum"))
+summary(ind_GxE_lms)
+anova(ind_GxE_lms)
+```
+
+```{r}
+
+
+agg.ind_GxE_lms <- lm(gall_survival ~ (c.gall_individuals + Genotype + Treatment.focus)^2, data = gall_agg, contrast = list(Genotype = "contr.sum"))
+summary(agg.ind_GxE_lms)
+anova(agg.ind_GxE_lms)
+visreg(agg.ind_GxE_lms, xvar="c.gall_individuals", by="Treatment.focus")
+visreg(agg.ind_GxE_lms, xvar="c.gall_individuals", by="Genotype")
+```
+
+```{r}
+gall_selection.df$c.Density_per_100_shoots <- with(gall_selection.df, Density_per_100_shoots - mean(Density_per_100_shoots))
+
+density_GxE_lms <- lm(gall_survival ~ (c.Density_per_100_shoots + Genotype + Treatment.focus)^2, data = gall_selection.df, contrast = list(Genotype = "contr.sum"))
+summary(density_GxE_lms)
+anova(density_GxE_lms)
+```
+
+```{r}
+plant_agg <- gall_selection.df %>%
+  group_by(Genotype, Treatment.focus, Plant_Position) %>%
+  summarise_at(vars(Density_per_100_shoots, gall_survival), funs(mean)) %>%
+  ungroup() %>%
+  mutate(c.Density_per_100_shoots = Density_per_100_shoots - mean(Density_per_100_shoots))
+
+agg.density_GxE_lms <- lm(gall_survival ~ c.Density_per_100_shoots*Genotype*Treatment.focus, data = plant_agg, contrast = list(Genotype = "contr.sum"))
+summary(agg.density_GxE_lms)
+anova(agg.density_GxE_lms)
+```
+
+```{r}
+multivar_GxE_lms <- lm(gall_survival ~ Genotype*Treatment.focus*c.Gall_Height_mm, data = gall_selection.df, contrast = list(Genotype = "contr.sum", Treatment.focus="contr.sum"))
+summary(multivar_GxE_lms)
+car::vif(multivar_GxE_lms)
+anova(multivar_GxE_lms)
+visreg(multivar_GxE_lms, xvar="c.Gall_Height_mm", by="Treatment.focus")
+visreg(multivar_GxE_lms, xvar="c.gall_individuals", by="Treatment.focus")
+visreg(multivar_GxE_lms, xvar="c.Density_per_100_shoots", by="Treatment.focus")
+visreg2d(multivar_GxE_lms, xvar="c.Density_per_100_shoots", yvar="c.gall_individuals")
+```
+
+```{r Piecewise SEM}
+library(lme4)
+library(lmerTest)
+library(piecewiseSEM)
+
+size_geno <- lm(Gall_Height_mm ~ Genotype, gall_selection.df, contrast = list(Genotype="contr.sum")) 
+summary(size_geno)
+sem.model.fits(size_geno)
+anova(size_geno)
+
+ind_geno <- lm(gall_individuals ~ Genotype, gall_selection.df, contrast = list(Genotype="contr.sum"))
+summary(ind_geno)
+sem.model.fits(ind_geno)
+anova(ind_geno)
+
+density_geno <- lmer(log(Density_per_100_shoots+1) ~ Genotype + (1|Plant_Position/Gall_Number/Gall_ID), gall_selection.df, contrast = list(Genotype="contr.sum"))
+summary(density_geno)
+sem.model.fits(density_geno)
+anova(density_geno)
+
+selection_grads <- lm(gall_survival ~ Treatment.focus*(Gall_Height_mm+gall_individuals+Density_per_100_shoots)^2, gall_selection.df)
+sem.model.fits(selection_grads)
+
+model.list <- list(size_geno, ind_geno, density_geno, selection_grads)
+
+sem.fit(model.list, gall_selection.df, corr.errors = c("Gall_Height_mm~~gall_individuals","Gall_Height_mm~~Density_per_100_shoots","gall_individuals~~Density_per_100_shoots"))
+```
+
+```{r}
+gall_selection.df %>%
+  ggplot(., aes(x=c.Gall_Height_mm, y=gall_survival, color=Genotype)) +
+  geom_smooth(method="lm") +
+  facet_wrap(~Treatment.focus)
+
+gall_agg %>%
+  ggplot(., aes(x=c.gall_individuals, y=gall_survival, color=Genotype)) +
+  geom_smooth(method="lm") +
+  facet_wrap(~Treatment.focus)
+
+plant_agg %>%
+  ggplot(., aes(x=c.Density_per_100_shoots, y=gall_survival, color=Genotype)) +
+  geom_smooth(method="lm") +
+  facet_wrap(~Treatment.focus)
+```
