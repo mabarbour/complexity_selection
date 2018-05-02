@@ -80,51 +80,106 @@ treatment_tree <- treatment_df %>%
 #  mutate(c.Gall_Height_mm_mean = Gall_Height_mm_mean - mean(Gall_Height_mm_mean),
 #         c.Density_per_100_shoots_mean = Density_per_100_shoots_mean - mean(Density_per_100_shoots_mean))
 
+#### EXAMINE CORRELATIONS ----
+
+## gall size vs. individuals
+size.ind.corr.lm <- lm(c.gall_individuals_mean ~ c.Gall_Height_mm_mean*Treatment.focus, data = all_tree, contrasts=list(Treatment.focus="contr.sum"))
+summary(size.ind.corr.lm)
+visreg(size.ind.corr.lm, xvar="c.Gall_Height_mm_mean", by="Treatment.focus")
+
+## gall size vs. density
+size.dens.corr.lm <- lm(c.Density_per_100_shoots_mean ~ c.Gall_Height_mm_mean*Treatment.focus, data = all_tree, contrasts=list(Treatment.focus="contr.sum"))
+summary(size.dens.corr.lm)
+visreg(size.dens.corr.lm, xvar="c.Gall_Height_mm_mean", by="Treatment.focus")
+
+## gall individuals vs. density
+ind.dens.corr.lm <- lm(c.Density_per_100_shoots_mean ~ c.gall_individuals_mean*Treatment.focus, data = all_tree, contrasts=list(Treatment.focus="contr.sum"))
+summary(ind.dens.corr.lm)
+visreg(ind.dens.corr.lm, xvar="c.gall_individuals_mean", by="Treatment.focus")
+
+
 #### CONTROL - ECO-EVO FITNESS LANDSCAPE ANALYSES ----
 
-## Summary: In the complex food web, trait (evo) gradient is much more important than the 
-## abundance (eco) gradient in shaping the fitness landscape.
+## Summary: In the complex food web, trait (evo) gradient is much more important than either 
+## abundance (eco) gradient in shaping the fitness landscape. There are no statistical interactions
+## among these different gradients. Note that removing the one high density outlier permits tests
+## of statistical interactions since it greatly reduces multicollinearity. Including or excluding it though
+## does not change the qualitative conclusions
 
 # analysis
-mcpeek_control.glm <- glm(gall_survival_mean ~ c.Gall_Height_mm_mean + c.Density_per_100_shoots_mean + c.gall_individuals_mean + Genotype, 
-                         data = control_tree, weights = gall_survival_n, family=binomial(link="logit"))
+mcpeek_control.glm <- glm(gall_survival_mean ~ c.Gall_Height_mm_mean*c.Density_per_100_shoots_mean*c.gall_individuals_mean, # + Genotype, 
+                         data = filter(control_tree, c.Density_per_100_shoots_mean < 50), weights = gall_survival_n, family=binomial(link="logit"))
 car::vif(mcpeek_control.glm)
 summary(mcpeek_control.glm)
 car::Anova(mcpeek_control.glm, type=3)
 
 # visualize models
-visreg(mcpeek_control.glm, xvar="c.Gall_Height_mm_mean", by="c.Density_per_100_shoots_mean", gg=TRUE, overlay=TRUE, scale="response")
-visreg(mcpeek_control.glm, xvar="c.Density_per_100_shoots_mean", gg=TRUE, scale="response")
-visreg(mcpeek_control.glm, xvar="c.gall_individuals_mean", gg=TRUE, scale="response")
-visreg2d(mcpeek_control.glm, xvar="c.Gall_Height_mm_mean", yvar="c.Density_per_100_shoots_mean", 
-         scale="response", plot.type = "persp")
+visreg(mcpeek_control.glm, xvar="c.Gall_Height_mm_mean", 
+       cond=list(c.Density_per_100_shoots_mean=0, c.gall_individuals_mean=0), 
+       gg=TRUE, scale="response")
+visreg(mcpeek_control.glm, xvar="c.gall_individuals_mean", 
+       cond=list(c.Density_per_100_shoots_mean=0, c.Gall_Height_mm_mean=0), 
+       gg=TRUE, scale="response")
+visreg(mcpeek_control.glm, xvar="c.Density_per_100_shoots_mean", 
+       cond=list(c.Gall_Height_mm_mean=0, c.gall_individuals_mean=0), 
+       gg=TRUE, scale="response")
 
 # standardized effect sizes
 coef(mcpeek_control.glm)["c.Gall_Height_mm_mean"] * sd(control_tree$Gall_Height_mm_mean)
-coef(mcpeek_control.glm)["c.Density_per_100_shoots_mean"] * sd(control_tree$Density_per_100_shoots_mean)
 
 #### TREATMENT - ECO-EVO FITNESS LANDSCAPE ANALYSES ----
 
-## Summary: In the simple food web, trait (evo) gradient and abundance (eco) gradient are similarly
-## important in shaping the fitness landscape. 
+## Summary: In the simple food web, trait (evo) gradient and abundance (eco) gradient are both
+## important in shaping the fitness landscape (evo > eco). 
 
 # analysis
-mcpeek_treatment.glm <- glm(gall_survival_mean ~ c.Gall_Height_mm_mean*c.Density_per_100_shoots_mean*c.gall_individuals_mean+Genotype, 
+mcpeek_treatment.glm <- glm(gall_survival_mean ~ c.Gall_Height_mm_mean*c.gall_individuals_mean*c.Density_per_100_shoots_mean, # + Genotype, 
                            data = treatment_tree, weights = gall_survival_n, family=binomial(link="logit"))
 car::vif(mcpeek_treatment.glm)
 summary(mcpeek_treatment.glm)
 car::Anova(mcpeek_treatment.glm, type=3) # potential 3-way interaction...
 
 # visualize models
-visreg(mcpeek_treatment.glm, xvar="c.Gall_Height_mm_mean", by="c.Density_per_100_shoots_mean", gg=TRUE, overlay=TRUE, scale="response")
-visreg(mcpeek_treatment.glm, xvar="c.gall_individuals_mean", by="c.Density_per_100_shoots_mean", gg=TRUE, overlay=TRUE, scale="response")
-visreg2d(mcpeek_treatment.glm, xvar="c.Gall_Height_mm_mean", yvar="c.Density_per_100_shoots_mean", 
-         scale="response", plot.type = "persp")
+visreg(mcpeek_treatment.glm, xvar="c.Gall_Height_mm_mean", cond=list(c.Density_per_100_shoots_mean=0, c.gall_individuals_mean=0), gg=TRUE, scale="response")
+visreg(mcpeek_treatment.glm, xvar="c.Density_per_100_shoots_mean", cond=list(c.Gall_Height_mm_mean=0, c.gall_individuals_mean=0), gg=TRUE, scale="response")
+visreg(mcpeek_treatment.glm, xvar="c.gall_individuals_mean", cond=list(c.Gall_Height_mm_mean=0, c.Density_per_100_shoots_mean=0), gg=TRUE, scale="response")
+
+visreg(mcpeek_treatment.glm, xvar="c.Gall_Height_mm_mean", by="c.gall_individuals_mean", cond=list(c.Density_per_100_shoots_mean=0), gg=TRUE, overlay=TRUE, scale="response")
+visreg2d(mcpeek_treatment.glm, xvar="c.Gall_Height_mm_mean", yvar="c.gall_individuals_mean", scale="response")
+
+visreg(mcpeek_treatment.glm, xvar="c.gall_individuals_mean", by="c.Density_per_100_shoots_mean", 
+       cond=list(c.Gall_Height_mm_mean=-2), gg=TRUE, overlay=TRUE, scale="response")
+visreg(mcpeek_treatment.glm, xvar="c.gall_individuals_mean", by="c.Density_per_100_shoots_mean", 
+       cond=list(c.Gall_Height_mm_mean=0), gg=TRUE, overlay=TRUE, scale="response")
+visreg(mcpeek_treatment.glm, xvar="c.gall_individuals_mean", by="c.Density_per_100_shoots_mean", 
+       cond=list(c.Gall_Height_mm_mean=2), gg=TRUE, overlay=TRUE, scale="response")
+
 
 # standardized effect sizes
 coef(mcpeek_treatment.glm)["c.Gall_Height_mm_mean"] * sd(treatment_tree$Gall_Height_mm_mean)
 coef(mcpeek_treatment.glm)["c.Density_per_100_shoots_mean"] * sd(treatment_tree$Density_per_100_shoots_mean)
 
+## exploring interactive effect with gall individuals
+hist(treatment_tree$gall_individuals_mean)
+
+treatment_tree <- mutate(treatment_tree,
+  c.Gall_Height_mm_cut = ifelse(c.Gall_Height_mm_mean > 0, 1, 0),
+  c.gall_individuals_cut = ifelse(c.gall_individuals_mean > 0, 1, 0),
+  gall_individuals_3cut = cut(gall_individuals_mean, breaks=c(0,2,6)) #quantile(gall_individuals_mean,0.33),quantile(gall_individuals_mean,0.66),quantile(gall_individuals_mean,1)))
+)
+table(treatment_tree$gall_individuals_3cut)
+
+ggplot(treatment_tree, aes(x=gall_individuals_3cut, y=c.Gall_Height_mm_mean)) + geom_boxplot()
+
+cut.mcpeek_treatment.glm <- glm(gall_survival_mean ~ c.Gall_Height_mm_mean*gall_individuals_3cut+c.Density_per_100_shoots_mean, # + Genotype, 
+                            data = filter(treatment_tree, c.Gall_Height_mm_mean < 2), weights = gall_survival_n, family=binomial(link="logit"),
+                            contrasts=list(gall_individuals_3cut="contr.sum"))
+car::vif(cut.mcpeek_treatment.glm)
+summary(cut.mcpeek_treatment.glm)
+car::Anova(cut.mcpeek_treatment.glm, type=3)
+
+visreg(cut.mcpeek_treatment.glm, xvar="c.Gall_Height_mm_mean", by="gall_individuals_3cut", 
+       cond=list(c.Density_per_100_shoots_mean=0), gg=TRUE, overlay=TRUE, scale="response")
 
 #### FULL - ECO-EVO FITNESS LANDSCAPE ANALYSES ----
 
@@ -132,8 +187,8 @@ coef(mcpeek_treatment.glm)["c.Density_per_100_shoots_mean"] * sd(treatment_tree$
 ## but not the trait (evo) gradient. 
 
 # analysis
-mcpeek_all.glm <- glm(gall_survival_mean ~ c.Gall_Height_mm_mean*c.Density_per_100_shoots_mean*c.gall_individuals_mean*Treatment.focus, 
-                            data = all_tree, weights = gall_survival_n, family=binomial(link="logit"),
+mcpeek_all.glm <- glm(gall_survival_mean ~ c.Gall_Height_mm_mean*c.gall_individuals_mean +c.Density_per_100_shoots_mean + Treatment.focus, 
+                            data = filter(all_tree, c.Density_per_100_shoots_mean < 100), weights = gall_survival_n, family=binomial(link="logit"),
                             contrasts = list(Treatment.focus="contr.sum"))
 car::vif(mcpeek_all.glm) 
 summary(mcpeek_all.glm) # note rather high residual deviance...
@@ -142,6 +197,16 @@ car::Anova(mcpeek_all.glm, type=3) # note that there no longer appears to be a d
 # visualize models
 visreg(mcpeek_all.glm, xvar="c.Gall_Height_mm_mean", by="Treatment.focus", overlay=TRUE, scale="response")
 visreg(mcpeek_all.glm, xvar="c.Density_per_100_shoots_mean", by="Treatment.focus", overlay=TRUE, scale="response")
+
+visreg(mcpeek_all.glm, xvar="c.gall_individuals_mean", by="c.Gall_Height_mm_mean", 
+       cond=list(c.Density_per_100_shoots_mean=0), gg=TRUE, overlay=TRUE, scale="response")
+
+visreg(mcpeek_treatment.glm, xvar="c.gall_individuals_mean", by="c.Density_per_100_shoots_mean", 
+       cond=list(c.Gall_Height_mm_mean=-2), gg=TRUE, overlay=TRUE, scale="response")
+visreg(mcpeek_treatment.glm, xvar="c.gall_individuals_mean", by="c.Density_per_100_shoots_mean", 
+       cond=list(c.Gall_Height_mm_mean=0), gg=TRUE, overlay=TRUE, scale="response")
+visreg(mcpeek_treatment.glm, xvar="c.gall_individuals_mean", by="c.Density_per_100_shoots_mean", 
+       cond=list(c.Gall_Height_mm_mean=2), gg=TRUE, overlay=TRUE, scale="response")
 
 # standardized effect sizes
 coef(mcpeek_all.glm)["c.Gall_Height_mm_mean"] * sd(all_tree$Gall_Height_mm_mean)
