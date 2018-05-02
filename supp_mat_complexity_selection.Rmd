@@ -197,9 +197,9 @@ gam_red.control_size <- gam(gall_survival ~
                              c.gall_individuals +
                              c.Density_per_100_shoots,
                            data = control_df, family = binomial(link = "logit"))
-summary(gam_red.control)
+summary(gam_red.control_size)
 
-gam.plot(gam_red.control)
+gam.plot(gam_red.control_size)
 gam.plot(gamm_red.control$gam)
 
 ## Gall individuals
@@ -237,15 +237,42 @@ control_df_plant.level <- control_df_gall.level %>%
          c.gall_individuals_mean = gall_individuals_mean - mean(gall_individuals_mean),
          c.Density_per_100_shoots = Density_per_100_shoots - mean(Density_per_100_shoots)) # why is this giving zero values?
 
+test.control_df_plant.level <- control_df %>%
+  group_by(Treatment.focus, Plant_Position) %>%
+  summarise(gall_survival_mean = mean(gall_survival),
+            gall_sample_size = n(),
+            gall_individuals_mean = mean(gall_individuals),                 
+            Gall_Height_mm_mean = mean(Gall_Height_mm),
+            Density_per_100_shoots = mean(Density_per_100_shoots)) %>%                # note that there is no variance, it is the actual value
+  ungroup() %>%
+  mutate(c.Gall_Height_mm_mean = Gall_Height_mm_mean - mean(Gall_Height_mm_mean),
+         c.gall_individuals_mean = gall_individuals_mean - mean(gall_individuals_mean),
+         c.Density_per_100_shoots = Density_per_100_shoots - mean(Density_per_100_shoots))
+
 gam_red.control_density <- gam(gall_survival_mean ~
-                                c.Gall_Height_mm_mean + 
-                                c.gall_individuals_mean +
+                                s(c.Gall_Height_mm_mean) + 
+                                s(c.gall_individuals_mean, k=3) +
                                 s(c.Density_per_100_shoots, k=3),   # do I adjust k to be consistent with mixed-effects model?
-                             data = control_df_plant.level, family = binomial(link = "logit"), weights = gall_sample_size) # weighting appears to alter the results...
+                             data = control_df_plant.level,
+                             family = binomial, #(link = "logit"), 
+                             weights = gall_sample_size) # weighting appears to alter the results...
 summary(gam_red.control_density)
+plot(gam_red.control_density, pages=1, residuals=TRUE)
+gam.check(gam_red.control_density)
+
+plot(lambda, gcvscore, type = "l") # or
+plot(log(lambda), gcvscore, type = "l")
 
 gam.plot(gam_red.control_density)
 gam.plot(gamm_red.control$gam)
+
+set.seed(1) 
+dat <- gamSim(1,n=400,scale=2)
+
+## fit a GAM with quite low `k'
+b<-gam(y~s(x0,k=6)+s(x1,k=6)+s(x2,k=6)+s(x3,k=6),data=dat)
+plot(b,pages=1,residuals=TRUE) ## hint of a problem in s(x2)
+gam.check(b)
 
 ## TREATMENT PLANTS ----
 
@@ -296,10 +323,10 @@ treatment_df_plant.level <- treatment_df_gall.level %>%
          c.Density_per_100_shoots = Density_per_100_shoots - mean(Density_per_100_shoots)) # why is this giving zero values?
 
 gam_red.treatment_density <- gam(gall_survival_mean ~
-                                c.Gall_Height_mm_mean + 
-                                c.gall_individuals_mean +
+                                s(c.Gall_Height_mm_mean) + 
+                                s(c.gall_individuals_mean) +
                                 s(c.Density_per_100_shoots),
-                             data = treatment_df_plant.level, family = binomial(link = "logit"), weights = gall_sample_size) # weighting appears to alter the results...
+                             data = treatment_df_plant.level, family = binomial(link = "logit"))#, weights = gall_sample_size) # weighting appears to alter the results...
 summary(gam_red.treatment_density)
 
 gam.plot(gam_red.treatment_density)
