@@ -7,6 +7,9 @@ library(cowplot) # pretty default ggplots
 library(visreg)
 library(viridis)
 
+mean_log <- function(x) mean(log(x))
+var_log <- function(x) var(log(x))
+
 ## LOAD & MANAGE DATASET ----
 
 gall_selection.df <- read_csv("gall_selection_data.csv") %>%
@@ -36,7 +39,7 @@ all_tree <- gall_selection.df %>%
   
   # then summarise at the plant level
   group_by(Genotype, Treatment.focus, Plant_Position) %>%
-  summarise_at(vars(Density_per_100_shoots, Gall_Height_mm, gall_individuals, gall_survival), funs(mean, n())) %>%
+  summarise_at(vars(Density_per_100_shoots, Gall_Height_mm, gall_individuals, gall_survival), funs(mean, var, mean_log, var_log, n())) %>%
   ungroup() %>%
   select(-Density_per_100_shoots_n, -Gall_Height_mm_n) %>%
   mutate(c.Gall_Height_mm_mean = Gall_Height_mm_mean - mean(Gall_Height_mm_mean),
@@ -50,7 +53,7 @@ control_tree <- control_df %>%
   
   # then summarise at the plant level
   group_by(Genotype, Treatment.focus, Plant_Position) %>%
-  summarise_at(vars(Density_per_100_shoots, Gall_Height_mm, gall_individuals, gall_survival), funs(mean, n())) %>%
+  summarise_at(vars(Density_per_100_shoots, Gall_Height_mm, gall_individuals, gall_survival), funs(mean, var, n())) %>%
   ungroup() %>%
   select(-Density_per_100_shoots_n, -Gall_Height_mm_n) %>%
   mutate(c.Gall_Height_mm_mean = Gall_Height_mm_mean - mean(Gall_Height_mm_mean),
@@ -64,12 +67,32 @@ treatment_tree <- treatment_df %>%
   
   # then summarise at the plant level
   group_by(Genotype, Treatment.focus, Plant_Position) %>%
-  summarise_at(vars(Density_per_100_shoots, Gall_Height_mm, gall_individuals, gall_survival), funs(mean, n())) %>%
+  summarise_at(vars(Density_per_100_shoots, Gall_Height_mm, gall_individuals, gall_survival), funs(mean, var, n())) %>%
   ungroup() %>%
   select(-Density_per_100_shoots_n, -Gall_Height_mm_n) %>%
   mutate(c.Gall_Height_mm_mean = Gall_Height_mm_mean - mean(Gall_Height_mm_mean),
          c.gall_individuals_mean = gall_individuals_mean - mean(gall_individuals_mean),
          c.Density_per_100_shoots_mean = Density_per_100_shoots_mean - mean(Density_per_100_shoots_mean))
+
+
+#### TEST THE ASSUMPTION THAT MEAN IS NOT RELATED TO VARIANCE
+all_tree %>%
+  ggplot(., aes(x=Gall_Height_mm_mean, y=Gall_Height_mm_var)) +
+  geom_point() + geom_smooth(method="lm")
+
+# very strong positive correlation...
+all_tree %>%
+  ggplot(., aes(x=gall_individuals_mean, y=gall_individuals_var)) +
+  geom_point() + geom_smooth(method="lm")
+
+all_tree %>%
+  ggplot(., aes(x=gall_individuals_mean_log, y=gall_individuals_var_log, size=gall_survival_n, weight=gall_survival_n)) +
+  geom_point() + geom_smooth(method="lm")
+
+summary(lm(gall_individuals_var_log ~ gall_individuals_mean_log, data=all_tree))
+summary(lm(gall_individuals_var_log ~ gall_individuals_mean_log, data=all_tree, weights = gall_survival_n))
+
+summary(all_tree$Density_per_100_shoots_var)
 
 
 #### MODEL RATIONALE
