@@ -1,0 +1,211 @@
+---
+title: "Morgue: Supplementary material"
+output: html_notebook
+---
+
+GAM estimates of selection gradients differ from GAMM
+
+```{r COMPARE GAM WITH GAMM}
+
+## CONTROL PLANTS ----
+
+## Gall Height
+gam_red.control_size <- gam(gall_survival ~
+                             s(c.Gall_Height_mm) + 
+                             s(c.gall_individuals, k=9) +
+                             s(c.Density_per_100_shoots),
+                           data = control_df, family = binomial(link = "logit"))
+summary(gam_red.control_size)
+
+gam.plot(gam_red.control_size, pages=1)
+gam.plot(gamm_red.control$gam, pages=1)
+
+## Gall individuals
+control_df_gall.level <- control_df %>%
+  group_by(Treatment.focus, Plant_Position, Gall_Number) %>%
+  summarise(gall_survival_mean = mean(gall_survival),
+            gall_individuals = mean(gall_individuals),                 # note that there is no variance, it is the actual value
+            Gall_Height_mm_mean = mean(Gall_Height_mm),
+            Density_per_100_shoots = mean(Density_per_100_shoots)) %>% # remember that this is pseudo-replicated at the gall-level
+  ungroup() %>%
+  mutate(c.Gall_Height_mm_mean = Gall_Height_mm_mean - mean(Gall_Height_mm_mean),
+         c.gall_individuals = gall_individuals - mean(gall_individuals),
+         c.Density_per_100_shoots = Density_per_100_shoots - mean(Density_per_100_shoots)) # why is this giving zero values?
+
+gam_red.control_indiv <- gam(gall_survival_mean ~
+                              s(c.Gall_Height_mm_mean) + 
+                              s(c.gall_individuals, k=9) +
+                              s(c.Density_per_100_shoots),
+                             data = control_df_gall.level, family = binomial(link = "logit")) # we didn't include weights because this would be correlated with the number of individuals per gall
+summary(gam_red.control_indiv)
+
+gam.plot(gam_red.control_indiv, pages=1)
+gam.plot(gamm_red.control$gam, pages=1)
+
+## Gall density
+control_df_plant.level <- control_df_gall.level %>%
+  group_by(Treatment.focus, Plant_Position) %>%
+  summarise(gall_survival_mean = mean(gall_survival_mean),
+            gall_sample_size = n(),
+            gall_individuals_mean = mean(gall_individuals),                 
+            Gall_Height_mm_mean = mean(Gall_Height_mm_mean),
+            Density_per_100_shoots = mean(Density_per_100_shoots)) %>%    # note that there is no variance, it is the actual value
+  ungroup() %>%
+  mutate(c.Gall_Height_mm_mean = Gall_Height_mm_mean - mean(Gall_Height_mm_mean),
+         c.gall_individuals_mean = gall_individuals_mean - mean(gall_individuals_mean),
+         c.Density_per_100_shoots = Density_per_100_shoots - mean(Density_per_100_shoots)) 
+
+#test.control_df_plant.level <- control_df %>%
+#  group_by(Treatment.focus, Plant_Position) %>%
+#  summarise(gall_survival_mean = mean(gall_survival),
+#            gall_sample_size = n(),
+#            gall_individuals_mean = mean(gall_individuals),                 
+#            Gall_Height_mm_mean = mean(Gall_Height_mm),
+#            Density_per_100_shoots = mean(Density_per_100_shoots)) %>%                # note that there is no variance, it is the actual value
+#  ungroup() %>%
+#  mutate(c.Gall_Height_mm_mean = Gall_Height_mm_mean - mean(Gall_Height_mm_mean),
+#         c.gall_individuals_mean = gall_individuals_mean - mean(gall_individuals_mean),
+#         c.Density_per_100_shoots = Density_per_100_shoots - mean(Density_per_100_shoots))
+
+gam_red.control_density <- gam(gall_survival_mean ~
+                                s(c.Gall_Height_mm_mean) + 
+                                s(c.gall_individuals_mean, k=9) +
+                                s(c.Density_per_100_shoots, k=3),  # adjusting k value to avoid overfitting of Density   
+                             data = control_df_plant.level,
+                             family = binomial(link = "logit"), 
+                             weights = gall_sample_size) 
+summary(gam_red.control_density)
+
+gam.plot(gam_red.control_density, pages=1)
+gam.plot(gamm_red.control$gam, pages=1)
+
+
+## TREATMENT PLANTS ----
+
+## Gall Height
+gam_red.treatment_size <- gam(gall_survival ~
+                         s(c.Gall_Height_mm) + 
+                         s(c.gall_individuals, k=9) +
+                         s(c.Density_per_100_shoots),
+                       data = treatment_df, family = binomial(link = "logit"))
+summary(gam_red.treatment_size)
+
+gam.plot(gam_red.treatment_size, pages=1)
+gam.plot(gamm_red.treatment$gam, pages=1)
+
+## Gall individuals
+treatment_df_gall.level <- treatment_df %>%
+  group_by(Treatment.focus, Plant_Position, Gall_Number) %>%
+  summarise(gall_survival_mean = mean(gall_survival),
+            gall_individuals = mean(gall_individuals),              # note that there is no variance, it is the actual value
+            Gall_Height_mm_mean = mean(Gall_Height_mm),
+            Density_per_100_shoots = mean(Density_per_100_shoots)) %>% # remember this is pseudo-replicated at the gall-level
+  ungroup() %>%
+  mutate(c.Gall_Height_mm_mean = Gall_Height_mm_mean - mean(Gall_Height_mm_mean),
+         c.gall_individuals = gall_individuals - mean(gall_individuals),
+         c.Density_per_100_shoots = Density_per_100_shoots - mean(Density_per_100_shoots)) # why is this giving zero values?
+
+gam_red.treatment_indiv <- gam(gall_survival_mean ~
+                              s(c.Gall_Height_mm_mean) + 
+                              s(c.gall_individuals, k=9) +
+                              s(c.Density_per_100_shoots),
+                             data = treatment_df_gall.level, family = binomial(link = "logit"))
+summary(gam_red.treatment_indiv)
+
+gam.plot(gam_red.treatment_indiv, pages=1)
+gam.plot(gamm_red.treatment$gam, pages=1)
+
+## Gall density
+treatment_df_plant.level <- treatment_df_gall.level %>%
+  group_by(Treatment.focus, Plant_Position) %>%
+  summarise(gall_survival_mean = mean(gall_survival_mean),
+            gall_sample_size = n(),
+            gall_individuals_mean = mean(gall_individuals),                 
+            Gall_Height_mm_mean = mean(Gall_Height_mm_mean),
+            Density_per_100_shoots = mean(Density_per_100_shoots)) %>%  # note that there is no variance, it is the actual value
+  ungroup() %>%
+  mutate(c.Gall_Height_mm_mean = Gall_Height_mm_mean - mean(Gall_Height_mm_mean),
+         c.gall_individuals_mean = gall_individuals_mean - mean(gall_individuals_mean),
+         c.Density_per_100_shoots = Density_per_100_shoots - mean(Density_per_100_shoots)) 
+
+
+gam_red.treatment_density <- gam(gall_survival_mean ~
+                                s(c.Gall_Height_mm_mean) + 
+                                s(c.gall_individuals_mean, k=9) +
+                                s(c.Density_per_100_shoots),
+                             data = treatment_df_plant.level, family = binomial(link = "logit"), 
+                             weights = gall_sample_size) 
+summary(gam_red.treatment_density)
+
+gam.plot(gam_red.treatment_density, pages=1)
+gam.plot(gamm_red.treatment$gam, pages=1)
+
+#### CALCULATE SELECTION GRADIENTS FROM GAM ----
+
+## GALL SIZE ----
+sg.gam.size_control <- gradient.calc(mod = gam_red.control_size, 
+                                 phenotype = "c.Gall_Height_mm", 
+                                 covariates = c("c.gall_individuals","c.Density_per_100_shoots"))
+sg.gam.size_treatment <- gradient.calc(mod = gam_red.treatment_size, 
+                                   phenotype = "c.Gall_Height_mm", 
+                                   covariates = c("c.gall_individuals","c.Density_per_100_shoots"))
+
+## GALL INDIVIDUALS ----
+sg.gam.individuals_control <- gradient.calc(mod = gam_red.control_indiv, 
+                                        phenotype = "c.gall_individuals", 
+                                        covariates = c("c.Gall_Height_mm_mean","c.Density_per_100_shoots"))
+sg.gam.individuals_treatment <- gradient.calc(mod = gam_red.treatment_indiv, 
+                                          phenotype = "c.gall_individuals", 
+                                          covariates = c("c.Gall_Height_mm_mean","c.Density_per_100_shoots"))
+
+## GALL DENSITY ----
+sg.gam.density_control <- gradient.calc(mod = gam_red.control_density, 
+                                    phenotype = "c.Density_per_100_shoots", 
+                                    covariates = c("c.gall_individuals_mean","c.Gall_Height_mm_mean"))
+sg.gam.density_treatment <- gradient.calc(mod = gam_red.treatment_density, 
+                                      phenotype = "c.Density_per_100_shoots", 
+                                      covariates = c("c.gall_individuals_mean","c.Gall_Height_mm_mean"))
+
+## PRINT TABLE ----
+rbind(
+  mutate(sg.gam.size_control$ests, Food_Web_Treatment = "Complex"),
+  mutate(sg.gam.size_treatment$ests, Food_Web_Treatment = "Simple"),
+  mutate(sg.gam.individuals_control$ests, Food_Web_Treatment = "Complex"),
+  mutate(sg.gam.individuals_treatment$ests, Food_Web_Treatment = "Simple"),
+  mutate(sg.gam.density_control$ests, Food_Web_Treatment = "Complex"),
+  mutate(sg.gam.density_treatment$ests, Food_Web_Treatment = "Simple")
+)
+
+round(rbind(
+  sg.gam.size_control$ests,
+  sg.gam.size_treatment$ests,
+  sg.gam.individuals_control$ests,
+  sg.gam.individuals_treatment$ests,
+  sg.gam.density_control$ests,
+  sg.gam.density_treatment$ests
+),3)
+
+## BOOTSTRAPPED INTERVALS ----
+gam.bootstrap_df <- bind_rows(
+  data.frame(Bootstrap_Estimates = sg.gam.size_control$boot[ ,1], Phenotype = "c.Gall_Height_mm", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.gam.size_control$boot[ ,2], Phenotype = "c.Gall_Height_mm", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.gam.size_treatment$boot[ ,1], Phenotype = "c.Gall_Height_mm", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.gam.size_treatment$boot[ ,2], Phenotype = "c.Gall_Height_mm", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.gam.individuals_control$boot[ ,1], Phenotype = "c.gall_individuals", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.gam.individuals_control$boot[ ,2], Phenotype = "c.gall_individuals", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.gam.individuals_treatment$boot[ ,1], Phenotype = "c.gall_individuals", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.gam.individuals_treatment$boot[ ,2], Phenotype = "c.gall_individuals", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.gam.density_control$boot[ ,1], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.gam.density_control$boot[ ,2], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.gam.density_treatment$boot[ ,1], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.gam.density_treatment$boot[ ,2], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Gamma", Food_Web_Treatment = "Simple")
+)
+
+gam.bootstrap_df %>%
+  ggplot(., aes(x=Phenotype, y=Bootstrap_Estimates, fill=Food_Web_Treatment)) +
+  geom_boxplot() +
+  geom_hline(yintercept=0, linetype="dotted") +
+  facet_wrap(~Selection_Type) +
+  coord_flip()
+
+```
