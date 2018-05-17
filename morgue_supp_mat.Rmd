@@ -3,6 +3,81 @@ title: "Morgue: Supplementary material"
 output: html_notebook
 ---
 
+ggplot_uniFL <- function(FL.df) {
+  ggplot(FL.df, aes(x = Var1, y = mean_fitness)) +
+    geom_line() + 
+    geom_ribbon(aes(ymin = lower_2.5, ymax = upper_97.5), alpha = 0.5)
+}
+
+```{r SELECTION GRADIENTS}
+
+## GALL SIZE ----
+sg.size_control <- gradient.calc(mod = gamm_red.control$gam, 
+                                 phenotype = "c.Gall_Height_mm", 
+                                 covariates = c("c.gall_individuals","c.Density_per_100_shoots"))
+sg.size_treatment <- gradient.calc(mod = gamm_red.treatment$gam, 
+                                   phenotype = "c.Gall_Height_mm", 
+                                   covariates = c("c.gall_individuals","c.Density_per_100_shoots"))
+
+## GALL INDIVIDUALS ----
+sg.individuals_control <- gradient.calc(mod = gamm_red.control$gam, 
+                                        phenotype = "c.gall_individuals", 
+                                        covariates = c("c.Gall_Height_mm","c.Density_per_100_shoots"))
+sg.individuals_treatment <- gradient.calc(mod = gamm_red.treatment$gam, 
+                                          phenotype = "c.gall_individuals", 
+                                          covariates = c("c.Gall_Height_mm","c.Density_per_100_shoots"))
+
+## GALL DENSITY ----
+sg.density_control <- gradient.calc(mod = gamm_red.control$gam, 
+                                    phenotype = "c.Density_per_100_shoots", 
+                                    covariates = c("c.gall_individuals","c.Gall_Height_mm"))
+sg.density_treatment <- gradient.calc(mod = gamm_red.treatment$gam, 
+                                      phenotype = "c.Density_per_100_shoots", 
+                                      covariates = c("c.gall_individuals","c.Gall_Height_mm"))
+
+## PRINT TABLE ----
+rbind(
+  mutate(sg.size_control$ests, Food_Web_Treatment = "Complex"),
+  mutate(sg.size_treatment$ests, Food_Web_Treatment = "Simple"),
+  mutate(sg.individuals_control$ests, Food_Web_Treatment = "Complex"),
+  mutate(sg.individuals_treatment$ests, Food_Web_Treatment = "Simple"),
+  mutate(sg.density_control$ests, Food_Web_Treatment = "Complex"),
+  mutate(sg.density_treatment$ests, Food_Web_Treatment = "Simple")
+)
+
+round(rbind(
+  sg.size_control$ests,
+  sg.size_treatment$ests,
+  sg.individuals_control$ests,
+  sg.individuals_treatment$ests,
+  sg.density_control$ests,
+  sg.density_treatment$ests
+),3)
+
+## BOOTSTRAPPED INTERVALS ----
+bootstrap_df <- bind_rows(
+  data.frame(Bootstrap_Estimates = sg.size_control$boot[ ,1], Phenotype = "c.Gall_Height_mm", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.size_control$boot[ ,2], Phenotype = "c.Gall_Height_mm", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.size_treatment$boot[ ,1], Phenotype = "c.Gall_Height_mm", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.size_treatment$boot[ ,2], Phenotype = "c.Gall_Height_mm", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.individuals_control$boot[ ,1], Phenotype = "c.gall_individuals", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.individuals_control$boot[ ,2], Phenotype = "c.gall_individuals", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.individuals_treatment$boot[ ,1], Phenotype = "c.gall_individuals", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.individuals_treatment$boot[ ,2], Phenotype = "c.gall_individuals", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.density_control$boot[ ,1], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.density_control$boot[ ,2], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.density_treatment$boot[ ,1], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.density_treatment$boot[ ,2], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Gamma", Food_Web_Treatment = "Simple")
+)
+
+bootstrap_df %>%
+  ggplot(., aes(x=Phenotype, y=Bootstrap_Estimates, fill=Food_Web_Treatment)) +
+  geom_boxplot() +
+  geom_hline(yintercept=0, linetype="dotted") +
+  facet_wrap(~Selection_Type) +
+  coord_flip() 
+```
+
 GAM estimates of selection gradients differ from GAMM
 
 ```{r COMPARE GAM WITH GAMM}
