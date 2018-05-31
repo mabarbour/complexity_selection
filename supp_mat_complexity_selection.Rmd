@@ -34,15 +34,15 @@ gall_selection.df <- read_csv("gall_selection_data.csv") %>%
 ## CREATE SEPARATE DATASETS FOR SELECTION ANALYSES ----
 control_df <- gall_selection.df %>%
   filter(Treatment.focus == "Control") %>%
-  mutate(Gall_Height_mm = Gall_Height_mm - mean(Gall_Height_mm),
-         gall_individuals = gall_individuals - mean(gall_individuals),
-         Density_per_100_shoots = Density_per_100_shoots - mean(Density_per_100_shoots))
+  mutate(sc.gall_size = (Gall_Height_mm - mean(Gall_Height_mm))/sd(Gall_Height_mm),
+         sc.clutch_size = (gall_individuals - mean(gall_individuals))/sd(gall_individuals),
+         sc.female_preference = (Density_per_100_shoots - mean(Density_per_100_shoots))/sd(Density_per_100_shoots))
 
 treatment_df <- gall_selection.df %>%
   filter(Treatment.focus == "Ectoparasitoid exclusion") %>%
-  mutate(Gall_Height_mm = Gall_Height_mm - mean(Gall_Height_mm),
-         gall_individuals = gall_individuals - mean(gall_individuals),
-         Density_per_100_shoots = Density_per_100_shoots - mean(Density_per_100_shoots))
+  mutate(sc.gall_size = (Gall_Height_mm - mean(Gall_Height_mm))/sd(Gall_Height_mm),
+         sc.clutch_size = (gall_individuals - mean(gall_individuals))/sd(gall_individuals),
+         sc.female_preference = (Density_per_100_shoots - mean(Density_per_100_shoots))/sd(Density_per_100_shoots))
 ```
 
 ```{r FUNCTIONS}
@@ -94,6 +94,8 @@ overdisp_fun <- function(model) {
   pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
   c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
 }
+
+inverse_logit <- function(x) exp(x)/(1+exp(x))
 ```
 
 ```{r}
@@ -214,7 +216,88 @@ m6 <- gamm.model(gall_survival ~ Treatment_contr.sum*(sc.gall_size + sc.clutch_s
 AIC(m5$mer, m6$mer) 
 ```
 
+```{r}
 
+## Control treatment
+Wbar_model_control <-  glmer(gall_survival ~ 1 + (1|Genotype/Plant_Position/Gall_Number),
+                         family=binomial(link=logit),
+                         data = control_df, glmerControl(optimizer="bobyqa"))
+Wbar_control <- inverse_logit(fixef(Wbar_model_control))
+
+glmer_control <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference +
+                           (1|Genotype/Plant_Position/Gall_Number),
+                         family=binomial(link=logit),
+                         data = control_df, glmerControl(optimizer="bobyqa"))
+summary(glmer_control)
+```
+
+
+```{r}
+
+## Ectoparasitoid exclusion treatment
+Wbar_model_treatment <-  glmer(gall_survival ~ 1 + (1|Genotype/Plant_Position/Gall_Number),
+                         family=binomial(link=logit),
+                         data = treatment_df, glmerControl(optimizer="bobyqa"))
+Wbar_treatment <- inverse_logit(fixef(Wbar_model_treatment))
+
+glmer_treatment <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference + 
+                           (1|Genotype/Plant_Position/Gall_Number),
+                         family=binomial(link=logit),
+                         data = treatment_df, glmerControl(optimizer="bobyqa"))
+summary(glmer_treatment)
+```
+
+```{r}
+distribution_female_preference <- distinct(.data=gall_selection.df, Plant_Position, Density_per_100_shoots)$Density_per_100_shoots 
+HPDinterval_female_preference <- coda::HPDinterval(coda::as.mcmc(scale(distribution_female_preference)), prob=0.95); HPDinterval_female_preference
+
+bind_rows(mutate(visreg(glmer_treatment, xvar="sc.female_preference", scale="response", plot=F)$fit, 
+                   Treatment="Simple", `Relative fitness` = visregFit/Wbar_treatment), 
+          mutate(visreg(glmer_control, xvar="sc.female_preference", scale="response", plot=F)$fit, 
+                   Treatment="Complex", `Relative fitness` = visregFit/Wbar_control)) %>%
+  ggplot(., aes(x=sc.female_preference, y=`Relative fitness`, color=Treatment)) +
+  geom_line() +
+  scale_x_continuous(limits = c(HPDinterval_female_preference[1], HPDinterval_female_preference[2]))
+```
+
+```{r}
+distribution_clutch_size <- distinct(.data=gall_selection.df, Plant_Position, Gall_Number, gall_individuals)$gall_individuals
+HPDinterval_clutch_size <- coda::HPDinterval(coda::as.mcmc(scale(distribution_clutch_size)), prob=0.95); HPDinterval_clutch_size
+
+bind_rows(mutate(visreg(glmer_treatment, xvar="sc.clutch_size", scale="response", plot=F)$fit, 
+                   Treatment="Simple", `Relative fitness` = visregFit/Wbar_treatment), 
+          mutate(visreg(glmer_control, xvar="sc.clutch_size", scale="response", plot=F)$fit, 
+                   Treatment="Complex", `Relative fitness` = visregFit/Wbar_control)) %>%
+  ggplot(., aes(x=sc.clutch_size, y=`Relative fitness`, color=Treatment)) +
+  geom_line() +
+  scale_x_continuous(limits = c(HPDinterval_clutch_size[1], HPDinterval_clutch_size[2]))
+```
+
+```{r}
+distribution_gall_size <- distinct(.data=gall_selection.df, Plant_Position, Gall_Number, Gall_Letter, Gall_Height_mm)$Gall_Height_mm
+HPDinterval_gall_size <- coda::HPDinterval(coda::as.mcmc(scale(distribution_gall_size)), prob=0.95); HPDinterval_gall_size
+
+predict_gall_size_df <- data.frame(sc.gall_size = seq(HPDinterval_gall_size[1], HPDinterval_gall_size[2], length.out=100),
+                                   sc.clutch_size = 0,
+                                   sc.female_preference = 0)
+model_matrix_gall_size <- model.matrix(~sc.gall_size + sc.clutch_size + sc.female_preference, predict_gall_size_df)
+
+# ref: https://www.r-bloggers.com/confidence-intervals-for-prediction-in-glmms/
+boot_treatment_gall_size <-bootMer(glmer_treatment, FUN = function(.) inverse_logit(model_matrix_gall_size %*% fixef(.)), nsim=200)
+se_treatment_gall_size <- apply(boot_treatment_gall_size$t, 2, function(x) x[order(x)])
+boot_lower <- se_treatment_gall_size[1, ]
+boot_upper <- se_treatment_gall_size[2, ]
+
+
+bind_rows(mutate(visreg(glmer_treatment, xvar="sc.gall_size", scale="response", plot=F)$fit, 
+                   Treatment="Simple", `Relative fitness` = visregFit/Wbar_treatment), 
+          mutate(visreg(glmer_control, xvar="sc.gall_size", scale="response", plot=F)$fit, 
+                   Treatment="Complex", `Relative fitness` = visregFit/Wbar_control)) %>%
+  ggplot(., aes(x=sc.gall_size, y=`Relative fitness`, color=Treatment)) +
+  geom_line() +
+  geom_ribbon(aes(ymin=boot_lower, ymax=boot_upper)) +
+  scale_x_continuous(limits = c(HPDinterval_gall_size[1], HPDinterval_gall_size[2]))
+```
 
 Choosing the level of model complexity. We used AIC to pair down the complexity of the model. For both the control and treatment plants, there is support for maintaing the linear interaction between gall size and the number of individuals per gall. In both cases, AIC suggest that the models lacking linear interaction terms were more parsimonious, so we subsequently analyzed selection gradients with these models.
 
