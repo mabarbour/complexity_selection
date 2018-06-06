@@ -96,6 +96,12 @@ overdisp_fun <- function(model) {
 }
 
 inverse_logit <- function(x) exp(x)/(1+exp(x))
+
+Beta_avg_grad <- function(logistic_model, mean_fitness) {
+  brackets <- predict(logistic_model, type = "response") * (1 - predict(logistic_model, type="response"))
+  gradient <- mean(brackets) * fixef(logistic_model) / mean_fitness 
+  return(gradient)
+}
 ```
 
 ```{r}
@@ -217,35 +223,190 @@ AIC(m5$mer, m6$mer)
 ```
 
 ```{r}
+## Calculate directional selection gradients
+# following method of Janzen and Stern 
+
+Beta_avg_grad <- function(.) {
+  mean_fitness <- inverse_logit(fixef(update(., .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
+  brackets <- predict(., type = "response") * (1 - predict(., type="response"))
+  mean(brackets) * fixef(.)[-1] / mean_fitness 
+}
+
+```
+
+
+```{r}
 
 ## Control treatment
-Wbar_model_control <-  glmer(gall_survival ~ 1 + (1|Genotype/Plant_Position/Gall_Number),
-                         family=binomial(link=logit),
-                         data = control_df, glmerControl(optimizer="bobyqa"))
-Wbar_control <- inverse_logit(fixef(Wbar_model_control))
 
+# GLMM
 glmer_control <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference +
                            (1|Genotype/Plant_Position/Gall_Number),
                          family=binomial(link=logit),
                          data = control_df, glmerControl(optimizer="bobyqa"))
 summary(glmer_control)
+
+# Mean fitness
+Wbar_control <- inverse_logit(fixef(update(glmer_control, .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
+
+# Use parametric bootstrapping to get confidence intervals for selection gradients
+boot_Beta_control <- bootMer(glmer_control, FUN = Beta_avg_grad, nsim=100, parallel="multicore", ncpus=32)
+
+data.frame(Beta_avg_grad = round(Beta_avg_grad(glmer_control),2),
+           lowerCI_2.5 = round(apply(boot_Beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),2),
+           upperCI_97.5 = round(apply(boot_Beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),2)) %>%
+  knitr::kable(.)
 ```
 
 
 ```{r}
 
 ## Ectoparasitoid exclusion treatment
-Wbar_model_treatment <-  glmer(gall_survival ~ 1 + (1|Genotype/Plant_Position/Gall_Number),
-                         family=binomial(link=logit),
-                         data = treatment_df, glmerControl(optimizer="bobyqa"))
-Wbar_treatment <- inverse_logit(fixef(Wbar_model_treatment))
 
+# GLMM
 glmer_treatment <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference + 
                            (1|Genotype/Plant_Position/Gall_Number),
                          family=binomial(link=logit),
                          data = treatment_df, glmerControl(optimizer="bobyqa"))
 summary(glmer_treatment)
+
+# Mean fitness
+Wbar_treatment <- inverse_logit(fixef(update(glmer_treatment, .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
+
+# Use parametric bootstrapping to get confidence intervals for selection gradients
+boot_Beta_treatment <- bootMer(glmer_treatment, FUN = Beta_avg_grad, nsim=10)
+
+data.frame(Beta_avg_grad = round(Beta_avg_grad(glmer_treatment),2),
+           lowerCI_2.5 = round(apply(boot_Beta_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),2),
+           upperCI_97.5 = round(apply(boot_Beta_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),2)) %>%
+  knitr::kable(.)
 ```
+
+```{r}
+## Custom function to calculate relative fitness intervals for my models
+relative_fitness_intervals <- function(logistic_model, newdata, bootstraps){
+  model_matrix <- model.matrix(~ sc.gall_size + sc.clutch_size + sc.female_preference, newdata)
+  model_null <- model.matrix(~1, newdata)
+  
+  get_relative_fitness <- function(.) {
+  #mean_fitness <- mean(inverse_logit(model_null %*% fixef(.))) #fixef(update(., .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
+  absolute_fitness <- inverse_logit(model_matrix %*% fixef(.))
+  absolute_fitness #/ mean_fitness # mean(absolute_fitness) # 
+  }
+  
+  get_bootstraps <-bootMer(logistic_model, FUN = get_relative_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
+  get_intervals <- apply(get_bootstraps$t, 2, function(x) x[order(x)][c(round(bootstraps*0.025,0),round(bootstraps*0.975,0))])
+  
+  mean_fitness <- mean(get_relative_fitness(logistic_model))
+
+  return(data.frame(relative_fitness = get_relative_fitness(logistic_model)/mean_fitness,
+                    lower_2.5 = get_intervals[1, ]/mean_fitness,
+                    upper_97.5 = get_intervals[2, ]/mean_fitness,
+                    newdata))
+}
+```
+
+Illustrating the relationship between phenotype and mean fitness depends critically on the range of parameters shown. Perhaps this is what it is a good idea to show it based on the actual phenotypic distributions, or for 1 +/- SD
+
+```{r}
+RF_treatment_gall_size <- relative_fitness_intervals(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = seq(min(treatment_df$sc.gall_size),
+                        max(treatment_df$sc.gall_size),
+                        length.out = 100),
+     sc.clutch_size = 0,
+     sc.female_preference = 0),
+  bootstraps=200)
+
+mean(RF_treatment_gall_size$relative_fitness)
+
+RF_control_gall_size <- relative_fitness_intervals(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = seq(min(control_df$sc.gall_size),
+                        max(control_df$sc.gall_size),
+                        length.out = 100),
+     sc.clutch_size = 0,
+     sc.female_preference = 0),
+  bootstraps=200)
+       
+mean(RF_control_gall_size$relative_fitness)
+
+bind_rows(mutate(RF_treatment_gall_size, Treatment = "Simple"),
+          mutate(RF_control_gall_size, Treatment = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=relative_fitness, color=Treatment, fill=Treatment)) +
+  geom_hline(yintercept=1, linetype="dotted") +
+  geom_line() +
+  geom_ribbon(aes(ymin=lower_2.5, ymax=upper_97.5), alpha=0.5)
+```
+
+```{r}
+RF_treatment_clutch_size <- relative_fitness_intervals(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = seq(min(treatment_df$sc.clutch_size),
+                          max(treatment_df$sc.clutch_size),
+                          length.out = 100),
+     sc.female_preference = 0),
+  bootstraps=200)
+
+mean(RF_treatment_clutch_size$relative_fitness)
+
+RF_control_clutch_size <- relative_fitness_intervals(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = seq(min(control_df$sc.clutch_size),
+                        max(control_df$sc.clutch_size),
+                        length.out = 100),
+     sc.female_preference = 0),
+  bootstraps=200)
+
+mean(RF_control_clutch_size$relative_fitness)
+       
+bind_rows(mutate(RF_treatment_clutch_size, Treatment = "Simple"),
+          mutate(RF_control_clutch_size, Treatment = "Complex")) %>%
+  ggplot(., aes(x=sc.clutch_size, y=relative_fitness, color=Treatment, fill=Treatment)) +
+  geom_hline(yintercept=1, linetype="dotted") +
+  geom_line() +
+  geom_ribbon(aes(ymin=lower_2.5, ymax=upper_97.5), alpha=0.5)
+```
+
+```{r}
+RF_treatment_female_preference <- relative_fitness_intervals(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = 0,
+     sc.female_preference = seq(min(treatment_df$sc.female_preference),
+                                max(treatment_df$sc.female_preference),
+                                length.out = 100)),
+  bootstraps=200)
+
+mean(RF_treatment_female_preference$relative_fitness)
+
+RF_control_female_preference <- relative_fitness_intervals(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = 0,
+     sc.female_preference = seq(min(control_df$sc.female_preference),
+                                max(control_df$sc.female_preference),
+                                length.out = 100)),
+  bootstraps=200)
+
+mean(RF_control_female_preference$relative_fitness)
+       
+bind_rows(mutate(RF_treatment_female_preference, Treatment = "Simple"),
+          mutate(RF_control_female_preference, Treatment = "Complex")) %>%
+  ggplot(., aes(x=sc.female_preference, y=relative_fitness, color=Treatment, fill=Treatment)) +
+  geom_hline(yintercept=1, linetype="dotted") +
+  geom_line() +
+  geom_ribbon(aes(ymin=lower_2.5, ymax=upper_97.5), alpha=0.5) +
+```
+
 
 ```{r}
 distribution_female_preference <- distinct(.data=gall_selection.df, Plant_Position, Density_per_100_shoots)$Density_per_100_shoots 
