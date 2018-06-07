@@ -250,7 +250,7 @@ summary(glmer_control)
 Wbar_control <- inverse_logit(fixef(update(glmer_control, .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
 
 # Use parametric bootstrapping to get confidence intervals for selection gradients
-boot_Beta_control <- bootMer(glmer_control, FUN = Beta_avg_grad, nsim=100, parallel="multicore", ncpus=32)
+boot_Beta_control <- bootMer(glmer_control, FUN = Beta_avg_grad, nsim=200, parallel="multicore", ncpus=32)
 
 data.frame(Beta_avg_grad = round(Beta_avg_grad(glmer_control),2),
            lowerCI_2.5 = round(apply(boot_Beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),2),
@@ -274,7 +274,7 @@ summary(glmer_treatment)
 Wbar_treatment <- inverse_logit(fixef(update(glmer_treatment, .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
 
 # Use parametric bootstrapping to get confidence intervals for selection gradients
-boot_Beta_treatment <- bootMer(glmer_treatment, FUN = Beta_avg_grad, nsim=10)
+boot_Beta_treatment <- bootMer(glmer_treatment, FUN = Beta_avg_grad, nsim=200, parallel="multicore", ncpus=32)
 
 data.frame(Beta_avg_grad = round(Beta_avg_grad(glmer_treatment),2),
            lowerCI_2.5 = round(apply(boot_Beta_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),2),
@@ -286,20 +286,18 @@ data.frame(Beta_avg_grad = round(Beta_avg_grad(glmer_treatment),2),
 ## Custom function to calculate relative fitness intervals for my models
 relative_fitness_intervals <- function(logistic_model, newdata, bootstraps){
   model_matrix <- model.matrix(~ sc.gall_size + sc.clutch_size + sc.female_preference, newdata)
-  model_null <- model.matrix(~1, newdata)
   
-  get_relative_fitness <- function(.) {
-  #mean_fitness <- mean(inverse_logit(model_null %*% fixef(.))) #fixef(update(., .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
+  get_absolute_fitness <- function(.) {
   absolute_fitness <- inverse_logit(model_matrix %*% fixef(.))
-  absolute_fitness #/ mean_fitness # mean(absolute_fitness) # 
+  absolute_fitness 
   }
   
-  get_bootstraps <-bootMer(logistic_model, FUN = get_relative_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
+  get_bootstraps <-bootMer(logistic_model, FUN = get_absolute_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
   get_intervals <- apply(get_bootstraps$t, 2, function(x) x[order(x)][c(round(bootstraps*0.025,0),round(bootstraps*0.975,0))])
   
-  mean_fitness <- mean(get_relative_fitness(logistic_model))
+  mean_fitness <- mean(get_absolute_fitness(logistic_model))
 
-  return(data.frame(relative_fitness = get_relative_fitness(logistic_model)/mean_fitness,
+  return(data.frame(relative_fitness = get_absolute_fitness(logistic_model)/mean_fitness,
                     lower_2.5 = get_intervals[1, ]/mean_fitness,
                     upper_97.5 = get_intervals[2, ]/mean_fitness,
                     newdata))
@@ -309,81 +307,142 @@ relative_fitness_intervals <- function(logistic_model, newdata, bootstraps){
 Illustrating the relationship between phenotype and mean fitness depends critically on the range of parameters shown. Perhaps this is what it is a good idea to show it based on the actual phenotypic distributions, or for 1 +/- SD
 
 ```{r}
+HPD_50_treatment_size <- coda::HPDinterval(coda::as.mcmc(treatment_df$sc.gall_size), prob=0.5)
+HPD_50_control_size <- coda::HPDinterval(coda::as.mcmc(control_df$sc.gall_size), prob=0.5)
+
+HPD_95_treatment_size <- coda::HPDinterval(coda::as.mcmc(treatment_df$sc.gall_size), prob=0.95)
+HPD_95_control_size <- coda::HPDinterval(coda::as.mcmc(control_df$sc.gall_size), prob=0.95)
+
 RF_treatment_gall_size <- relative_fitness_intervals(
   logistic_model = glmer_treatment, 
   newdata = expand.grid(
-     sc.gall_size = seq(min(treatment_df$sc.gall_size),
-                        max(treatment_df$sc.gall_size),
-                        length.out = 100),
+     sc.gall_size = treatment_df$sc.gall_size, 
      sc.clutch_size = 0,
      sc.female_preference = 0),
-  bootstraps=200)
+  bootstraps=1000)
 
 mean(RF_treatment_gall_size$relative_fitness)
 
 RF_control_gall_size <- relative_fitness_intervals(
   logistic_model = glmer_control, 
   newdata = expand.grid(
-     sc.gall_size = seq(min(control_df$sc.gall_size),
-                        max(control_df$sc.gall_size),
-                        length.out = 100),
+     sc.gall_size = treatment_df$sc.gall_size,
      sc.clutch_size = 0,
      sc.female_preference = 0),
-  bootstraps=200)
+  bootstraps=1000)
        
 mean(RF_control_gall_size$relative_fitness)
 
+bind_rows(mutate(treatment_df, Treatment = "Simple"),
+          mutate(control_df, Treatment = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, color=Treatment, fill=Treatment)) +
+  geom_density(alpha=0.5)
+
 bind_rows(mutate(RF_treatment_gall_size, Treatment = "Simple"),
           mutate(RF_control_gall_size, Treatment = "Complex")) %>%
-  ggplot(., aes(x=sc.gall_size, y=relative_fitness, color=Treatment, fill=Treatment)) +
+  ggplot(., aes(x=sc.gall_size, y=relative_fitness)) +
   geom_hline(yintercept=1, linetype="dotted") +
-  geom_line() +
-  geom_ribbon(aes(ymin=lower_2.5, ymax=upper_97.5), alpha=0.5)
+  geom_line(aes(color=Treatment), size=0.25) +
+  geom_ribbon(aes(ymin=lower_2.5, ymax=upper_97.5, fill=Treatment), alpha=0.25) +
+  geom_line(data = filter(mutate(RF_treatment_gall_size, Treatment = "Simple"), 
+                          between(sc.gall_size, HPD_95_treatment_size[1], HPD_95_treatment_size[2])),
+            aes(color=Treatment), size=1) +
+  geom_line(data = filter(mutate(RF_control_gall_size, Treatment = "Complex"), 
+                          between(sc.gall_size, HPD_95_control_size[1], HPD_95_control_size[2])), 
+            aes(color=Treatment), size=1) +
+    geom_line(data = filter(mutate(RF_treatment_gall_size, Treatment = "Simple"), 
+                          between(sc.gall_size, HPD_50_treatment_size[1], HPD_50_treatment_size[2])),
+            aes(color=Treatment), size=2.5) +
+  geom_line(data = filter(mutate(RF_control_gall_size, Treatment = "Complex"), 
+                          between(sc.gall_size, HPD_50_control_size[1], HPD_50_control_size[2])), 
+            aes(color=Treatment), size=2.5) +
+  ylab("Relative fitness") +
+  xlab("Gall size (mm)")
 ```
 
 ```{r}
+## Get Highest Posterior Density Intervals for clutch size phenotype
+
+# 50%
+HPD_50_treatment_clutch <- coda::HPDinterval(coda::as.mcmc(
+  distinct(treatment_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size), prob=0.5)
+HPD_50_control_clutch <- coda::HPDinterval(coda::as.mcmc(
+  distinct(control_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size), prob=0.5)
+
+# 95%
+HPD_95_treatment_clutch <- coda::HPDinterval(coda::as.mcmc(
+  distinct(treatment_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size), prob=0.95)
+HPD_95_control_clutch <- coda::HPDinterval(coda::as.mcmc(
+  distinct(control_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size), prob=0.95)
+
+
 RF_treatment_clutch_size <- relative_fitness_intervals(
   logistic_model = glmer_treatment, 
   newdata = expand.grid(
      sc.gall_size = 0,
-     sc.clutch_size = seq(min(treatment_df$sc.clutch_size),
-                          max(treatment_df$sc.clutch_size),
-                          length.out = 100),
+     sc.clutch_size = distinct(treatment_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size,
      sc.female_preference = 0),
-  bootstraps=200)
+  bootstraps=1000)
 
+# confirm that mean relative fitness = 1
 mean(RF_treatment_clutch_size$relative_fitness)
 
 RF_control_clutch_size <- relative_fitness_intervals(
   logistic_model = glmer_control, 
   newdata = expand.grid(
      sc.gall_size = 0,
-     sc.clutch_size = seq(min(control_df$sc.clutch_size),
-                        max(control_df$sc.clutch_size),
-                        length.out = 100),
+     sc.clutch_size = distinct(control_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size,
      sc.female_preference = 0),
-  bootstraps=200)
+  bootstraps=1000)
 
+# confirm that mean relative fitness = 1
 mean(RF_control_clutch_size$relative_fitness)
-       
+
 bind_rows(mutate(RF_treatment_clutch_size, Treatment = "Simple"),
           mutate(RF_control_clutch_size, Treatment = "Complex")) %>%
-  ggplot(., aes(x=sc.clutch_size, y=relative_fitness, color=Treatment, fill=Treatment)) +
+  ggplot(., aes(x=sc.clutch_size, y=relative_fitness)) +
   geom_hline(yintercept=1, linetype="dotted") +
-  geom_line() +
-  geom_ribbon(aes(ymin=lower_2.5, ymax=upper_97.5), alpha=0.5)
+  geom_line(aes(color=Treatment), size=0.25) +
+  geom_ribbon(aes(ymin=lower_2.5, ymax=upper_97.5, fill=Treatment), alpha=0.25) +
+  geom_line(data = filter(mutate(RF_treatment_clutch_size, Treatment = "Simple"), 
+                          between(sc.clutch_size, HPD_95_treatment_clutch[1], HPD_95_treatment_clutch[2])),
+            aes(color=Treatment), size=1) +
+  geom_line(data = filter(mutate(RF_control_clutch_size, Treatment = "Complex"), 
+                          between(sc.clutch_size, HPD_95_control_clutch[1], HPD_95_control_clutch[2])), 
+            aes(color=Treatment), size=1) +
+    geom_line(data = filter(mutate(RF_treatment_clutch_size, Treatment = "Simple"), 
+                          between(sc.clutch_size, HPD_50_treatment_clutch[1], HPD_50_treatment_clutch[2])),
+            aes(color=Treatment), size=2.5) +
+  geom_line(data = filter(mutate(RF_control_clutch_size, Treatment = "Complex"), 
+                          between(sc.clutch_size, HPD_50_control_clutch[1], HPD_50_control_clutch[2])), 
+            aes(color=Treatment), size=2.5) +
+  ylab("Relative fitness") +
+  xlab("Clutch size")
 ```
 
 ```{r}
+## Get Highest Posterior Density Intervals for clutch size phenotype
+
+# 50%
+HPD_50_treatment_preference <- coda::HPDinterval(coda::as.mcmc(
+  distinct(treatment_df, Plant_Position, Gall_Number, sc.female_preference)$sc.female_preference), prob=0.5)
+HPD_50_control_preference <- coda::HPDinterval(coda::as.mcmc(
+  distinct(control_df, Plant_Position, Gall_Number, sc.female_preference)$sc.female_preference), prob=0.5)
+
+# 95%
+HPD_95_treatment_preference <- coda::HPDinterval(coda::as.mcmc(
+  distinct(treatment_df, Plant_Position, Gall_Number, sc.female_preference)$sc.female_preference), prob=0.95)
+HPD_95_control_preference <- coda::HPDinterval(coda::as.mcmc(
+  distinct(control_df, Plant_Position, Gall_Number, sc.female_preference)$sc.female_preference), prob=0.95)
+
+
 RF_treatment_female_preference <- relative_fitness_intervals(
   logistic_model = glmer_treatment, 
   newdata = expand.grid(
      sc.gall_size = 0,
      sc.clutch_size = 0,
-     sc.female_preference = seq(min(treatment_df$sc.female_preference),
-                                max(treatment_df$sc.female_preference),
-                                length.out = 100)),
-  bootstraps=200)
+     sc.female_preference = distinct(treatment_df, Plant_Position, sc.female_preference)$sc.female_preference), 
+  bootstraps=1000)
 
 mean(RF_treatment_female_preference$relative_fitness)
 
@@ -392,19 +451,71 @@ RF_control_female_preference <- relative_fitness_intervals(
   newdata = expand.grid(
      sc.gall_size = 0,
      sc.clutch_size = 0,
-     sc.female_preference = seq(min(control_df$sc.female_preference),
-                                max(control_df$sc.female_preference),
-                                length.out = 100)),
-  bootstraps=200)
+     sc.female_preference = distinct(control_df, Plant_Position, sc.female_preference)$sc.female_preference), 
+  bootstraps=1000)
 
 mean(RF_control_female_preference$relative_fitness)
+
+
        
 bind_rows(mutate(RF_treatment_female_preference, Treatment = "Simple"),
           mutate(RF_control_female_preference, Treatment = "Complex")) %>%
-  ggplot(., aes(x=sc.female_preference, y=relative_fitness, color=Treatment, fill=Treatment)) +
-  geom_hline(yintercept=1, linetype="dotted") +
-  geom_line() +
-  geom_ribbon(aes(ymin=lower_2.5, ymax=upper_97.5), alpha=0.5) +
+  ggplot(., aes(x=sc.female_preference, y=relative_fitness)) +
+    geom_hline(yintercept=1, linetype="dotted") +
+  geom_line(aes(color=Treatment), size=0.25) +
+  geom_ribbon(aes(ymin=lower_2.5, ymax=upper_97.5, fill=Treatment), alpha=0.25) +
+  geom_line(data = filter(mutate(RF_treatment_female_preference, Treatment = "Simple"), 
+                          between(sc.female_preference, HPD_95_treatment_preference[1], HPD_95_treatment_preference[2])),
+            aes(color=Treatment), size=1) +
+  geom_line(data = filter(mutate(RF_control_female_preference, Treatment = "Complex"), 
+                          between(sc.female_preference, HPD_95_control_preference[1], HPD_95_control_preference[2])), 
+            aes(color=Treatment), size=1) +
+    geom_line(data = filter(mutate(RF_treatment_female_preference, Treatment = "Simple"), 
+                          between(sc.female_preference, HPD_50_treatment_preference[1], HPD_50_treatment_preference[2])),
+            aes(color=Treatment), size=2.5) +
+  geom_line(data = filter(mutate(RF_control_female_preference, Treatment = "Complex"), 
+                          between(sc.female_preference, HPD_50_control_preference[1], HPD_50_control_preference[2])), 
+            aes(color=Treatment), size=2.5) +
+  ylab("Relative fitness") +
+  xlab("Female preference")
+```
+
+
+```{r}
+RF_treatment_clutch_preference <- relative_fitness_intervals(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = distinct(treatment_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size,
+     sc.female_preference = distinct(treatment_df, Plant_Position, sc.female_preference)$sc.female_preference), 
+  bootstraps=100)
+
+mean(RF_treatment_clutch_preference$relative_fitness)
+
+RF_control_clutch_preference <- relative_fitness_intervals(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = distinct(control_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size,
+     sc.female_preference = distinct(control_df, Plant_Position, sc.female_preference)$sc.female_preference), 
+  bootstraps=100)
+
+mean(RF_control_clutch_preference$relative_fitness)
+
+bind_rows(mutate(RF_treatment_clutch_preference, Treatment="Simple"),
+          mutate(RF_control_clutch_preference, Treatment="Complex")) %>%
+  ggplot(., aes(x=sc.clutch_size, y=sc.female_preference, fill=relative_fitness)) +
+  geom_raster(size=2) + 
+  facet_wrap(~Treatment) +
+  scale_fill_viridis(name = "Relative fitness") +
+  xlab("Clutch size") +
+  ylab("Female preference")
+
+expand.grid(sc.gall_size = 0,
+     sc.clutch_size = distinct(control_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size,
+     sc.female_preference = distinct(control_df, Plant_Position, sc.female_preference)$sc.female_preference) %>%
+  ggplot(., aes(x=sc.clutch_size, y=sc.female_preference)) +
+  geom_point(shape=21)
 ```
 
 
@@ -413,9 +524,9 @@ distribution_female_preference <- distinct(.data=gall_selection.df, Plant_Positi
 HPDinterval_female_preference <- coda::HPDinterval(coda::as.mcmc(scale(distribution_female_preference)), prob=0.95); HPDinterval_female_preference
 
 bind_rows(mutate(visreg(glmer_treatment, xvar="sc.female_preference", scale="response", plot=F)$fit, 
-                   Treatment="Simple", `Relative fitness` = visregFit/Wbar_treatment), 
+                   Treatment="Simple", `Relative fitness` = visregFit/mean(visregFit)), 
           mutate(visreg(glmer_control, xvar="sc.female_preference", scale="response", plot=F)$fit, 
-                   Treatment="Complex", `Relative fitness` = visregFit/Wbar_control)) %>%
+                   Treatment="Complex", `Relative fitness` = visregFit/mean(visregFit))) %>%
   ggplot(., aes(x=sc.female_preference, y=`Relative fitness`, color=Treatment)) +
   geom_line() +
   scale_x_continuous(limits = c(HPDinterval_female_preference[1], HPDinterval_female_preference[2]))
@@ -426,9 +537,9 @@ distribution_clutch_size <- distinct(.data=gall_selection.df, Plant_Position, Ga
 HPDinterval_clutch_size <- coda::HPDinterval(coda::as.mcmc(scale(distribution_clutch_size)), prob=0.95); HPDinterval_clutch_size
 
 bind_rows(mutate(visreg(glmer_treatment, xvar="sc.clutch_size", scale="response", plot=F)$fit, 
-                   Treatment="Simple", `Relative fitness` = visregFit/Wbar_treatment), 
+                   Treatment="Simple", `Relative fitness` = visregFit/mean(visregFit)), 
           mutate(visreg(glmer_control, xvar="sc.clutch_size", scale="response", plot=F)$fit, 
-                   Treatment="Complex", `Relative fitness` = visregFit/Wbar_control)) %>%
+                   Treatment="Complex", `Relative fitness` = visregFit/mean(visregFit))) %>%
   ggplot(., aes(x=sc.clutch_size, y=`Relative fitness`, color=Treatment)) +
   geom_line() +
   scale_x_continuous(limits = c(HPDinterval_clutch_size[1], HPDinterval_clutch_size[2]))
@@ -819,6 +930,10 @@ bootstrap_df %>%
   summarise(p_value = sum(diff_gradient < 0)/1000)
 ```
 
+```{r}
+gam.plot(gamm_red.control$gam, select="Gall_Height_mm")
+```
+
 
 Another decision we had to make was whether to calculate selection gradients with GAM or GAMMs. The problem with calculating selection gradients with GAMM is that the selection gradients can vary among environmental contexts that are being modelled by random intercepts. Since we did not alter random slopes, this would just cause variation in the selection gradients around the mean value, which is what our model tries to estimate. Therefore, we felt our GAMM model accurately reflects the selection that is happening at the population-level.
 
@@ -896,6 +1011,22 @@ uni_size <- bind_rows(mutate(get_insect_FL.df(fl.size_control), Treatment = "Com
   scale_fill_manual(values = treatmeant_colors) +
   scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1), limits = c(0,1))
 
+control_mean_fitness <- mean(get_insect_FL.df(fl.size_control)$mean_fitness)
+treatment_mean_fitness <- mean(get_insect_FL.df(fl.size_treatment)$mean_fitness)
+
+bind_rows(mutate(get_insect_FL.df(fl.size_control), Treatment = "Complex"),
+          mutate(get_insect_FL.df(fl.size_treatment), Treatment = "Simple")) %>%
+  mutate(relative_fitness = ifelse(Treatment=="Complex", mean_fitness/control_mean_fitness, mean_fitness/treatment_mean_fitness),
+         lower_2.5 = ifelse(Treatment=="Complex", lower_2.5/control_mean_fitness, lower_2.5/treatment_mean_fitness),
+         upper_97.5 = ifelse(Treatment=="Complex", upper_97.5/control_mean_fitness, upper_97.5/treatment_mean_fitness)) %>%
+  ggplot(.) +
+  geom_line(aes(x = Var1, y = relative_fitness, color=Treatment)) + 
+  geom_ribbon(aes(x = Var1, ymin = lower_2.5, ymax = upper_97.5, fill=Treatment), alpha = 0.25) +
+  ylab("Relative fitness") +
+  xlab("Mean gall size\n(mm)") +
+  scale_color_manual(values = treatmeant_colors) +
+  scale_fill_manual(values = treatmeant_colors) 
+
 uni_clutch <- bind_rows(mutate(get_insect_FL.df(fl.individuals_control), Treatment = "Complex"),
           mutate(get_insect_FL.df(fl.individuals_treatment), Treatment = "Simple")) %>%
   ggplot(.) +
@@ -907,6 +1038,22 @@ uni_clutch <- bind_rows(mutate(get_insect_FL.df(fl.individuals_control), Treatme
   scale_fill_manual(values = treatmeant_colors) +
   scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1), limits = c(0,1))
 
+control_mean_fitness <- mean(get_insect_FL.df(fl.individuals_control)$mean_fitness)
+treatment_mean_fitness <- mean(get_insect_FL.df(fl.individuals_treatment)$mean_fitness)
+
+bind_rows(mutate(get_insect_FL.df(fl.individuals_control), Treatment = "Complex"),
+          mutate(get_insect_FL.df(fl.individuals_treatment), Treatment = "Simple")) %>%
+  mutate(relative_fitness = ifelse(Treatment=="Complex", mean_fitness/control_mean_fitness, mean_fitness/treatment_mean_fitness),
+         lower_2.5 = ifelse(Treatment=="Complex", lower_2.5/control_mean_fitness, lower_2.5/treatment_mean_fitness),
+         upper_97.5 = ifelse(Treatment=="Complex", upper_97.5/control_mean_fitness, upper_97.5/treatment_mean_fitness)) %>%
+  ggplot(.) +
+  geom_line(aes(x = Var1, y = relative_fitness, color=Treatment)) + 
+  geom_ribbon(aes(x = Var1, ymin = lower_2.5, ymax = upper_97.5, fill=Treatment), alpha = 0.25) +
+  ylab("Relative fitness") +
+  xlab("Mean gall individuals\n(mm)") +
+  scale_color_manual(values = treatmeant_colors) +
+  scale_fill_manual(values = treatmeant_colors) 
+
 uni_pref <- bind_rows(mutate(get_insect_FL.df(fl.density_control), Treatment = "Complex"),
           mutate(get_insect_FL.df(fl.density_treatment), Treatment = "Simple")) %>%
   ggplot(.) +
@@ -917,6 +1064,22 @@ uni_pref <- bind_rows(mutate(get_insect_FL.df(fl.density_control), Treatment = "
   scale_color_manual(values = treatmeant_colors) +
   scale_fill_manual(values = treatmeant_colors) +
   scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1), limits = c(0,1))
+
+control_mean_fitness <- mean(get_insect_FL.df(fl.density_control)$mean_fitness)
+treatment_mean_fitness <- mean(get_insect_FL.df(fl.density_treatment)$mean_fitness)
+
+bind_rows(mutate(get_insect_FL.df(fl.density_control), Treatment = "Complex"),
+          mutate(get_insect_FL.df(fl.density_treatment), Treatment = "Simple")) %>%
+  mutate(relative_fitness = ifelse(Treatment=="Complex", mean_fitness/control_mean_fitness, mean_fitness/treatment_mean_fitness),
+         lower_2.5 = ifelse(Treatment=="Complex", lower_2.5/control_mean_fitness, lower_2.5/treatment_mean_fitness),
+         upper_97.5 = ifelse(Treatment=="Complex", upper_97.5/control_mean_fitness, upper_97.5/treatment_mean_fitness)) %>%
+  ggplot(.) +
+  geom_line(aes(x = Var1, y = relative_fitness, color=Treatment)) + 
+  geom_ribbon(aes(x = Var1, ymin = lower_2.5, ymax = upper_97.5, fill=Treatment), alpha = 0.25) +
+  ylab("Relative fitness") +
+  xlab("Mean gall density\n(mm)") +
+  scale_color_manual(values = treatmeant_colors) +
+  scale_fill_manual(values = treatmeant_colors) 
   
 uni_legend <- get_legend(uni_size)
 
