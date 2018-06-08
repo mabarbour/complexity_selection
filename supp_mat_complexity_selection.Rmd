@@ -5,9 +5,10 @@ output: html_notebook
 ---
 
 Load dataset. This dataset is a subset that only includes larva that survive to pupation or turned into parasitoids. We omitted any data where larva mortality was unclear. This enabled us to focus on the selection pressures imposed by insect parasitoids rather than other sources.
-```{r Preliminaries, message=FALSE, warning=FALSE, include=FALSE}
+```{r setup}
+knitr::opts_chunk$set(include = FALSE)
 
-## LOAD REQUIRED LIBRARIES & SET OPTIONS ----
+## Load required libraries ----
 library(tidyverse)
 library(cowplot) # pretty default ggplots
 library(broom) # for tidying multiple linear models
@@ -17,7 +18,7 @@ library(gsg) # calculating selection gradients
 library(visreg)
 library(viridis) # for color palette
 
-## LOAD & MANAGE DATASET ----
+## Load and manage data ----
 
 gall_selection.df <- read_csv("gall_selection_data.csv") %>%
   # convert appropriate variables to characters instead of integers
@@ -31,7 +32,15 @@ gall_selection.df <- read_csv("gall_selection_data.csv") %>%
   mutate(gall_survival = as.numeric(ifelse(pupa > 0, 1, 0)),
          egg_parasitoid = as.numeric(ifelse(platy > 0, 1, 0))) 
 
-## CREATE SEPARATE DATASETS FOR SELECTION ANALYSES ----
+# convert treatment to factor to use as 'by' variable in generalized additive models
+gall_selection.df <- gall_selection.df %>%
+  mutate(Treatment_contr.sum=factor(Treatment.focus), 
+         sc.gall_size = as.numeric(scale(Gall_Height_mm)),
+         sc.clutch_size = as.numeric(scale(gall_individuals)),
+         sc.female_preference = as.numeric(scale(Density_per_100_shoots)))
+contrasts(gall_selection.df$Treatment_contr.sum) <- 'contr.sum'
+
+## Create separate datasets for quantifying selection gradients ----
 control_df <- gall_selection.df %>%
   filter(Treatment.focus == "Control") %>%
   mutate(sc.gall_size = (Gall_Height_mm - mean(Gall_Height_mm))/sd(Gall_Height_mm),
@@ -43,10 +52,8 @@ treatment_df <- gall_selection.df %>%
   mutate(sc.gall_size = (Gall_Height_mm - mean(Gall_Height_mm))/sd(Gall_Height_mm),
          sc.clutch_size = (gall_individuals - mean(gall_individuals))/sd(gall_individuals),
          sc.female_preference = (Density_per_100_shoots - mean(Density_per_100_shoots))/sd(Density_per_100_shoots))
-```
 
-Custom functions to avoid repetitive code
-```{r FUNCTIONS}
+## Custom functions to avoid repetitive code ----
 gamm.model <- function(formula, data) {
   gamm4(formula, data, 
         random = ~(1|Genotype/Plant_Position/Gall_Number), 
@@ -98,216 +105,355 @@ overdisp_fun <- function(model) {
 
 inverse_logit <- function(x) exp(x)/(1+exp(x))
 
-Beta_avg_grad <- function(logistic_model, mean_fitness) {
-  brackets <- predict(logistic_model, type = "response") * (1 - predict(logistic_model, type="response"))
-  gradient <- mean(brackets) * fixef(logistic_model) / mean_fitness 
-  return(gradient)
-}
-```
+#Beta_avg_grad <- function(logistic_model, mean_fitness) {
+#  brackets <- predict(logistic_model, type = "response") * (1 - predict(logistic_model, type="response"))
+#  gradient <- mean(brackets) * fixef(logistic_model) / mean_fitness 
+#  return(gradient)
+#}
 
-```{r}
-# convert treatment to factor to use as 'by' variable in gamm.model
-gall_selection.df <- gall_selection.df %>%
-  mutate(Treatment_contr.sum=factor(Treatment.focus), 
-         sc.gall_size = as.numeric(scale(Gall_Height_mm)),
-         sc.clutch_size = as.numeric(scale(gall_individuals)),
-         sc.female_preference = as.numeric(scale(Density_per_100_shoots)))
-contrasts(gall_selection.df$Treatment_contr.sum) <- 'contr.sum'
-# Inspect contrasts:
-contrasts(gall_selection.df$Treatment_contr.sum)
-
-## AIC MODEL SELECTION
-# Note that I use gamm4 to fit all models to maintain consistency
-
-## GAMM full
-m1 <- gamm.model(gall_survival ~ Treatment_contr.sum +
-                   s(sc.gall_size, by=Treatment_contr.sum) + 
-                   s(sc.clutch_size, by=Treatment_contr.sum) + 
-                   s(sc.female_preference, by=Treatment_contr.sum) + 
-                   sc.gall_size:sc.clutch_size + sc.gall_size:sc.clutch_size:Treatment_contr.sum +
-                   sc.gall_size:sc.female_preference + sc.gall_size:sc.female_preference:Treatment_contr.sum +                                 sc.clutch_size:sc.female_preference + sc.clutch_size:sc.female_preference:Treatment_contr.sum,
-                 data = gall_selection.df)
-summary(m1$gam); summary(m1$mer)
-
-gamm_reduced <- gamm.model(gall_survival ~ Treatment_contr.sum +
-                             s(sc.gall_size) + 
-                             s(sc.clutch_size, by=Treatment_contr.sum) + 
-                             s(sc.female_preference, by=Treatment_contr.sum),
-                 data = gall_selection.df)
-summary(gamm_reduced$gam); summary(gamm_reduced$mer)
-
-gamm_reduced2 <- gamm.model(gall_survival ~ Treatment_contr.sum +
-                             sc.gall_size + 
-                             sc.clutch_size + sc.clutch_size:Treatment_contr.sum + 
-                             s(sc.female_preference, by=Treatment_contr.sum),
-                 data = gall_selection.df)
-summary(gamm_reduced2$gam); summary(gamm_reduced2$mer)
-
-GLMM_reduced <- gamm.model(gall_survival ~ Treatment_contr.sum +
-                             sc.gall_size + 
-                             sc.clutch_size + sc.clutch_size:Treatment_contr.sum + 
-                             sc.female_preference + sc.female_preference:Treatment_contr.sum,
-                            data = gall_selection.df)
-summary(GLMM_reduced$gam); summary(GLMM_reduced$mer)
-
-AIC(m1$mer, gamm_reduced$mer, gamm_reduced2$mer, GLMM_reduced$mer)
-
-glmer_reduced <- glmer(gall_survival ~ Treatment_contr.sum +
-                             sc.gall_size + 
-                             sc.clutch_size + sc.clutch_size:Treatment_contr.sum + 
-                             sc.female_preference + sc.female_preference:Treatment_contr.sum +
-                             (1|Genotype/Plant_Position/Gall_Number),
-                       family=binomial(link=logit),
-                       data = gall_selection.df, glmerControl(optimizer="bobyqa"))
-summary(glmer_reduced)
-overdisp_fun(glmer_reduced) # no evidence of overdispersion
-
-v <- visreg(fit, 'Days', 'Subject', re.form=(~Days|Subject), plot=FALSE)
-plot(v)
-plot(v, overlay=TRUE)
-
-test <- visreg(glmer_reduced, xvar=c("sc.gall_size"), by="Genotype", re.form=(~1|Genotype), plot=FALSE, 
-       scale="response", partial=TRUE, gg=TRUE, overlay=TRUE,
-       cond = list(sc.gall_size=0, sc.clutch_size=0, sc.female_preference=0))
-plot(test, partial=TRUE, overlay=TRUE)
-visreg(glmer_reduced, xvar=c("sc.gall_size"), scale="response", partial=TRUE, gg=TRUE, overlay=TRUE)
-visreg(glmer_reduced, xvar=c("sc.clutch_size"), by="Treatment_contr.sum", scale="response", partial=TRUE, gg=TRUE, overlay=TRUE)
-visreg(glmer_reduced, xvar=c("sc.female_preference"), by="Treatment_contr.sum", scale="response", partial=TRUE, gg=TRUE, overlay=TRUE)
-
-## GLMER full
-glmer_full <- gamm.model(gall_survival ~ Treatment_contr.sum*(sc.gall_size + sc.clutch_size + sc.female_preference)^2 +
-                           Treatment_contr.sum*(I(sc.gall_size^2) + I(sc.clutch_size^2) + I(sc.female_preference^2)), 
-                         data = gall_selection.df)
-summary(glmer_full$gam); summary(glmer_full$mer)
-round(vcov(glmer_full$mer), 2) # no evidence of correlations that would confound interpretations of statistical main and interaction effects.
-
-glmer_reduced <- gamm.model(gall_survival ~ Treatment_contr.sum*(sc.gall_size + sc.clutch_size + sc.female_preference) +
-                           I(sc.gall_size^2) + I(sc.female_preference^2) + sc.gall_size:sc.clutch_size, 
-                         data = gall_selection.df)
-summary(glmer_reduced$gam); summary(glmer_reduced$mer, correlation=TRUE)
-visreg(glmer_reduced$gam, xvar="sc.gall_size", by="sc.clutch_size", scale="response")
-
-glmer_reduced2 <- gamm.model(gall_survival ~ Treatment_contr.sum*sc.clutch_size + sc.gall_size + sc.female_preference +
-                               I(sc.female_preference^2) + sc.gall_size:sc.clutch_size, 
-                         data = gall_selection.df)
-summary(glmer_reduced2$gam); summary(glmer_reduced2$mer)
-
-AIC(glmer_full$mer, glmer_reduced$mer, glmer_reduced2$mer)
-
-
-## LMER full
-m3 <- gamm4(gall_survival ~ Treatment_contr.sum*(sc.gall_size + sc.clutch_size + sc.female_preference)^2 +
-                   Treatment_contr.sum*(I(sc.gall_size^2) + I(sc.clutch_size^2) + I(sc.female_preference^2)),
-            family = gaussian(link=identity),
-            random = ~(1|Genotype/Plant_Position/Gall_Number),
-            data = gall_selection.df)
-
-AIC(m1$mer, m2$mer, m3$mer) # suggests that the GLMM is best
-
-## Do we need a model with interactions between traits?
-m4 <- gamm.model(gall_survival ~ Treatment_contr.sum*(sc.gall_size + sc.clutch_size + sc.female_preference) + #^2 +
-                   Treatment_contr.sum*(I(sc.gall_size^2) + I(sc.clutch_size^2) + I(sc.female_preference^2)), 
-                 data = gall_selection.df)
-AIC(m2$mer, m4$mer) # AIC suggests not
-
-## Do we need a model with non-linear trait effects?
-m5 <- gamm.model(gall_survival ~ Treatment_contr.sum*(sc.gall_size + sc.clutch_size + sc.female_preference) + #^2 +
-                   (I(sc.gall_size^2) + I(sc.clutch_size^2) + I(sc.female_preference^2)), 
-                 data = gall_selection.df)
-AIC(m4$mer, m5$mer) # 
-summary(m5$gam)
-summary(m5$mer)
-
-m6 <- gamm.model(gall_survival ~ Treatment_contr.sum*(sc.gall_size + sc.clutch_size + sc.female_preference), 
-                 data = gall_selection.df)
-AIC(m5$mer, m6$mer) 
-```
-
-```{r}
 ## Calculate directional selection gradients
-# following method of Janzen and Stern 
-
+# following method of Janzen and Stern 1998, Evolution
 Beta_avg_grad <- function(.) {
   mean_fitness <- inverse_logit(fixef(update(., .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
   brackets <- predict(., type = "response") * (1 - predict(., type="response"))
   mean(brackets) * fixef(.)[-1] / mean_fitness 
 }
 
-```
-
-
-```{r}
-
-## Control treatment
-
-# GLMM
-glmer_control <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference +
-                           (1|Genotype/Plant_Position/Gall_Number),
-                         family=binomial(link=logit),
-                         data = control_df, glmerControl(optimizer="bobyqa"))
-summary(glmer_control)
-
-# Mean fitness
-Wbar_control <- inverse_logit(fixef(update(glmer_control, .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
-
-# Use parametric bootstrapping to get confidence intervals for selection gradients
-boot_Beta_control <- bootMer(glmer_control, FUN = Beta_avg_grad, nsim=200, parallel="multicore", ncpus=32)
-
-data.frame(Beta_avg_grad = round(Beta_avg_grad(glmer_control),2),
-           lowerCI_2.5 = round(apply(boot_Beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),2),
-           upperCI_97.5 = round(apply(boot_Beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),2)) %>%
-  knitr::kable(.)
-```
-
-
-```{r}
-
-## Ectoparasitoid exclusion treatment
-
-# GLMM
-glmer_treatment <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference + 
-                           (1|Genotype/Plant_Position/Gall_Number),
-                         family=binomial(link=logit),
-                         data = treatment_df, glmerControl(optimizer="bobyqa"))
-summary(glmer_treatment)
-
-# Mean fitness
-Wbar_treatment <- inverse_logit(fixef(update(glmer_treatment, .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
-
-# Use parametric bootstrapping to get confidence intervals for selection gradients
-boot_Beta_treatment <- bootMer(glmer_treatment, FUN = Beta_avg_grad, nsim=200, parallel="multicore", ncpus=32)
-
-data.frame(Beta_avg_grad = round(Beta_avg_grad(glmer_treatment),2),
-           lowerCI_2.5 = round(apply(boot_Beta_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),2),
-           upperCI_97.5 = round(apply(boot_Beta_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),2)) %>%
-  knitr::kable(.)
-```
-
-```{r}
-## Custom function to calculate relative fitness intervals for my models
+## Calculate confidence intervals of relative fitness
 relative_fitness_intervals <- function(logistic_model, newdata, bootstraps){
   model_matrix <- model.matrix(~ sc.gall_size + sc.clutch_size + sc.female_preference, newdata)
   
   get_absolute_fitness <- function(.) {
   absolute_fitness <- inverse_logit(model_matrix %*% fixef(.))
-  absolute_fitness 
+  absolute_fitness#/mean(absolute_fitness) 
   }
   
   get_bootstraps <-bootMer(logistic_model, FUN = get_absolute_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
+  browser()
+  
   get_intervals <- apply(get_bootstraps$t, 2, function(x) x[order(x)][c(round(bootstraps*0.025,0),round(bootstraps*0.975,0))])
   
-  mean_fitness <- mean(get_absolute_fitness(logistic_model))
+  #mean_fitness <- mean(get_absolute_fitness(logistic_model))
 
-  return(data.frame(relative_fitness = get_absolute_fitness(logistic_model)/mean_fitness,
-                    lower_2.5 = get_intervals[1, ]/mean_fitness,
-                    upper_97.5 = get_intervals[2, ]/mean_fitness,
+  return(data.frame(relative_fitness = get_absolute_fitness(logistic_model),#/mean_fitness,
+                    lower_2.5 = get_intervals[1, ],#/mean_fitness,
+                    upper_97.5 = get_intervals[2, ],#/mean_fitness,
                     newdata))
 }
 ```
 
+We used Aikaike Information Criteria (AIC)
+
+```{r AIC Model Selection}
+
+## GAMM 1: models the effect of food-web treatment on univariate and multivariate fitness landscapes ----
+GAMM_1 <- gamm.model(gall_survival ~ 
+                       Treatment_contr.sum +
+                       s(sc.gall_size, by=Treatment_contr.sum) + 
+                       s(sc.clutch_size, by=Treatment_contr.sum) + 
+                       s(sc.female_preference, by=Treatment_contr.sum) + 
+                       sc.gall_size:sc.clutch_size + sc.gall_size:sc.clutch_size:Treatment_contr.sum +
+                       sc.gall_size:sc.female_preference + sc.gall_size:sc.female_preference:Treatment_contr.sum +                                sc.clutch_size:sc.female_preference + sc.clutch_size:sc.female_preference:Treatment_contr.sum,
+                     data = gall_selection.df)
+# summary(GAMM_1$gam); summary(GAMM_1$mer)
+
+## GAMM 2: models the effect of food-web treatment on univariate, but not multivariate landscape ----
+GAMM_2 <- gamm.model(gall_survival ~ 
+                       Treatment_contr.sum +
+                       s(sc.gall_size, by=Treatment_contr.sum) + 
+                       s(sc.clutch_size, by=Treatment_contr.sum) + 
+                       s(sc.female_preference, by=Treatment_contr.sum) +
+                       sc.gall_size:sc.clutch_size + 
+                       sc.gall_size:sc.female_preference +                        
+                       sc.clutch_size:sc.female_preference,
+                     data = gall_selection.df)
+# summary(GAMM_2$gam); summary(GAMM_2$mer)
+
+## GAMM 3: models the effect of food-web treatment on univariate landscape ----
+GAMM_3 <- gamm.model(gall_survival ~ 
+                       Treatment_contr.sum +
+                       s(sc.gall_size, by=Treatment_contr.sum) + 
+                       s(sc.clutch_size, by=Treatment_contr.sum) + 
+                       s(sc.female_preference, by=Treatment_contr.sum),
+                      data = gall_selection.df)
+# summary(GAMM_3$gam); summary(GAMM_3$mer)
+
+## GAMM 4: assumes that the food-web does not modify the fitness landscape 
+GAMM_4 <- gamm.model(gall_survival ~ 
+                       Treatment_contr.sum +
+                       s(sc.gall_size) + 
+                       s(sc.clutch_size) + 
+                       s(sc.female_preference),
+                     data = gall_selection.df)
+# summary(GAMM_4$gam); summary(GAMM_4$mer)
+
+## AIC Comparison of GAMMs
+knitr::kable(AIC(GAMM_1$mer, GAMM_2$mer, GAMM_3$mer, GAMM_4$mer))
+
+```
+
+AIC model comparison suggests that ....
+
+Now let's compare the best GAMMs to analog generalized linear mixed-models (GLMM). If these GLMMs have a lower AIC value than their respective GAMMs, then this suggests that there is only evidence of directional selection in our data.
+```{r}
+# Note that I still use gamm.model to allow for appropriate model comparisons
+
+## GLMM 3: only models the effect of food-web treatment on directional selection gradients ----
+GLMM_3 <- gamm.model(gall_survival ~ 
+                       Treatment_contr.sum +
+                       sc.gall_size + sc.gall_size:Treatment_contr.sum + 
+                       sc.clutch_size + sc.clutch_size:Treatment_contr.sum + 
+                       sc.female_preference + sc.female_preference:Treatment_contr.sum,
+                      data = gall_selection.df)
+#summary(GLMM_3$gam); summary(GLMM_3$mer)
+
+## GLMM 4: only models the effect of food-web treatment on directional selection gradients ----
+GLMM_4 <- gamm.model(gall_survival ~ 
+                       Treatment_contr.sum +
+                       sc.gall_size + 
+                       sc.clutch_size + 
+                       sc.female_preference,
+                      data = gall_selection.df)
+#summary(GLMM_4$gam); summary(GLMM_4$mer)
+
+knitr::kable(AIC(GAMM_3$mer, GLMM_3$mer, GAMM_4$mer, GLMM_4$mer)) 
+```
+
+It appears that the best predictive model is the GLMM that includes an effect of food-web treatment on directional selection gradients. Therefore, we continue by quantifying the effect of food-web treatment on directional selection gradients.
+
+The model selection procedure was useful for pairing down the complexity of our model. To actually quantify the directional selection gradients in each treatment though, we analyze each treatment separately.
+
+
+```{r Selection Gradients - Complex Food Web}
+# note that I've switched to using the lme4 package to analyzing the GLMM
+
+# GLMM ----
+glmer_control <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference +
+                           (1|Genotype/Plant_Position/Gall_Number),
+                         data = control_df,
+                         family = binomial(link = logit), optimizer = "bobyqa")
+# summary(glmer_control)
+
+# Mean fitness ----
+Wbar_control <- inverse_logit(fixef(update(glmer_control, .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
+
+# Confidence intervals for selection gradients ----
+boot_Beta_control <- bootMer(glmer_control, FUN = Beta_avg_grad, nsim=1000, parallel="multicore", ncpus=32)
+
+## Summary ----
+summary_Beta_glmm_control <- data.frame(
+  Phenotype = c("Gall size", "Clutch size", "Female preference"),
+  Food_Web = "Complex",
+  Model = "GLMM",
+  Beta = round(Beta_avg_grad(glmer_control),3),
+  lower_2.5 = round(apply(boot_Beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3),
+  upper_97.5 = round(apply(boot_Beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3)) 
+```
+
+
+```{r Selection Gradients - Simple Food Web}
+
+## GLMM ----
+glmer_treatment <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference +
+                           (1|Genotype/Plant_Position/Gall_Number),
+                         data = treatment_df,
+                         family = binomial(link = logit), optimizer = "bobyqa")
+# summary(glmer_treatment)
+
+## Mean fitness ----
+Wbar_treatment <- inverse_logit(fixef(update(glmer_treatment, .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
+
+## Confidence intervals for selection gradients ----
+boot_Beta_treatment <- bootMer(glmer_treatment, FUN = Beta_avg_grad, nsim=1000, parallel="multicore", ncpus=32)
+
+## Summary ----
+summary_Beta_glmm_treatment <- data.frame(
+  Phenotype = c("Gall size", "Clutch size", "Female preference"),
+  Food_Web = "Simple",
+  Model = "GLMM",
+  Beta = round(Beta_avg_grad(glmer_treatment),2),
+  lower_2.5 = round(apply(boot_Beta_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),2),
+  upper_97.5 = round(apply(boot_Beta_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),2)) 
+```
+
+
+To ensure we are calculating these selection gradients correctly, we'll compare our results to those obtained from the *gsg* package developed by Michael Morrissey.
+```{r Check Gradient Calculations}
+
+## GAMM Control ----
+gamm_control <- gamm.model(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference,
+                             data = control_df)
+gsg_control <- data.frame(
+  Phenotype = c("Gall size", "Clutch size", "Female preference"),
+  Food_Web = "Complex",
+  Model = "GAMM",
+  Beta = round(c(gam.gradients(gamm_control$gam, 
+                         phenotype = "sc.gall_size", covariates = c("sc.clutch_size","sc.female_preference"), 
+                         se.method = "n")["B-sc.gall_size","estimates"],
+           gam.gradients(gamm_control$gam, 
+                         phenotype = "sc.clutch_size", covariates = c("sc.gall_size","sc.female_preference"), 
+                         se.method = "n")["B-sc.clutch","estimates"],
+           gam.gradients(gamm_control$gam, 
+                         phenotype = "sc.female_preference", covariates = c("sc.gall_size","sc.clutch_size"),
+                         se.method = "n")["B-sc.female_preference","estimates"]),3),
+  lower_2.5 = NA,
+  upper_97.5 = NA)
+
+## GAMM Treatment ----
+gamm_treatment <- gamm.model(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference,
+                             data = treatment_df)
+gsg_treatment <- data.frame(
+  Phenotype = c("Gall size", "Clutch size", "Female preference"),
+  Food_Web = "Simple",
+  Model = "GAMM",
+  Beta = round(c(gam.gradients(gamm_treatment$gam, 
+                         phenotype = "sc.gall_size", covariates = c("sc.clutch_size","sc.female_preference"), 
+                         se.method = "n")["B-sc.gall_size","estimates"],
+           gam.gradients(gamm_treatment$gam, 
+                         phenotype = "sc.clutch_size", covariates = c("sc.gall_size","sc.female_preference"), 
+                         se.method = "n")["B-sc.clutch","estimates"],
+           gam.gradients(gamm_treatment$gam, 
+                         phenotype = "sc.female_preference", covariates = c("sc.gall_size","sc.clutch_size"),
+                         se.method = "n")["B-sc.female_preference","estimates"]),3),
+  lower_2.5 = NA,
+  upper_97.5 = NA)
+
+## Compare GAMM and GLMM estimates ----
+compare_Beta <- bind_rows(gsg_control, gsg_treatment, summary_Beta_glmm_control, summary_Beta_glmm_treatment) %>%
+  select(-lower_2.5, -upper_97.5) %>%
+  spread(Model, Beta)
+
+knitr::kable(compare_Beta)
+
+```
+
+The comparisons are quite close, but why should they differ at all? This suggests that my implementation of the Janzen and Stern 1998 method and Morrisey's are slightly different. Perhaps this is because Janzen and Stern relies on the coefficient to calculate the gradient, whereas Morrisey calculates it using the finite difference methods for partial derivatives...
+
+Now let's look at how the confidence intervals vary between the GLMM and GAMMs. Note that I now fit it with a spline function to allow gsg to calculate bootstrap intervals (it won't otherwise).
+
+```{r gsg Comparison}
+
+## Fit generalized additive mixed models ----
+gamm_control_2 <- gamm.model(gall_survival ~ s(sc.gall_size) + s(sc.clutch_size,k=9) + s(sc.female_preference),
+                             data = control_df)
+
+gamm_treatment_2 <- gamm.model(gall_survival ~ s(sc.gall_size) + s(sc.clutch_size,k=9) + s(sc.female_preference),
+                             data = treatment_df)
+
+## Estimate selection gradients ----
+sg.size_control <- gradient.calc(mod = gamm_control_2$gam, 
+                                 phenotype = "sc.gall_size", 
+                                 covariates = c("sc.clutch_size","sc.female_preference"))
+sg.size_treatment <- gradient.calc(mod = gamm_treatment_2$gam, 
+                                   phenotype = "sc.gall_size", 
+                                   covariates = c("sc.clutch_size","sc.female_preference"))
+sg.clutch_control <- gradient.calc(mod = gamm_control_2$gam, 
+                                        phenotype = "sc.clutch_size", 
+                                        covariates = c("sc.gall_size","sc.female_preference"))
+sg.clutch_treatment <- gradient.calc(mod = gamm_treatment_2$gam, 
+                                          phenotype = "sc.clutch_size", 
+                                          covariates = c("sc.gall_size","sc.female_preference"))
+sg.preference_control <- gradient.calc(mod = gamm_control_2$gam, 
+                                    phenotype = "sc.female_preference", 
+                                    covariates = c("sc.clutch_size","sc.gall_size"))
+sg.preference_treatment <- gradient.calc(mod = gamm_treatment_2$gam, 
+                                      phenotype = "sc.female_preference", 
+                                      covariates = c("sc.clutch_size","sc.gall_size"))
+
+## Organize bootstrap estimates ----
+bootstrap_df <- bind_rows(
+  data.frame(Bootstrap_Estimates = sg.size_control$boot[ ,1], 
+             Phenotype = "Gall size", Selection_Type = "Beta", Food_Web = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.size_treatment$boot[ ,1], 
+             Phenotype = "Gall size", Selection_Type = "Beta", Food_Web = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.clutch_control$boot[ ,1], 
+             Phenotype = "Clutch size", Selection_Type = "Beta", Food_Web = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.clutch_treatment$boot[ ,1], 
+             Phenotype = "Clutch size", Selection_Type = "Beta", Food_Web = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.preference_control$boot[ ,1], 
+             Phenotype = "Female preference", Selection_Type = "Beta", Food_Web = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.preference_treatment$boot[ ,1], 
+             Phenotype = "Female preference", Selection_Type = "Beta", Food_Web = "Simple"))
+
+## Summarise bootstrap estimates ----
+gsg_gradients <- bootstrap_df %>%
+  group_by(Phenotype, Food_Web) %>%
+  summarise(Beta = round(mean(Bootstrap_Estimates),3),
+            lower_2.5 = round(quantile(Bootstrap_Estimates, probs = 0.025),3),
+            upper_97.5 = round(quantile(Bootstrap_Estimates, probs = 0.975),3)) %>%
+  mutate(Model = "gsg_GAMM")
+
+## Compare gsg GAMM and GLMM estimates of directional selection ----
+bind_rows(gsg_gradients, summary_Beta_glmm_control, summary_Beta_glmm_treatment) %>%
+  arrange(Phenotype, Food_Web, Model) %>%
+  mutate(absolute_range = upper_97.5 - lower_2.5) %>%
+  knitr::kable(.)
+```
+
+Both methods give the same qualitative results. However, range of the confidence intervals can be more than twice as large using my GLMM bootstrapping methods. Therefore, our reported intervals provide a conservative estimate.
+
+```{r Compare Selection Gradients across Treatments - GLMM}
+
+## Gather bootstrap data from GLMMs
+glmm_boostrap_df <- bind_rows(
+  data.frame(boot_Beta_treatment$t, ID = rep(1:dim(boot_Beta_treatment$t)[1]), Food_Web = "Simple"),
+  data.frame(boot_Beta_control$t, ID = rep(1:dim(boot_Beta_control$t)[1]), Food_Web = "Complex")
+)
+
+## Gall size ----
+select(glmm_boostrap_df, sc.gall_size, ID, Food_Web) %>%
+  spread(Food_Web, sc.gall_size) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient < 0)/dim(glmm_boostrap_df)[1])
+
+## Clutch size ----
+select(glmm_boostrap_df, sc.clutch_size, ID, Food_Web) %>%
+  spread(Food_Web, sc.clutch_size) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient < 0)/dim(glmm_boostrap_df)[1])
+
+## Female preference ----
+select(glmm_boostrap_df, sc.female_preference, ID, Food_Web) %>%
+  spread(Food_Web, sc.female_preference) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient < 0)/dim(glmm_boostrap_df)[1])
+```
+
+We observe the same qualitative results with *gsg* GAMMs, except that the P-values are always lower.
+
+```{r Compare Selection Gradients across Treatments - gsg GAMM}
+
+## Gall size ----
+bootstrap_df %>%
+  filter(Phenotype == "Gall size", Selection_Type == "Beta") %>%
+  mutate(ID = rep(1:1000,2)) %>%
+  spread(Food_Web, Bootstrap_Estimates) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient < 0)/1000)
+
+## Clutch size ----
+bootstrap_df %>%
+  filter(Phenotype == "Clutch size", Selection_Type == "Beta") %>%
+  mutate(ID = rep(1:1000,2)) %>%
+  spread(Food_Web, Bootstrap_Estimates) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient < 0)/1000)
+
+## Female preference ----
+bootstrap_df %>%
+  filter(Phenotype == "Female preference", Selection_Type == "Beta") %>%
+  mutate(ID = rep(1:1000,2)) %>%
+  spread(Food_Web, Bootstrap_Estimates) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient < 0)/1000)
+```
+
+
 Illustrating the relationship between phenotype and mean fitness depends critically on the range of parameters shown. Perhaps this is what it is a good idea to show it based on the actual phenotypic distributions, or for 1 +/- SD
 
-```{r}
+```{r GLMM Univariate Landscapes, eval=FALSE}
+
+## Gall size ----
 HPD_50_treatment_size <- coda::HPDinterval(coda::as.mcmc(treatment_df$sc.gall_size), prob=0.5)
 HPD_50_control_size <- coda::HPDinterval(coda::as.mcmc(control_df$sc.gall_size), prob=0.5)
 
@@ -320,7 +466,7 @@ RF_treatment_gall_size <- relative_fitness_intervals(
      sc.gall_size = treatment_df$sc.gall_size, 
      sc.clutch_size = 0,
      sc.female_preference = 0),
-  bootstraps=1000)
+  bootstraps=10)
 
 mean(RF_treatment_gall_size$relative_fitness)
 
@@ -330,7 +476,7 @@ RF_control_gall_size <- relative_fitness_intervals(
      sc.gall_size = treatment_df$sc.gall_size,
      sc.clutch_size = 0,
      sc.female_preference = 0),
-  bootstraps=1000)
+  bootstraps=100)
        
 mean(RF_control_gall_size$relative_fitness)
 
@@ -359,9 +505,9 @@ bind_rows(mutate(RF_treatment_gall_size, Treatment = "Simple"),
             aes(color=Treatment), size=2.5) +
   ylab("Relative fitness") +
   xlab("Gall size (mm)")
-```
 
-```{r}
+## Clutch size ----
+
 ## Get Highest Posterior Density Intervals for clutch size phenotype
 
 # 50%
@@ -419,10 +565,9 @@ bind_rows(mutate(RF_treatment_clutch_size, Treatment = "Simple"),
             aes(color=Treatment), size=2.5) +
   ylab("Relative fitness") +
   xlab("Clutch size")
-```
 
-```{r}
-## Get Highest Posterior Density Intervals for clutch size phenotype
+## Female preference ----
+## Get Highest Posterior Density Intervals for female preference phenotype
 
 # 50%
 HPD_50_treatment_preference <- coda::HPDinterval(coda::as.mcmc(
@@ -481,8 +626,9 @@ bind_rows(mutate(RF_treatment_female_preference, Treatment = "Simple"),
   xlab("Female preference")
 ```
 
+```{r GLMM Multivariate Landscapes, eval=FALSE}
 
-```{r}
+## Clutch size x Female Preference ----
 RF_treatment_clutch_preference <- relative_fitness_intervals(
   logistic_model = glmer_treatment, 
   newdata = expand.grid(
@@ -520,71 +666,30 @@ expand.grid(sc.gall_size = 0,
 ```
 
 
-```{r}
-distribution_female_preference <- distinct(.data=gall_selection.df, Plant_Position, Density_per_100_shoots)$Density_per_100_shoots 
-HPDinterval_female_preference <- coda::HPDinterval(coda::as.mcmc(scale(distribution_female_preference)), prob=0.95); HPDinterval_female_preference
-
-bind_rows(mutate(visreg(glmer_treatment, xvar="sc.female_preference", scale="response", plot=F)$fit, 
-                   Treatment="Simple", `Relative fitness` = visregFit/mean(visregFit)), 
-          mutate(visreg(glmer_control, xvar="sc.female_preference", scale="response", plot=F)$fit, 
-                   Treatment="Complex", `Relative fitness` = visregFit/mean(visregFit))) %>%
-  ggplot(., aes(x=sc.female_preference, y=`Relative fitness`, color=Treatment)) +
-  geom_line() +
-  scale_x_continuous(limits = c(HPDinterval_female_preference[1], HPDinterval_female_preference[2]))
-```
-
-```{r}
-distribution_clutch_size <- distinct(.data=gall_selection.df, Plant_Position, Gall_Number, gall_individuals)$gall_individuals
-HPDinterval_clutch_size <- coda::HPDinterval(coda::as.mcmc(scale(distribution_clutch_size)), prob=0.95); HPDinterval_clutch_size
-
-bind_rows(mutate(visreg(glmer_treatment, xvar="sc.clutch_size", scale="response", plot=F)$fit, 
-                   Treatment="Simple", `Relative fitness` = visregFit/mean(visregFit)), 
-          mutate(visreg(glmer_control, xvar="sc.clutch_size", scale="response", plot=F)$fit, 
-                   Treatment="Complex", `Relative fitness` = visregFit/mean(visregFit))) %>%
-  ggplot(., aes(x=sc.clutch_size, y=`Relative fitness`, color=Treatment)) +
-  geom_line() +
-  scale_x_continuous(limits = c(HPDinterval_clutch_size[1], HPDinterval_clutch_size[2]))
-```
-
-```{r}
-distribution_gall_size <- distinct(.data=gall_selection.df, Plant_Position, Gall_Number, Gall_Letter, Gall_Height_mm)$Gall_Height_mm
-HPDinterval_gall_size <- coda::HPDinterval(coda::as.mcmc(scale(distribution_gall_size)), prob=0.95); HPDinterval_gall_size
-
-predict_gall_size_df <- data.frame(sc.gall_size = seq(HPDinterval_gall_size[1], HPDinterval_gall_size[2], length.out=100),
-                                   sc.clutch_size = 0,
-                                   sc.female_preference = 0)
-model_matrix_gall_size <- model.matrix(~sc.gall_size + sc.clutch_size + sc.female_preference, predict_gall_size_df)
-
-# ref: https://www.r-bloggers.com/confidence-intervals-for-prediction-in-glmms/
-boot_treatment_gall_size <-bootMer(glmer_treatment, FUN = function(.) inverse_logit(model_matrix_gall_size %*% fixef(.)), nsim=200)
-se_treatment_gall_size <- apply(boot_treatment_gall_size$t, 2, function(x) x[order(x)])
-boot_lower <- se_treatment_gall_size[1, ]
-boot_upper <- se_treatment_gall_size[2, ]
-
-
-bind_rows(mutate(visreg(glmer_treatment, xvar="sc.gall_size", scale="response", plot=F)$fit, 
-                   Treatment="Simple", `Relative fitness` = visregFit/Wbar_treatment), 
-          mutate(visreg(glmer_control, xvar="sc.gall_size", scale="response", plot=F)$fit, 
-                   Treatment="Complex", `Relative fitness` = visregFit/Wbar_control)) %>%
-  ggplot(., aes(x=sc.gall_size, y=`Relative fitness`, color=Treatment)) +
-  geom_line() +
-  geom_ribbon(aes(ymin=boot_lower, ymax=boot_upper)) +
-  scale_x_continuous(limits = c(HPDinterval_gall_size[1], HPDinterval_gall_size[2]))
-```
-
 Choosing the level of model complexity. We used AIC to pair down the complexity of the model. For both the control and treatment plants, there is support for maintaing the linear interaction between gall size and the number of individuals per gall. In both cases, AIC suggest that the models lacking linear interaction terms were more parsimonious, so we subsequently analyzed selection gradients with these models.
 
-```{r AIC MODEL COMPLEXITY}
+```{r AIC Model Selection v0.1, eval=FALSE}
 
 ## CONTROL PLANTS ----
-gamm_full.control <- gamm.model(gall_survival ~ s(Gall_Height_mm) + s(gall_individuals, k=9) + s(Density_per_100_shoots) +
-                                  Gall_Height_mm:gall_individuals + Gall_Height_mm:Density_per_100_shoots + gall_individuals:Density_per_100_shoots,
+gamm_full.control <- gamm.model(gall_survival ~ 
+                                  s(Gall_Height_mm) + 
+                                  s(gall_individuals, k=9) + 
+                                  s(Density_per_100_shoots) +
+                                  Gall_Height_mm:gall_individuals + 
+                                  Gall_Height_mm:Density_per_100_shoots + 
+                                  gall_individuals:Density_per_100_shoots,
                                 data = control_df)
-summary(gamm_full.control$gam); summary(gamm_full.control$mer)
+summary(gamm_full.control$gam)
+summary(gamm_full.control$mer)
 
-glmm_full.control <- gamm.model(gall_survival ~ Gall_Height_mm + gall_individuals + Density_per_100_shoots +
+glmm_full.control <- gamm.model(gall_survival ~ 
+                                  Gall_Height_mm + 
+                                  gall_individuals + 
+                                  Density_per_100_shoots +
                                   I(Gall_Height_mm^2) + I(gall_individuals^2) + I(Density_per_100_shoots^2) +
-                                  Gall_Height_mm:gall_individuals + Gall_Height_mm:Density_per_100_shoots + gall_individuals:Density_per_100_shoots,
+                                  Gall_Height_mm:gall_individuals + 
+                                  Gall_Height_mm:Density_per_100_shoots + 
+                                  gall_individuals:Density_per_100_shoots,
                                 data = control_df)
 summary(glmm_full.control$gam); summary(glmm_full.control$mer)
 
@@ -671,126 +776,6 @@ summary(glmm_lin.red.noRE.treatment$gam); summary(glmm_lin.red.noRE.treatment$me
 AIC(gamm_full.treatment$mer, glmm_full.treatment$mer, gamm_red.treatment$mer, glmm_quad.treatment$mer, glmm_lin.treatment$mer, lmm_lin.treatment$mer, glmm_lin.red.treatment$mer, glmm_null.treatment$mer, glmm_lin.red.noRE.treatment$mer, glmm_quad.red.treatment$mer)
 ```
 
-```{r}
-library(schoenberg)
-pointwise <- confint(gamm_red.control$gam, parm = "Gall_Height_mm", trans = function(x) {exp(x)/(1+exp(x))})
-simultaneous <- confint(gamm_red.control$gam, parm = "Gall_Height_mm", trans = function(x) {exp(x)/(1+exp(x))}, type = "simultaneous", seWithMean=TRUE)
-
-compare.confint <- bind_rows(mutate(pointwise, confint = "pointwise"), mutate(simultaneous, confint = "simultaneous")) 
-compare.confint$confint <- relevel(factor(compare.confint$confint), ref = "simultaneous")
-
-ggplot(compare.confint, aes(x=Gall_Height_mm)) +
-  geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.25) +
-  geom_line(aes(y=est), color="black") +
-  facet_wrap(~confint)
-
-schluter <- gam.plot(gamm_red.control$gam)
-schluter
-
-gam.plot(glmm_lin.red.control$gam, all.terms=TRUE)
-test <- plot(glmm_lin.red.control$gam, all.terms=TRUE)
-gam.gradients(mod = glmm_lin.red.control$gam, phenotype = "Gall_Height_mm", se.method = "n")
-coef(glmm_lin.red.control$gam)
-
-# test derivative calculations
-control_df$Genotype <- factor(control_df$Genotype)
-control_df$Plant_Position <- factor(control_df$Plant_Position)
-control_df$Gall_Number <- factor(control_df$Gall_Number)
-A <- gam(gall_survival ~ s(Gall_Height_mm) + s(Plant_Position, bs="re") + s(Gall_Number, bs="re"), data = control_df, family=binomial(link=logit)) # random=~(1|Genotype/Plant_Position/Gall_Number),
-summary(A)
-
-head(control_df)
-A_withMean <- plot(A, se = TRUE, seWithMean = T, shift = mean(predict(A)), trans = function(x) {exp(x)/(1+exp(x))}); A_withMean
-A_only <- plot(A, se = TRUE, shift = mean(predict(A)), trans = function(x) {exp(x)/(1+exp(x))}); A_only
-draw(A)
-
-
-# new data for prediction
-newDF <- with(control_df, data.frame(Gall_Height_mm = seq(min(Gall_Height_mm),max(Gall_Height_mm),length.out = 100)))
-# prediction of smoothed estimates at each unique year value
-# with standard error    
-B <- predict(A$gam,  newDF, type="response", se.fit=TRUE)
-B
-
-# finite difference approach to derivatives following
-# example from ?predict.gam
-
-eps <- 1e-7
-X0 <- predict(A, newDF, type = 'lpmatrix')
-X0 <- exp(X0)/(1+exp(X0))
-
-newDFeps_p <- newDF + eps
-
-X1 <- predict(A, newDFeps_p, type = 'lpmatrix')
-X1 <- exp(X1)/(1+exp(X1))
-# finite difference approximation of first derivative
-# the design matrix
-Xp <- (X0 - X1) / eps
-Xp
-# first derivative
-fd_d1 <- Xp %*% coef(A)
-fd_d1/mean_fit
-# second derivative
-newDFeps_m <- newDF - eps
-
-X_1 <- predict(A$gam, newDFeps_m, type = 'lpmatrix')
-# design matrix for second derivative
-Xpp <- (X1 + X_1 - 2*X0)  / eps^2
-# second derivative
-fd_d2 <- Xpp %*% coef(A$gam)
-
-exp(fd_d1) / ( 1+exp(fd_d1))  # type = "response"
-exp(fd_d2) / ( 1+exp(fd_d2))  # type = "response"
-
-mean(fd_d1)/mean_fit
-mean(fd_d2)/mean_fit
-
-gam.gradients(A, phenotype = "Gall_Height_mm", se.method="n", standardized = FALSE)
-
-coef(A)
-mean_fit <- mean(control_df$gall_survival)
-fderiv_size <- fderiv(A, newdata = data.frame(Gall_Height_mm = mean(control_df$Gall_Height_mm)), offset = mean_fit)
-test <- fderiv_size$derivatives$`s(Gall_Height_mm)`$deriv
-exp(test)/(1+exp(test))
-
-plot(A, se = TRUE, seWithMean = T, shift = mean(predict(A)), trans = function(x) {exp(x)/(1+exp(x))})
-diff <- .Machine$double.eps^(1/3)
-predicts <- predict(A, newdata = data.frame(Gall_Height_mm = c(mean(control_df$Gall_Height_mm)-diff,mean(control_df$Gall_Height_mm)+diff)), type="lpmatrix")
-tests <- predicts %*% coef(A)
-exp(tests)/(1+exp(tests))
-t1 <- exp(predicts[2])/(1+exp(predicts[2]));t1
-t2 <- exp(predicts[1])/(1+exp(predicts[1]));t2
-((t1-t2)/(diff*2))/mean(control_df$gall_survival)
-gam.gradients(A, phenotype = "Gall_Height_mm", se.method="n", standardized = FALSE)
-
-	Wbar <- function(x, mod, phenotype,covariates) {
-    		new.d <- as.data.frame(mod$model[,c(phenotype,covariates)])
-    		names(new.d)<-c(phenotype,covariates)
-    		new.d2<-new.d
-    		for (i in 1:length(x)) {
-    		    new.d[,as.character(phenotype[i])] <-
-    		    new.d[,as.character(phenotype[i])]+x[i]
-    		}
-    
-    		p <- predict.gam(
-			   object=mod,
-    	 	   newdata=new.d,
-    	 	   newdata.guaranteed=TRUE,
-    	 	   type="response"
-    		)
-    	return(mean(p))
-	}
-	as.data.frame(A$model[ ,"Gall_Height_mm"])
-	#mean(control_df$gall_survival)
-	Wbar(x=0, mod=A, phenotype="Gall_Height_mm", covariates=NULL)
-first.derivatives <- grad(f=Wbar, x=rep(0, 1), mod=A, phenotype="Gall_Height_mm", covariates=NULL); first.derivatives
-denom <- Wbar(x=rep(0,1), mod=A, phenotype="Gall_Height_mm", covariates=NULL); denom
-first.derivatives/denom
-pracma:::grad
-A$Vp
-A$coefficients
-A_withMean
-```
 
 Parametric bootstrapping: Currently reported results
 
@@ -799,9 +784,9 @@ Case-wise bootstrapping: qualitative results match parametric bootstrapping.
 Posterior: qualitative results match parametric bootstrapping, except that non-linear selection on gall size in the complex food-web is no longer significant.
 
 Permutation: qualtiative results are consistent with parametric bootstrapping. Exceptions include: in the simple food-web, there is no evidence of non-linear selection for gall density or gall individuals. In the complex food-web, there is only marginal evidence for non-linear selection acting on gall size, but there is evidence for correlational selection between gall size and the number of individuals per gall.
-```{r SELECTION GRADIENTS, echo=TRUE, warning=FALSE}
+```{r SELECTION GRADIENTS, echo=TRUE, warning=FALSE, eval=FALSE}
 
-## Estimate directional, nonlinear, and correlational selection gradients
+## Estimate directional, nonlinear, and correlational selection gradients ----
 sg.size_control <- gradient.calc(mod = gamm_red.control$gam, 
                                  phenotype = "Gall_Height_mm", 
                                  covariates = c("gall_individuals","Density_per_100_shoots"))
@@ -839,7 +824,7 @@ sg.density.x.individuals_treatment <- gradient.calc(mod = gamm_red.treatment$gam
                                                     phenotype = c("Density_per_100_shoots", "gall_individuals"),
                                                     covariates = c("Gall_Height_mm"))
 
-## Summarise the results
+## Summarise the results ----
 sg.summary <- bind_rows(
           data.frame(sg.size_control$ests,  
                      gradients = rownames(sg.size_control$ests),
@@ -878,7 +863,7 @@ sg.summary <- bind_rows(
                      gradients = rownames(sg.density.x.individuals_treatment$ests),
                      treatment = "Simple")[5,]) 
 
-## Table of Estimates
+## Table of Estimates ----
 sg.table <- sg.summary %>%
   mutate(plus_minus = "\u00B1", estimates = round(estimates, 4), SE = round(SE, 4)) %>%
   unite(col = estimate_SE, from = c("estimates", "plus_minus", "SE"), sep="") %>%
@@ -887,13 +872,13 @@ sg.table <- sg.summary %>%
 sg.table
 write_csv(sg.table, "sg.table.csv")
 
-## Table of P-values
+## Table of P-values ----
 sg.summary %>%
   select(-estimates, -SE) %>%
   spread(treatment, P.value)
 ```
 
-```{r}
+```{r Selection Gradients - Bootstrapped Intervals, eval=FALSE}
 
 ## BOOTSTRAPPED INTERVALS ----
 bootstrap_df <- bind_rows(
@@ -928,7 +913,7 @@ bootstrap_df %>%
 ```
 
 Compare bootstrapped replicates across treatments, rather than comparing to zero.
-```{r}
+```{r Compare bootstrapped replicates across treatments, eval=FALSE}
 bootstrap_df %>%
   filter(Phenotype == "Gall size", Selection_Type == "Beta") %>%
   mutate(ID = rep(1:1000,2)) %>%
@@ -991,10 +976,6 @@ bootstrap_df %>%
   spread(Food_Web_Treatment, Bootstrap_Estimates) %>%
   mutate(diff_gradient = Complex - Simple) %>%
   summarise(p_value = sum(diff_gradient < 0)/1000)
-```
-
-```{r}
-gam.plot(gamm_red.control$gam, select="Gall_Height_mm")
 ```
 
 
