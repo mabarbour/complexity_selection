@@ -119,26 +119,21 @@ Beta_avg_grad <- function(.) {
   mean(brackets) * fixef(.)[-1] / mean_fitness 
 }
 
-## Calculate confidence intervals of relative fitness
-relative_fitness_intervals <- function(logistic_model, newdata, bootstraps){
+## Bootstrap fitness estimates
+bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0.025,0.975)){
   model_matrix <- model.matrix(~ sc.gall_size + sc.clutch_size + sc.female_preference, newdata)
   
-  get_absolute_fitness <- function(.) {
-  absolute_fitness <- inverse_logit(model_matrix %*% fixef(.))
-  absolute_fitness#/mean(absolute_fitness) 
-  }
+  get_absolute_fitness <- function(.) inverse_logit(model_matrix %*% fixef(.))
   
   get_bootstraps <-bootMer(logistic_model, FUN = get_absolute_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
-  browser()
-  
-  get_intervals <- apply(get_bootstraps$t, 2, function(x) x[order(x)][c(round(bootstraps*0.025,0),round(bootstraps*0.975,0))])
-  
-  #mean_fitness <- mean(get_absolute_fitness(logistic_model))
 
-  return(data.frame(relative_fitness = get_absolute_fitness(logistic_model),#/mean_fitness,
-                    lower_2.5 = get_intervals[1, ],#/mean_fitness,
-                    upper_97.5 = get_intervals[2, ],#/mean_fitness,
-                    newdata))
+  get_intervals <- apply(get_bootstraps$t, 2, function(x) x[order(x)][c(round(bootstraps*intervals[1],0),round(bootstraps*intervals[2],0))])
+    
+  return(data.frame(newdata, 
+                    average = get_absolute_fitness(logistic_model), 
+                    lower = get_intervals[1, ],
+                    upper = get_intervals[2, ],
+                    t(get_bootstraps$t)))
 }
 ```
 
@@ -238,7 +233,7 @@ glmer_control <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female
 Wbar_control <- inverse_logit(fixef(update(glmer_control, .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
 
 # Confidence intervals for selection gradients ----
-boot_Beta_control <- bootMer(glmer_control, FUN = Beta_avg_grad, nsim=1000, parallel="multicore", ncpus=32)
+boot_Beta_control <- bootMer(glmer_control, FUN = Beta_avg_grad, nsim=100, parallel="multicore", ncpus=32)
 
 ## Summary ----
 summary_Beta_glmm_control <- data.frame(
@@ -264,7 +259,7 @@ glmer_treatment <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.fema
 Wbar_treatment <- inverse_logit(fixef(update(glmer_treatment, .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
 
 ## Confidence intervals for selection gradients ----
-boot_Beta_treatment <- bootMer(glmer_treatment, FUN = Beta_avg_grad, nsim=1000, parallel="multicore", ncpus=32)
+boot_Beta_treatment <- bootMer(glmer_treatment, FUN = Beta_avg_grad, nsim=100, parallel="multicore", ncpus=32)
 
 ## Summary ----
 summary_Beta_glmm_treatment <- data.frame(
@@ -449,7 +444,203 @@ bootstrap_df %>%
 ```
 
 
-Illustrating the relationship between phenotype and mean fitness depends critically on the range of parameters shown. Perhaps this is what it is a good idea to show it based on the actual phenotypic distributions, or for 1 +/- SD
+Illustrating the relationship between phenotype and mean fitness depends critically on the range of parameters shown. Perhaps this is what it is a good idea to show it based on the actual phenotypic distributions, or for 1 +/- SD.
+
+The reason why the intervals look so chunky is because I've used the actual phenotypic distributions rather than sampling evenly at high densities across the distribution. 
+
+One interesting thing is that I don't believe the relative fitness intervals correspond to the absolute fitness intervals. This is likely because there can be a high absolute fitness, but the relative fitness might not change all that much...This means I need to figure out another way to plot these intervals. One easy way to do this would be to just return a list of two data frames, one that corresponds to absolute fitness and the other to relative fitness. This would be the easiest solution that would also remove a lot of redundancy in my code. 
+
+```{r Gall Size Fitness Landscape}
+
+## Control ----
+RF_control_gall_size <- bootstrap_fitness(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = seq(-2,2,length.out=1000), #sort(control_df$sc.gall_size),
+     sc.clutch_size = 0,
+     sc.female_preference = 0),
+  bootstraps=100)
+
+## Treatment ----
+RF_treatment_gall_size <- bootstrap_fitness(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = seq(-2,2,length.out=1000), #sort(treatment_df$sc.gall_size), 
+     sc.clutch_size = 0,
+     sc.female_preference = 0),
+  bootstraps=100)
+   
+## Spaghetti Plot: Relative Fitness ----   
+bind_rows(mutate(RF_treatment_gall_size, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size, Food_Web = "Complex")) %>%
+  select(-sc.clutch_size, -sc.female_preference) %>%
+  gather(ID, fitness, -sc.gall_size, -Food_Web) %>%
+  group_by(ID, Food_Web) %>%
+  mutate(relative_fitness = fitness/mean(fitness)) %>%
+  ungroup() %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.gall_size, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.1)) +
+  scale_size_manual(values=c(1.5,0.25))
+
+## Interval Plot: Relative Fitness ----   
+bind_rows(mutate(RF_treatment_gall_size, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size, Food_Web = "Complex")) %>%
+  group_by(Food_Web) %>%
+  mutate(relative_fitness = average/mean(average), lower_RF = lower/mean(lower), upper_RF = upper/mean(upper)) %>%
+  ggplot(., aes(x=sc.gall_size, y=relative_fitness)) +
+  geom_line(aes(color=Food_Web)) +
+  geom_ribbon(aes(ymin=lower_RF, ymax=upper_RF, fill=Food_Web), alpha=0.25)
+
+## Spaghetti Plot: Absolute Fitness ----   
+bind_rows(mutate(RF_treatment_gall_size, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size, Food_Web = "Complex")) %>%
+  select(-sc.clutch_size, -sc.female_preference) %>%
+  gather(ID, fitness, -sc.gall_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.gall_size, y=fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.1)) +
+  scale_size_manual(values=c(1.5,0.25))
+
+## Interval Plot: Absolute Fitness ----   
+bind_rows(mutate(RF_treatment_gall_size, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=average)) +
+  geom_line(aes(color=Food_Web)) +
+  geom_ribbon(aes(ymin=lower, ymax=upper, fill=Food_Web), alpha=0.25)
+```
+
+```{r Clutch Size Fitness Landscapes}
+
+## Control ----
+RF_control_clutch_size <- bootstrap_fitness(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = sort(distinct(control_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size), # note that these aren't unique
+     sc.female_preference = 0),
+  bootstraps=100)
+
+## Treatment ----
+RF_treatment_clutch_size <- bootstrap_fitness(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = sort(distinct(treatment_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size), # note that these aren't unique
+     sc.female_preference = 0),
+  bootstraps=100)
+   
+## Spaghetti Plot: Relative Fitness ----   
+bind_rows(mutate(RF_treatment_clutch_size, Food_Web = "Simple"), 
+          mutate(RF_control_clutch_size, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.female_preference) %>%
+  gather(ID, fitness, -sc.clutch_size, -Food_Web) %>%
+  group_by(ID, Food_Web) %>%
+  mutate(relative_fitness = fitness/mean(fitness)) %>%
+  ungroup() %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.clutch_size, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.1)) +
+  scale_size_manual(values=c(1.5,0.25))
+
+## Interval Plot: Relative Fitness ----  
+
+# unclear to me why the complex intervals are weird...
+bind_rows(mutate(RF_treatment_clutch_size, Food_Web = "Simple"), 
+          mutate(RF_control_clutch_size, Food_Web = "Complex")) %>%
+  group_by(Food_Web) %>%
+  mutate(relative_fitness = average/mean(average), lower_RF = lower/mean(lower), upper_RF = upper/mean(upper)) %>%
+  ggplot(., aes(x=sc.clutch_size, y=relative_fitness)) +
+  geom_line(aes(color=Food_Web)) +
+  geom_ribbon(aes(ymin=lower_RF, ymax=upper_RF, fill=Food_Web), alpha=0.25)
+
+## Spaghetti Plot: Absolute Fitness ----   
+bind_rows(mutate(RF_treatment_clutch_size, Food_Web = "Simple"), 
+          mutate(RF_control_clutch_size, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.female_preference) %>%
+  gather(ID, fitness, -sc.clutch_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.clutch_size, y=fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.1)) +
+  scale_size_manual(values=c(1.5,0.25))
+
+## Interval Plot: Absolute Fitness ----   
+bind_rows(mutate(RF_treatment_clutch_size, Food_Web = "Simple"), 
+          mutate(RF_control_clutch_size, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.clutch_size, y=average)) +
+  geom_line(aes(color=Food_Web)) +
+  geom_ribbon(aes(ymin=lower, ymax=upper, fill=Food_Web), alpha=0.25)
+```
+
+```{r Female Preference Fitness Landscapes}
+
+## Control ----
+RF_control_female_preference <- bootstrap_fitness(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = 0, 
+     sc.female_preference = sort(distinct(control_df, Plant_Position, sc.female_preference)$sc.female_preference)), 
+  bootstraps=100)
+
+## Treatment ----
+RF_treatment_female_preference <- bootstrap_fitness(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = 0,
+     sc.female_preference = sort(distinct(treatment_df, Plant_Position, sc.female_preference)$sc.female_preference)), 
+  bootstraps=100)
+   
+## Spaghetti Plot: Relative Fitness ----   
+bind_rows(mutate(RF_treatment_female_preference, Food_Web = "Simple"), 
+          mutate(RF_control_female_preference, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.clutch_size) %>%
+  gather(ID, fitness, -sc.female_preference, -Food_Web) %>%
+  group_by(ID, Food_Web) %>%
+  mutate(relative_fitness = fitness/mean(fitness)) %>%
+  ungroup() %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.female_preference, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.1)) +
+  scale_size_manual(values=c(1.5,0.25))
+
+## Interval Plot: Relative Fitness ----  
+
+# unclear to me why the complex intervals are weird...
+bind_rows(mutate(RF_treatment_female_preference, Food_Web = "Simple"), 
+          mutate(RF_control_female_preference, Food_Web = "Complex")) %>%
+  group_by(Food_Web) %>%
+  mutate(relative_fitness = average/mean(average), lower_RF = lower/mean(lower), upper_RF = upper/mean(upper)) %>%
+  ggplot(., aes(x=sc.female_preference, y=relative_fitness)) +
+  geom_line(aes(color=Food_Web)) +
+  geom_ribbon(aes(ymin=lower_RF, ymax=upper_RF, fill=Food_Web), alpha=0.25)
+
+## Spaghetti Plot: Absolute Fitness ----   
+bind_rows(mutate(RF_treatment_female_preference, Food_Web = "Simple"), 
+          mutate(RF_control_female_preference, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.clutch_size) %>%
+  gather(ID, fitness, -sc.female_preference, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.female_preference, y=fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.1)) +
+  scale_size_manual(values=c(1.5,0.25))
+
+## Interval Plot: Absolute Fitness ----   
+bind_rows(mutate(RF_treatment_female_preference, Food_Web = "Simple"), 
+          mutate(RF_control_female_preference, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.female_preference, y=average)) +
+  geom_line(aes(color=Food_Web)) +
+  geom_ribbon(aes(ymin=lower, ymax=upper, fill=Food_Web), alpha=0.25)
+```
+
+
 
 ```{r GLMM Univariate Landscapes, eval=FALSE}
 
@@ -463,7 +654,7 @@ HPD_95_control_size <- coda::HPDinterval(coda::as.mcmc(control_df$sc.gall_size),
 RF_treatment_gall_size <- relative_fitness_intervals(
   logistic_model = glmer_treatment, 
   newdata = expand.grid(
-     sc.gall_size = treatment_df$sc.gall_size, 
+     sc.gall_size = sort(treatment_df$sc.gall_size), 
      sc.clutch_size = 0,
      sc.female_preference = 0),
   bootstraps=10)
@@ -476,7 +667,7 @@ RF_control_gall_size <- relative_fitness_intervals(
      sc.gall_size = treatment_df$sc.gall_size,
      sc.clutch_size = 0,
      sc.female_preference = 0),
-  bootstraps=100)
+  bootstraps=10)
        
 mean(RF_control_gall_size$relative_fitness)
 
