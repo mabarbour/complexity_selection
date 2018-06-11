@@ -123,17 +123,33 @@ Beta_avg_grad <- function(.) {
 bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0.025,0.975)){
   model_matrix <- model.matrix(~ sc.gall_size + sc.clutch_size + sc.female_preference, newdata)
   
+  # Absolute fitness
   get_absolute_fitness <- function(.) inverse_logit(model_matrix %*% fixef(.))
   
-  get_bootstraps <-bootMer(logistic_model, FUN = get_absolute_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
-
-  get_intervals <- apply(get_bootstraps$t, 2, function(x) x[order(x)][c(round(bootstraps*intervals[1],0),round(bootstraps*intervals[2],0))])
-    
-  return(data.frame(newdata, 
+  get_bootstraps_absolute_fitness <-bootMer(logistic_model, FUN = get_absolute_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
+  
+   get_intervals_absolute_fitness <- apply(get_bootstraps_absolute_fitness$t, 2, function(x) x[order(x)][c(round(bootstraps*intervals[1],0),round(bootstraps*intervals[2],0))])
+   
+  absolute_fitness_df <- data.frame(newdata, 
                     average = get_absolute_fitness(logistic_model), 
-                    lower = get_intervals[1, ],
-                    upper = get_intervals[2, ],
-                    t(get_bootstraps$t)))
+                    lower = get_intervals_absolute_fitness[1, ],
+                    upper = get_intervals_absolute_fitness[2, ],
+                    t(get_bootstraps_absolute_fitness$t))
+  
+  # Relative fitness
+  get_relative_fitness <- function(.) get_absolute_fitness(.)/mean(get_absolute_fitness(.))
+  
+  get_bootstraps_relative_fitness <-bootMer(logistic_model, FUN = get_relative_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
+  
+  get_intervals_relative_fitness <- apply(get_bootstraps_relative_fitness$t, 2, function(x) x[order(x)][c(round(bootstraps*intervals[1],0),round(bootstraps*intervals[2],0))])
+    
+  relative_fitness_df <- data.frame(newdata, 
+                    average = get_relative_fitness(logistic_model), 
+                    lower = get_intervals_relative_fitness[1, ],
+                    upper = get_intervals_relative_fitness[2, ],
+                    t(get_bootstraps_relative_fitness$t))
+  # Organize data
+  return(list(absolute_fitness = absolute_fitness_df, relative_fitness = relative_fitness_df))
 }
 ```
 
@@ -450,7 +466,71 @@ The reason why the intervals look so chunky is because I've used the actual phen
 
 One interesting thing is that I don't believe the relative fitness intervals correspond to the absolute fitness intervals. This is likely because there can be a high absolute fitness, but the relative fitness might not change all that much...This means I need to figure out another way to plot these intervals. One easy way to do this would be to just return a list of two data frames, one that corresponds to absolute fitness and the other to relative fitness. This would be the easiest solution that would also remove a lot of redundancy in my code. 
 
-```{r Gall Size Fitness Landscape}
+Okay, I solved the interval problem with relative fitness. Now I want to see if I can smooth up the 95% interval plots, by just plotting these 95% bootstrapped reps, shouldn't they be smooth lines? Is it something weird with geom_ribbon?
+
+```{r REVISED Gall Size Fitness Landscape}
+
+## Control ----
+RF_control_gall_size <- bootstrap_fitness(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000), 
+     sc.clutch_size = 0,
+     sc.female_preference = 0),
+  bootstraps=100)
+
+## Treatment ----
+RF_treatment_gall_size <- bootstrap_fitness(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.clutch_size = 0,
+     sc.female_preference = 0),
+  bootstraps=100)
+   
+## Spaghetti Plot: Relative Fitness ----   
+bind_rows(mutate(RF_treatment_gall_size$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size$relative_fitness, Food_Web = "Complex")) %>%
+  select(-sc.clutch_size, -sc.female_preference) %>%
+  gather(ID, relative_fitness, -sc.gall_size, -Food_Web) %>%
+  #group_by(ID, Food_Web) %>%
+  #mutate(relative_fitness = fitness/mean(fitness)) %>%
+  #ungroup() %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.gall_size, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.1)) +
+  scale_size_manual(values=c(1.5,0.25))
+
+## Interval Plot: Relative Fitness ----   
+bind_rows(mutate(RF_treatment_gall_size$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size$relative_fitness, Food_Web = "Complex")) %>%
+  #group_by(Food_Web) %>%
+  #mutate(relative_fitness = average/mean(average), lower_RF = lower/mean(lower), upper_RF = upper/mean(upper)) %>%
+  ggplot(., aes(x=sc.gall_size, y=average)) +
+  geom_line(aes(color=Food_Web)) +
+  geom_ribbon(aes(ymin=lower, ymax=upper, fill=Food_Web), alpha=0.25)
+
+## Spaghetti Plot: Absolute Fitness ----   
+bind_rows(mutate(RF_treatment_gall_size$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size$absolute_fitness, Food_Web = "Complex")) %>%
+  select(-sc.clutch_size, -sc.female_preference) %>%
+  gather(ID, absolute_fitness, -sc.gall_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.gall_size, y=absolute_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.1)) +
+  scale_size_manual(values=c(1.5,0.25))
+
+## Interval Plot: Absolute Fitness ----   
+bind_rows(mutate(RF_treatment_gall_size$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size$absolute_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=average)) +
+  geom_line(aes(color=Food_Web)) +
+  geom_ribbon(aes(ymin=lower, ymax=upper, fill=Food_Web), alpha=0.25)
+```
+
+```{r OLD Gall Size Fitness Landscape, eval=FALSE}
 
 ## Control ----
 RF_control_gall_size <- bootstrap_fitness(
@@ -519,7 +599,7 @@ RF_control_clutch_size <- bootstrap_fitness(
   logistic_model = glmer_control, 
   newdata = expand.grid(
      sc.gall_size = 0,
-     sc.clutch_size = sort(distinct(control_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size), # note that these aren't unique
+     sc.clutch_size = seq(-1,1,length.out=1000),
      sc.female_preference = 0),
   bootstraps=100)
 
@@ -528,18 +608,18 @@ RF_treatment_clutch_size <- bootstrap_fitness(
   logistic_model = glmer_treatment, 
   newdata = expand.grid(
      sc.gall_size = 0,
-     sc.clutch_size = sort(distinct(treatment_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size), # note that these aren't unique
+     sc.clutch_size = seq(-1,1,length.out=1000),
      sc.female_preference = 0),
   bootstraps=100)
    
 ## Spaghetti Plot: Relative Fitness ----   
-bind_rows(mutate(RF_treatment_clutch_size, Food_Web = "Simple"), 
-          mutate(RF_control_clutch_size, Food_Web = "Complex")) %>%
+bind_rows(mutate(RF_treatment_clutch_size$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch_size$relative_fitness, Food_Web = "Complex")) %>%
   select(-sc.gall_size, -sc.female_preference) %>%
-  gather(ID, fitness, -sc.clutch_size, -Food_Web) %>%
-  group_by(ID, Food_Web) %>%
-  mutate(relative_fitness = fitness/mean(fitness)) %>%
-  ungroup() %>%
+  gather(ID, relative_fitness, -sc.clutch_size, -Food_Web) %>%
+  #group_by(ID, Food_Web) %>%
+  #mutate(relative_fitness = fitness/mean(fitness)) %>%
+  #ungroup() %>%
   mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
   ggplot(., aes(x=sc.clutch_size, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
   geom_line() +
@@ -548,29 +628,28 @@ bind_rows(mutate(RF_treatment_clutch_size, Food_Web = "Simple"),
 
 ## Interval Plot: Relative Fitness ----  
 
-# unclear to me why the complex intervals are weird...
-bind_rows(mutate(RF_treatment_clutch_size, Food_Web = "Simple"), 
-          mutate(RF_control_clutch_size, Food_Web = "Complex")) %>%
+bind_rows(mutate(RF_treatment_clutch_size$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch_size$relative_fitness, Food_Web = "Complex")) %>%
   group_by(Food_Web) %>%
-  mutate(relative_fitness = average/mean(average), lower_RF = lower/mean(lower), upper_RF = upper/mean(upper)) %>%
-  ggplot(., aes(x=sc.clutch_size, y=relative_fitness)) +
+  #mutate(relative_fitness = average/mean(average), lower_RF = lower/mean(lower), upper_RF = upper/mean(upper)) %>%
+  ggplot(., aes(x=sc.clutch_size, y=average)) +
   geom_line(aes(color=Food_Web)) +
-  geom_ribbon(aes(ymin=lower_RF, ymax=upper_RF, fill=Food_Web), alpha=0.25)
+  geom_ribbon(aes(ymin=lower, ymax=upper, fill=Food_Web), alpha=0.25)
 
 ## Spaghetti Plot: Absolute Fitness ----   
-bind_rows(mutate(RF_treatment_clutch_size, Food_Web = "Simple"), 
-          mutate(RF_control_clutch_size, Food_Web = "Complex")) %>%
+bind_rows(mutate(RF_treatment_clutch_size$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch_size$absolute_fitness, Food_Web = "Complex")) %>%
   select(-sc.gall_size, -sc.female_preference) %>%
-  gather(ID, fitness, -sc.clutch_size, -Food_Web) %>%
+  gather(ID, absolute_fitness, -sc.clutch_size, -Food_Web) %>%
   mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
-  ggplot(., aes(x=sc.clutch_size, y=fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  ggplot(., aes(x=sc.clutch_size, y=absolute_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
   geom_line() +
   scale_alpha_manual(values=c(1,0.1)) +
   scale_size_manual(values=c(1.5,0.25))
 
 ## Interval Plot: Absolute Fitness ----   
-bind_rows(mutate(RF_treatment_clutch_size, Food_Web = "Simple"), 
-          mutate(RF_control_clutch_size, Food_Web = "Complex")) %>%
+bind_rows(mutate(RF_treatment_clutch_size$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch_size$absolute_fitness, Food_Web = "Complex")) %>%
   ggplot(., aes(x=sc.clutch_size, y=average)) +
   geom_line(aes(color=Food_Web)) +
   geom_ribbon(aes(ymin=lower, ymax=upper, fill=Food_Web), alpha=0.25)
@@ -584,7 +663,7 @@ RF_control_female_preference <- bootstrap_fitness(
   newdata = expand.grid(
      sc.gall_size = 0,
      sc.clutch_size = 0, 
-     sc.female_preference = sort(distinct(control_df, Plant_Position, sc.female_preference)$sc.female_preference)), 
+     sc.female_preference = seq(-1,1,length.out=1000)), 
   bootstraps=100)
 
 ## Treatment ----
@@ -593,17 +672,17 @@ RF_treatment_female_preference <- bootstrap_fitness(
   newdata = expand.grid(
      sc.gall_size = 0,
      sc.clutch_size = 0,
-     sc.female_preference = sort(distinct(treatment_df, Plant_Position, sc.female_preference)$sc.female_preference)), 
+     sc.female_preference = seq(-1,1,length.out=1000)), 
   bootstraps=100)
    
 ## Spaghetti Plot: Relative Fitness ----   
-bind_rows(mutate(RF_treatment_female_preference, Food_Web = "Simple"), 
-          mutate(RF_control_female_preference, Food_Web = "Complex")) %>%
+bind_rows(mutate(RF_treatment_female_preference$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_female_preference$relative_fitness, Food_Web = "Complex")) %>%
   select(-sc.gall_size, -sc.clutch_size) %>%
-  gather(ID, fitness, -sc.female_preference, -Food_Web) %>%
-  group_by(ID, Food_Web) %>%
-  mutate(relative_fitness = fitness/mean(fitness)) %>%
-  ungroup() %>%
+  gather(ID, relative_fitness, -sc.female_preference, -Food_Web) %>%
+  #group_by(ID, Food_Web) %>%
+  #mutate(relative_fitness = fitness/mean(fitness)) %>%
+  #ungroup() %>%
   mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
   ggplot(., aes(x=sc.female_preference, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
   geom_line() +
@@ -613,28 +692,28 @@ bind_rows(mutate(RF_treatment_female_preference, Food_Web = "Simple"),
 ## Interval Plot: Relative Fitness ----  
 
 # unclear to me why the complex intervals are weird...
-bind_rows(mutate(RF_treatment_female_preference, Food_Web = "Simple"), 
-          mutate(RF_control_female_preference, Food_Web = "Complex")) %>%
-  group_by(Food_Web) %>%
-  mutate(relative_fitness = average/mean(average), lower_RF = lower/mean(lower), upper_RF = upper/mean(upper)) %>%
-  ggplot(., aes(x=sc.female_preference, y=relative_fitness)) +
+bind_rows(mutate(RF_treatment_female_preference$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_female_preference$relative_fitness, Food_Web = "Complex")) %>%
+  #group_by(Food_Web) %>%
+  #mutate(relative_fitness = average/mean(average), lower_RF = lower/mean(lower), upper_RF = upper/mean(upper)) %>%
+  ggplot(., aes(x=sc.female_preference, y=average)) +
   geom_line(aes(color=Food_Web)) +
-  geom_ribbon(aes(ymin=lower_RF, ymax=upper_RF, fill=Food_Web), alpha=0.25)
+  geom_ribbon(aes(ymin=lower, ymax=upper, fill=Food_Web), alpha=0.25)
 
 ## Spaghetti Plot: Absolute Fitness ----   
-bind_rows(mutate(RF_treatment_female_preference, Food_Web = "Simple"), 
-          mutate(RF_control_female_preference, Food_Web = "Complex")) %>%
+bind_rows(mutate(RF_treatment_female_preference$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_female_preference$absolute_fitness, Food_Web = "Complex")) %>%
   select(-sc.gall_size, -sc.clutch_size) %>%
-  gather(ID, fitness, -sc.female_preference, -Food_Web) %>%
+  gather(ID, absolute_fitness, -sc.female_preference, -Food_Web) %>%
   mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
-  ggplot(., aes(x=sc.female_preference, y=fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  ggplot(., aes(x=sc.female_preference, y=absolute_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
   geom_line() +
   scale_alpha_manual(values=c(1,0.1)) +
   scale_size_manual(values=c(1.5,0.25))
 
 ## Interval Plot: Absolute Fitness ----   
-bind_rows(mutate(RF_treatment_female_preference, Food_Web = "Simple"), 
-          mutate(RF_control_female_preference, Food_Web = "Complex")) %>%
+bind_rows(mutate(RF_treatment_female_preference$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_female_preference$absolute_fitness, Food_Web = "Complex")) %>%
   ggplot(., aes(x=sc.female_preference, y=average)) +
   geom_line(aes(color=Food_Web)) +
   geom_ribbon(aes(ymin=lower, ymax=upper, fill=Food_Web), alpha=0.25)
