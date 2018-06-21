@@ -1,12 +1,14 @@
 ---
-title: "Supplementary Material for Food-web complexity alters the fitness landscape of an insect herbivore"
-author: Matt Barbour
-output: html_notebook
+title: Supplementary Material for Food-web complexity alters the fitness landscape
+  of an insect herbivore
+author: "Matt Barbour"
+output:
+  html_document: default
+  html_notebook: default
 ---
 
 Load dataset. This dataset is a subset that only includes larva that survive to pupation or turned into parasitoids. We omitted any data where larva mortality was unclear. This enabled us to focus on the selection pressures imposed by insect parasitoids rather than other sources.
-```{r setup}
-knitr::opts_chunk$set(include = FALSE)
+```{r setup, include=FALSE}
 
 ## Load required libraries ----
 library(tidyverse)
@@ -167,7 +169,7 @@ bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0
 
 We used Aikaike Information Criteria (AIC)
 
-```{r AIC Model Selection, cache=TRUE}
+```{r AIC Model Selection, echo=TRUE, cache=TRUE}
 
 ## GAMM 1: models the effect of food-web treatment on univariate and multivariate fitness landscapes ----
 GAMM_1 <- gamm.model(gall_survival ~ 
@@ -862,7 +864,7 @@ save_plot("AF_landscapes_2d.pdf", AF_landscape_2d, base_height=6, base_width = 8
 
 
 
-```{r GLMM Univariate Landscapes, eval=FALSE}
+```{r GLMM Univariate Landscapes, eval=FALSE, include=FALSE}
 
 ## Gall size ----
 HPD_50_treatment_size <- coda::HPDinterval(coda::as.mcmc(treatment_df$sc.gall_size), prob=0.5)
@@ -1037,7 +1039,7 @@ bind_rows(mutate(RF_treatment_female_preference, Treatment = "Simple"),
   xlab("Female preference")
 ```
 
-```{r GLMM Multivariate Landscapes, eval=FALSE}
+```{r GLMM Multivariate Landscapes, eval=FALSE, include=FALSE}
 
 ## Clutch size x Female Preference ----
 RF_treatment_clutch_preference <- relative_fitness_intervals(
@@ -1079,7 +1081,7 @@ expand.grid(sc.gall_size = 0,
 
 Choosing the level of model complexity. We used AIC to pair down the complexity of the model. For both the control and treatment plants, there is support for maintaing the linear interaction between gall size and the number of individuals per gall. In both cases, AIC suggest that the models lacking linear interaction terms were more parsimonious, so we subsequently analyzed selection gradients with these models.
 
-```{r AIC Model Selection v0.1, eval=FALSE}
+```{r AIC Model Selection v0.1, eval=FALSE, include=FALSE}
 
 ## CONTROL PLANTS ----
 gamm_full.control <- gamm.model(gall_survival ~ 
@@ -1195,7 +1197,7 @@ Case-wise bootstrapping: qualitative results match parametric bootstrapping.
 Posterior: qualitative results match parametric bootstrapping, except that non-linear selection on gall size in the complex food-web is no longer significant.
 
 Permutation: qualtiative results are consistent with parametric bootstrapping. Exceptions include: in the simple food-web, there is no evidence of non-linear selection for gall density or gall individuals. In the complex food-web, there is only marginal evidence for non-linear selection acting on gall size, but there is evidence for correlational selection between gall size and the number of individuals per gall.
-```{r SELECTION GRADIENTS, echo=TRUE, warning=FALSE, eval=FALSE}
+```{r SELECTION GRADIENTS, echo=TRUE, warning=FALSE, eval=FALSE, include=FALSE}
 
 ## Estimate directional, nonlinear, and correlational selection gradients ----
 sg.size_control <- gradient.calc(mod = gamm_red.control$gam, 
@@ -1289,7 +1291,7 @@ sg.summary %>%
   spread(treatment, P.value)
 ```
 
-```{r Selection Gradients - Bootstrapped Intervals, eval=FALSE}
+```{r Selection Gradients - Bootstrapped Intervals, eval=FALSE, include=FALSE}
 
 ## BOOTSTRAPPED INTERVALS ----
 bootstrap_df <- bind_rows(
@@ -1324,7 +1326,7 @@ bootstrap_df %>%
 ```
 
 Compare bootstrapped replicates across treatments, rather than comparing to zero.
-```{r Compare bootstrapped replicates across treatments, eval=FALSE}
+```{r Compare bootstrapped replicates across treatments, eval=FALSE, include=FALSE}
 bootstrap_df %>%
   filter(Phenotype == "Gall size", Selection_Type == "Beta") %>%
   mutate(ID = rep(1:1000,2)) %>%
@@ -1394,7 +1396,7 @@ Another decision we had to make was whether to calculate selection gradients wit
 
 
 Now we plot the fitness landscapes associated with different combinations of gall phenotypes. We restrict these plots to 1 SD above and below the mean trait value, as this contains the majority of phenotypes under selection. Therefore, this fitness landscape integrates information from the fitness function with information about distributions of phenotype, and has been suggested to be a more informative way to visualize the magnitude of natural selection.
-```{r Fitness Landscapes, eval=FALSE}
+```{r Fitness Landscapes, eval=FALSE, include=FALSE}
 
 #### ESTIMATE FITNESS LANDSCAPES ----
 
