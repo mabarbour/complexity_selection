@@ -1,12 +1,12 @@
 ---
-title: Short Paper
+title: Food-web complexity flattens the fitness landscape of an insect herbivore
 author:
-  - name: Alice Anonymous
-    email: alice@example.com
-    affiliation: Some Institute of Technology
+  - name: Matthew A. Barbour
+    email: matthew.barbour@ieu.uzh.ch
+    affiliation: Department of Evolutionary Biology and Environmental Studies, University of Zurich, Zurich, Switzerland
     footnote: Corresponding Author
-  - name: Bob Security
-    email: bob@example.com
+  - name: Jordi Bascompte
+    email: jordi.bascompte@ieu.uzh.ch
     affiliation: Another University
 address:
   - code: Some Institute of Technology
@@ -26,7 +26,24 @@ _Text based on elsarticle sample manuscript, see [http://www.elsevier.com/author
 Introduction
 ============
 
-Biological diversity -- from genes, to phenotypes, to species -- has fascinated evolutionary biologists for decades. However, the explicit context (i.e. ecological environment) is often abstracted and not examined in detail in studies of natural selection. Thus, we have a poor understanding of how biological diversity itself, imposes natural selection, and the potential feedbacks that may emerge.
+<!-- I. Community context can affect evolutionary change -->
+
+Biological diversity -- from genes, to phenotypes, to species -- has fascinated evolutionary biologists for decades.
+
+Much of this biological diversity has been shaped by natural selection via trophic interactions, such as resource competition (cite charater displacement), mutualistic exchanges of resource (cite? ), and predation (cite recent Heath and Stireman paper).
+
+NEED to recognize that evolutionary biologists have begun to explore how community context affects evolutionary change (work by Sharon Strauss, Casey terHorst, Lutz Becks, etc.). These results have begun to show interesting patterns whereby the composition of species in a community can alter the direction and strength of natural selection imposed on species embedded within these communities (cite). 
+
+Put another way, these results have begun to show biological diversity, in terms of differences between species, can drive evolutionary change. 
+
+While there is clear evidence for pairwise trophic interactions to drive evolution by natural selection, its unclear how biological diversity itself imposes natural selection and drives evolutionary change.
+
+<!-- II. Still unclear how biological diversity shapes evolutionary change -->
+
+Exploring the effects of biological diversity requires an explicit examination of the network structure of trophic interactions between species in a community. Theoretical models have begun to examine how the network structure of species interactions drives evolutionary change (Nuismer paper; Guimeras paper; Ecology Letters paper from a spanish guy...); however, we are currently lacking experimental tests. 
+
+
+<!-- II. Ecologists have incorporated community context --> 
 
 In contrast, ecologists have begun to embrace the complexity of the natural world, and seeking to identify the complex networks of interactions that underlie community structure and ecosystem function. However, these studies have not examined how evolutionary processes feedback to shape the structure and evolution of these interaction networks.
 
@@ -64,6 +81,15 @@ We used a spline-based semiparametric regression (Schluter 1988, Morrissey and S
 We then calculated selection gradients as the partial derivatives in absolute fitness (larva survival) with response to multivariate phenotype using the \textit{gsg} package in R (cite Morrissey and R project). We standardized phenotypes (mean=0, SD=1), so that first-order derivatives correspond to the intensity of directional selection ($\beta$\textsubscript{trait}), while second-order derivatives correspond to intensity of nonlinear ($\gamma$\textsubscript{trait}) and correlational selection ($\gamma$\textsubscript{trait$_i$,}\textsubscript{trait$_j$}) and are thus comparable within this study as well as to others.
 
 Our GLMMs are useful for testing the effects of food-web complexity on the fitness landscape within the context of our experimental design; however, coefficients from GLMMs cannot be easily converted into quantitative estimates of selection gradients (cite Morrissey's work). Therefore, for each treatment, we fit separate generalized additive models (GAMs) for gall traits that we identified as being under selection from our GLMMs. Estimating selection gradients from GAMs can give insight to both linear and non-linear selection gradients, which we assumed were all linear for our GLMMs, given the complexity of already fitting up to 4-way interactions in these models. For the number of larva per gall and gall density, we aggregated larva survival at the gall or plant level, respectively, to avoid pseudoreplication in our GAMs. 
+
+Results
+=======
+
+Discussion
+==========
+
+
+<!-- Feedbacks between biological diversity and evolutionary change -->
 
 There are various bibliography styles available. You can select the
 style of your choice in the preamble of this document. These styles are
