@@ -126,7 +126,8 @@ bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0
   # Absolute fitness
   get_absolute_fitness <- function(.) inverse_logit(model_matrix %*% fixef(.))
   
-  get_bootstraps_absolute_fitness <-bootMer(logistic_model, FUN = get_absolute_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
+  if(is.null(bootstraps) == FALSE){
+    get_bootstraps_absolute_fitness <-bootMer(logistic_model, FUN = get_absolute_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
   
    get_intervals_absolute_fitness <- apply(get_bootstraps_absolute_fitness$t, 2, function(x) x[order(x)][c(round(bootstraps*intervals[1],0),round(bootstraps*intervals[2],0))])
    
@@ -135,11 +136,17 @@ bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0
                     lower = get_intervals_absolute_fitness[1, ],
                     upper = get_intervals_absolute_fitness[2, ],
                     t(get_bootstraps_absolute_fitness$t))
+  } else {
+    absolute_fitness_df <- data.frame(newdata, 
+                    average = get_absolute_fitness(logistic_model))
+  }
+  
   
   # Relative fitness
   get_relative_fitness <- function(.) get_absolute_fitness(.)/mean(get_absolute_fitness(.))
   
-  get_bootstraps_relative_fitness <-bootMer(logistic_model, FUN = get_relative_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
+  if(is.null(bootstraps) == FALSE){
+    get_bootstraps_relative_fitness <-bootMer(logistic_model, FUN = get_relative_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
   
   get_intervals_relative_fitness <- apply(get_bootstraps_relative_fitness$t, 2, function(x) x[order(x)][c(round(bootstraps*intervals[1],0),round(bootstraps*intervals[2],0))])
     
@@ -148,6 +155,11 @@ bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0
                     lower = get_intervals_relative_fitness[1, ],
                     upper = get_intervals_relative_fitness[2, ],
                     t(get_bootstraps_relative_fitness$t))
+  } else {
+      relative_fitness_df <- data.frame(newdata, 
+                    average = get_relative_fitness(logistic_model))
+  }
+  
   # Organize data
   return(list(absolute_fitness = absolute_fitness_df, relative_fitness = relative_fitness_df))
 }
@@ -717,6 +729,173 @@ bind_rows(mutate(RF_treatment_female_preference$absolute_fitness, Food_Web = "Si
   ggplot(., aes(x=sc.female_preference, y=average)) +
   geom_line(aes(color=Food_Web)) +
   geom_ribbon(aes(ymin=lower, ymax=upper, fill=Food_Web), alpha=0.25)
+```
+
+
+```{r Multivariate Landscapes}
+
+## Clutch size x Female preference ----
+
+# Control
+RF_control_clutch.x.preference <- bootstrap_fitness(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = seq(-1,1,length.out=1000), 
+     sc.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=NULL)
+
+# Treatment
+RF_treatment_clutch.x.preference <- bootstrap_fitness(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = seq(-1,1,length.out=1000),
+     sc.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=NULL)
+
+## Gall size x Clutch size ----
+
+# Control
+RF_control_size.x.clutch <- bootstrap_fitness(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.clutch_size = seq(-1,1,length.out=1000), 
+     sc.female_preference = 0), 
+  bootstraps=NULL)
+
+# Treatment
+RF_treatment_size.x.clutch <- bootstrap_fitness(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.clutch_size = seq(-1,1,length.out=1000),
+     sc.female_preference = 0), 
+  bootstraps=NULL)
+
+## Gall size x Female preference ----
+
+# Control
+RF_control_size.x.preference <- bootstrap_fitness(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.clutch_size = 0, 
+     sc.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=NULL)
+
+# Treatment
+RF_treatment_size.x.preference <- bootstrap_fitness(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.clutch_size = 0,
+     sc.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=NULL)
+
+## Relative fitness plots ----
+
+# Get range in relative fitness for accurate scaling across all plots
+RF_range <- bind_rows(RF_treatment_clutch.x.preference$relative_fitness, RF_control_clutch.x.preference$relative_fitness,
+          RF_treatment_size.x.clutch$relative_fitness, RF_control_size.x.clutch$relative_fitness,
+          RF_treatment_size.x.preference$relative_fitness, RF_control_size.x.preference$relative_fitness) %>%
+  summarise(min = min(average), max = max(average))
+
+# Clutch x Preference
+RF_plot_clutch.x.preference <- bind_rows(mutate(RF_treatment_clutch.x.preference$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch.x.preference$relative_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.female_preference, y=sc.clutch_size, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Female preference (SDs)") +
+  ylab("Clutch size (SDs)") +
+  #scale_fill_gradient2(midpoint=1, limits = c(RF_range$min, RF_range$max))
+  scale_fill_viridis(limits = c(RF_range$min, RF_range$max), name = "Relative fitness")
+
+# Size x Clutch
+RF_plot_size.x.clutch <- bind_rows(mutate(RF_treatment_size.x.clutch$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_size.x.clutch$relative_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=sc.clutch_size, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Clutch size (SDs)") +
+  #scale_fill_gradient2(midpoint=1, limits = c(RF_range$min, RF_range$max))
+  scale_fill_viridis(limits = c(RF_range$min, RF_range$max), name = "Relative fitness")
+
+# Size x Preference
+RF_plot_size.x.preference <- bind_rows(mutate(RF_treatment_size.x.preference$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_size.x.preference$relative_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=sc.female_preference, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Female preference (SDs)") +
+  #scale_fill_gradient2(midpoint=1, limits = c(RF_range$min, RF_range$max))
+  scale_fill_viridis(limits = c(RF_range$min, RF_range$max), name = "Relative fitness")
+
+# Get legend
+RF_landscape_legend <- get_legend(RF_plot_size.x.preference)
+
+# Format plots
+RF_landscape_plots <- plot_grid(
+  RF_plot_size.x.clutch + theme(legend.position = "none", axis.title.x = element_blank()),
+  RF_plot_clutch.x.preference + theme(legend.position = "none", axis.title.y = element_blank()),
+  RF_plot_size.x.preference + theme(legend.position = "none"), 
+  nrow=2, align="hv", labels = "AUTO")
+RF_landscape_2d <- ggdraw(RF_landscape_plots) + draw_grob(RF_landscape_legend, x = 0.7, y=-0.2)
+RF_landscape_2d
+save_plot("RF_landscapes_2d.png", RF_landscape_2d, base_height=6, base_width = 8)
+
+## Absolute fitness landscapes ----
+AF_range <- bind_rows(RF_treatment_clutch.x.preference$absolute_fitness, RF_control_clutch.x.preference$absolute_fitness,
+          RF_treatment_size.x.clutch$absolute_fitness, RF_control_size.x.clutch$absolute_fitness,
+          RF_treatment_size.x.preference$absolute_fitness, RF_control_size.x.preference$absolute_fitness) %>%
+  summarise(min = min(average), max = max(average))
+
+# Size x Preference
+AF_plot_size.x.preference <- bind_rows(mutate(RF_treatment_size.x.preference$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_size.x.preference$absolute_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=sc.female_preference, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Female preference (SDs)") +
+  scale_fill_viridis(limits = c(AF_range$min, AF_range$max), name = "Absolute fitness")
+
+# Size x Clutch
+AF_plot_size.x.clutch <- bind_rows(mutate(RF_treatment_size.x.clutch$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_size.x.clutch$absolute_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=sc.clutch_size, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Clutch size (SDs)") +
+  scale_fill_viridis(limits = c(AF_range$min, AF_range$max), name = "Absolute fitness")
+
+# Clutch x Preference
+AF_plot_clutch.x.preference <- bind_rows(mutate(RF_treatment_clutch.x.preference$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch.x.preference$absolute_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.female_preference, y=sc.clutch_size, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Female preference (SDs)") +
+  ylab("Clutch size (SDs)") +
+  scale_fill_viridis(limits = c(AF_range$min, AF_range$max), name = "Absolute fitness")
+
+# Get legend
+AF_landscape_legend <- get_legend(AF_plot_size.x.preference)
+
+# Format plots
+AF_landscape_plots <- plot_grid(
+  AF_plot_size.x.clutch + theme(legend.position = "none", axis.title.x = element_blank()),
+  AF_plot_clutch.x.preference + theme(legend.position = "none", axis.title.y = element_blank()),
+  AF_plot_size.x.preference + theme(legend.position = "none"), 
+  nrow=2, align="hv", labels = "AUTO")
+AF_landscape_2d <- ggdraw(AF_landscape_plots) + draw_grob(AF_landscape_legend, x = 0.7, y=-0.2)
+AF_landscape_2d
+save_plot("AF_landscapes_2d.png", AF_landscape_2d, base_height=6, base_width = 8)
 ```
 
 
