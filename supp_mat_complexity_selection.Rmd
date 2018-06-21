@@ -807,7 +807,7 @@ RF_landscape_plots <- plot_grid(
   RF_plot_size.x.preference + theme(legend.position = "none"), 
   nrow=2, align="hv", labels = "AUTO")
 RF_landscape_2d <- ggdraw(RF_landscape_plots) + draw_grob(RF_landscape_legend, x = 0.7, y=-0.2)
-RF_landscape_2d
+#RF_landscape_2d
 #save_plot("RF_landscapes_2d.png", RF_landscape_2d, base_height=6, base_width = 8)
 #save_plot("RF_landscapes_2d.pdf", RF_landscape_2d, base_height=6, base_width = 8)
 
@@ -857,7 +857,7 @@ AF_landscape_plots <- plot_grid(
   AF_plot_size.x.preference + theme(legend.position = "none"), 
   nrow=2, align="hv", labels = "AUTO")
 AF_landscape_2d <- ggdraw(AF_landscape_plots) + draw_grob(AF_landscape_legend, x = 0.7, y=-0.2)
-AF_landscape_2d
+#AF_landscape_2d
 #save_plot("AF_landscapes_2d.png", AF_landscape_2d, base_height=6, base_width = 8)
 #save_plot("AF_landscapes_2d.pdf", AF_landscape_2d, base_height=6, base_width = 8)
 ```
