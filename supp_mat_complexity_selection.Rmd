@@ -167,7 +167,7 @@ bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0
 
 We used Aikaike Information Criteria (AIC)
 
-```{r AIC Model Selection}
+```{r AIC Model Selection, cache=TRUE}
 
 ## GAMM 1: models the effect of food-web treatment on univariate and multivariate fitness landscapes ----
 GAMM_1 <- gamm.model(gall_survival ~ 
@@ -218,7 +218,7 @@ knitr::kable(AIC(GAMM_1$mer, GAMM_2$mer, GAMM_3$mer, GAMM_4$mer))
 AIC model comparison suggests that ....
 
 Now let's compare the best GAMMs to analog generalized linear mixed-models (GLMM). If these GLMMs have a lower AIC value than their respective GAMMs, then this suggests that there is only evidence of directional selection in our data.
-```{r}
+```{r GAMM vs GLMM, cache=TRUE}
 # Note that I still use gamm.model to allow for appropriate model comparisons
 
 ## GLMM 3: only models the effect of food-web treatment on directional selection gradients ----
@@ -247,7 +247,7 @@ It appears that the best predictive model is the GLMM that includes an effect of
 The model selection procedure was useful for pairing down the complexity of our model. To actually quantify the directional selection gradients in each treatment though, we analyze each treatment separately.
 
 
-```{r Selection Gradients - Complex Food Web}
+```{r Selection Gradients - Complex Food Web, cache=TRUE}
 # note that I've switched to using the lme4 package to analyzing the GLMM
 
 # GLMM ----
@@ -274,7 +274,7 @@ summary_Beta_glmm_control <- data.frame(
 ```
 
 
-```{r Selection Gradients - Simple Food Web}
+```{r Selection Gradients - Simple Food Web, cache=TRUE}
 
 ## GLMM ----
 glmer_treatment <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference +
@@ -301,7 +301,7 @@ summary_Beta_glmm_treatment <- data.frame(
 
 
 To ensure we are calculating these selection gradients correctly, we'll compare our results to those obtained from the *gsg* package developed by Michael Morrissey.
-```{r Check Gradient Calculations}
+```{r Check Gradient Calculations, cache=TRUE}
 
 ## GAMM Control ----
 gamm_control <- gamm.model(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference,
@@ -354,7 +354,7 @@ The comparisons are quite close, but why should they differ at all? This suggest
 
 Now let's look at how the confidence intervals vary between the GLMM and GAMMs. Note that I now fit it with a spline function to allow gsg to calculate bootstrap intervals (it won't otherwise).
 
-```{r gsg Comparison}
+```{r gsg Comparison, cache=TRUE}
 
 ## Fit generalized additive mixed models ----
 gamm_control_2 <- gamm.model(gall_survival ~ s(sc.gall_size) + s(sc.clutch_size,k=9) + s(sc.female_preference),
@@ -415,7 +415,7 @@ bind_rows(gsg_gradients, summary_Beta_glmm_control, summary_Beta_glmm_treatment)
 
 Both methods give the same qualitative results. However, range of the confidence intervals can be more than twice as large using my GLMM bootstrapping methods. Therefore, our reported intervals provide a conservative estimate.
 
-```{r Compare Selection Gradients across Treatments - GLMM}
+```{r Compare Selection Gradients across Treatments - GLMM, cache=TRUE}
 
 ## Gather bootstrap data from GLMMs
 glmm_boostrap_df <- bind_rows(
@@ -444,7 +444,7 @@ select(glmm_boostrap_df, sc.female_preference, ID, Food_Web) %>%
 
 We observe the same qualitative results with *gsg* GAMMs, except that the P-values are always lower.
 
-```{r Compare Selection Gradients across Treatments - gsg GAMM}
+```{r Compare Selection Gradients across Treatments - gsg GAMM, cache=TRUE}
 
 ## Gall size ----
 bootstrap_df %>%
@@ -480,7 +480,7 @@ One interesting thing is that I don't believe the relative fitness intervals cor
 
 Okay, I solved the interval problem with relative fitness. Now I want to see if I can smooth up the 95% interval plots, by just plotting these 95% bootstrapped reps, shouldn't they be smooth lines? Is it something weird with geom_ribbon?
 
-```{r Univariate Fitness Landscapes}
+```{r Univariate Fitness Landscapes, cache=TRUE}
 ## Gall size ----
 
 # Control
@@ -692,7 +692,7 @@ save_plot("AF_gradients.pdf", AF_gradients, base_height=6, base_width = 8)
 ```
 
 
-```{r Multivariate Landscapes}
+```{r Multivariate Landscapes, cache=TRUE}
 
 ## Clutch size x Female preference ----
 
@@ -1394,7 +1394,7 @@ Another decision we had to make was whether to calculate selection gradients wit
 
 
 Now we plot the fitness landscapes associated with different combinations of gall phenotypes. We restrict these plots to 1 SD above and below the mean trait value, as this contains the majority of phenotypes under selection. Therefore, this fitness landscape integrates information from the fitness function with information about distributions of phenotype, and has been suggested to be a more informative way to visualize the magnitude of natural selection.
-```{r Fitness Landscapes}
+```{r Fitness Landscapes, eval=FALSE}
 
 #### ESTIMATE FITNESS LANDSCAPES ----
 
