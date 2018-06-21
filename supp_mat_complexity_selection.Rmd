@@ -623,8 +623,8 @@ RF_uni_plots <- plot_grid(RF_uni_size + theme(legend.position = "none"),
 
 RF_gradients <- ggdraw(RF_uni_plots) + draw_grob(RF_uni_legend, x = 0.8, y=0)
 RF_gradients
-save_plot("RF_gradients.png", RF_gradients, base_height=6, base_width = 8)
-save_plot("RF_gradients.pdf", RF_gradients, base_height=6, base_width = 8)
+#save_plot("RF_gradients.png", RF_gradients, base_height=6, base_width = 8)
+#save_plot("RF_gradients.pdf", RF_gradients, base_height=6, base_width = 8)
 
 ## Absolute fitness plots ----
 
@@ -689,8 +689,8 @@ AF_uni_plots <- plot_grid(AF_uni_size + theme(legend.position = "none"),
 
 AF_gradients <- ggdraw(AF_uni_plots) + draw_grob(AF_uni_legend, x = 0.8, y=0)
 AF_gradients
-save_plot("AF_gradients.png", AF_gradients, base_height=6, base_width = 8)
-save_plot("AF_gradients.pdf", AF_gradients, base_height=6, base_width = 8)
+#save_plot("AF_gradients.png", AF_gradients, base_height=6, base_width = 8)
+#save_plot("AF_gradients.pdf", AF_gradients, base_height=6, base_width = 8)
 ```
 
 
@@ -808,8 +808,8 @@ RF_landscape_plots <- plot_grid(
   nrow=2, align="hv", labels = "AUTO")
 RF_landscape_2d <- ggdraw(RF_landscape_plots) + draw_grob(RF_landscape_legend, x = 0.7, y=-0.2)
 RF_landscape_2d
-save_plot("RF_landscapes_2d.png", RF_landscape_2d, base_height=6, base_width = 8)
-save_plot("RF_landscapes_2d.pdf", RF_landscape_2d, base_height=6, base_width = 8)
+#save_plot("RF_landscapes_2d.png", RF_landscape_2d, base_height=6, base_width = 8)
+#save_plot("RF_landscapes_2d.pdf", RF_landscape_2d, base_height=6, base_width = 8)
 
 ## Absolute fitness landscapes ----
 AF_range <- bind_rows(RF_treatment_clutch.x.preference$absolute_fitness, RF_control_clutch.x.preference$absolute_fitness,
@@ -858,8 +858,8 @@ AF_landscape_plots <- plot_grid(
   nrow=2, align="hv", labels = "AUTO")
 AF_landscape_2d <- ggdraw(AF_landscape_plots) + draw_grob(AF_landscape_legend, x = 0.7, y=-0.2)
 AF_landscape_2d
-save_plot("AF_landscapes_2d.png", AF_landscape_2d, base_height=6, base_width = 8)
-save_plot("AF_landscapes_2d.pdf", AF_landscape_2d, base_height=6, base_width = 8)
+#save_plot("AF_landscapes_2d.png", AF_landscape_2d, base_height=6, base_width = 8)
+#save_plot("AF_landscapes_2d.pdf", AF_landscape_2d, base_height=6, base_width = 8)
 ```
 
 
