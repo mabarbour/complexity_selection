@@ -43,12 +43,21 @@ While there is clear evidence for pairwise trophic interactions to drive evoluti
 
 Exploring the effects of biological diversity requires an explicit examination of the network structure of trophic interactions between species in a community. Theoretical models have begun to examine how the network structure of species interactions drives evolutionary change (Nuismer paper; Guimeras paper; Ecology Letters paper from a spanish guy...); however, we are currently lacking experimental tests. 
 
-
 <!-- II. Ecologists have incorporated community context --> 
 
 In contrast, ecologists have begun to embrace the complexity of the natural world, and seeking to identify the complex networks of interactions that underlie community structure and ecosystem function. However, these studies have not examined how evolutionary processes feedback to shape the structure and evolution of these interaction networks.
 
-We sought to bridge this gap through a field experiment that examines how food-web complexity alters the fitness landscape of species embedded within this food web. 
+<!-- III. Generate expectations for how food-web complexity may alter selection gradients -->
+
+Food-web complexity may influence selection gradients in multiple ways. First, if more diverse predator communities are more efficient as suppressing prey densities (e.g. biodiversity-ecosystem fucntion; Ives 2005 Ecology Letters), then this will result in lower mean fitness. A reduction in mean fitness, all else equal, will intensify natural selection and thus could increase the rate of evolutionary change. Alternatively, if predators are functionally distinct, more diverse communities can reduce the strength of selection. This is because each predator has a different functional relationship between prey phenotype and the probability of an interaction. 
+
+<!-- IV. Introduce study system -->
+
+Here, we conducted a field experiment to test the effect of food-web complexity on the fitness landscape of a species embedded within this food web. To do this, we used a common garden experiment with a host plant (*Salix hooeriana*), an abundant herbivore (*Iteomyia salicisverruca*), and the diverse community of insect parasitoids that attack it. Prior work in this system has shown that there is directional selection for larger galls, likely because larger galls provide more of a refuge from parasitoid attack. However, there is also evidence that different parasitoid species impose differential selection on gall phenotypes.  
+
+<!-- IV. Relationship between entropy and fitness landscape 
+In more complex communities, there is greater uncertainty for an individual prey in which predator species will be imposing the trophic interaction. This also means the --> 
+
 
 
 Materials & Methods
@@ -66,8 +75,9 @@ We setup our food-web manipulation soon after galls began developing on \textit{
 
 <!-- % III. Describe how we measured gall phenotypes -->
 
-We collected data on three different phenotypes for each larva that have been shown to be important in our work (cite Barbour et al. 2016) and in other work with Cecidomyiid midges (CITE). First, we measured the size of each gall chamber to the nearest 0.01 mm at its maximum diameter (perpendicular to the direction of plant tissue growth). Second, we counted the number of chambers in each gall, which is indicative of the number of larva per gall. All larva collected from the same gall were scored with the same 'number of larva per gall' phenotype. This trait is indicative of the clutch size of adult females.  %This trait likely reflects a combination of both larva feeding behavior as well as adult female preferences and clutch size (CITE Art Weis' work). 
-Third, we estimated gall density as the number of larva per 100 shoots. We did this by counting the number of gall chambers on five randomly sampled branches per tree. To account for potential differences in the number of shoots per branch for each plant genotype (CITE other willow work), we then counted the number of shoots on the fifth branch to estimate the number of larva per 100 shoots for each plant. All larva collected from the same plant were scored with the same gall density phenotype. This phenotype is indicative of the preference of female midges for particular plant traits (hereafter 'female preference'). 
+We collected data on three different phenotypes for each larva that have been shown to be important in our work (@Barbour2016) and in other work with Cecidomyiid midges (@Weis1983, @Heath2018). First, we measured the size of each gall chamber to the nearest 0.01 mm at its maximum diameter (perpendicular to the direction of plant tissue growth). Our previous work has shown that larger galls provide a refuge for larva from parasitoid attack (@Barbour2016). Second, we counted the number of chambers in each gall, which is indicative of the clutch size of adult female midges (@Weis1983). All larva collected from the same multi-chambered gall were scored with the same clutch size. Third, we estimated gall density as the number of larva per 100 shoots. We did this by summing the number of gall chambers for galls on five randomly sampled branches per tree. To account for potential differences in the number of shoots per branch for each plant genotype (CITE other willow work), we then counted the number of shoots on the fifth branch to estimate the number of larva per 100 shoots for each plant. All larva collected from the same plant were scored with the same gall density phenotype. This phenotype is indicative of the preference of female midges for particular plant traits (hereafter 'female preference'). 
+
+The measurement of insect densities on a plant is a commonly used index for measuring oviposition preference (@Gripenberg2010), although it is controversal (@Singer1986)
 
 <!-- % IV. Describe statistical analysis to test the effects of food-web complexity -->
 
@@ -83,8 +93,12 @@ We then calculated selection gradients as the partial derivatives in absolute fi
 
 Our GLMMs are useful for testing the effects of food-web complexity on the fitness landscape within the context of our experimental design; however, coefficients from GLMMs cannot be easily converted into quantitative estimates of selection gradients (cite Morrissey's work). Therefore, for each treatment, we fit separate generalized additive models (GAMs) for gall traits that we identified as being under selection from our GLMMs. Estimating selection gradients from GAMs can give insight to both linear and non-linear selection gradients, which we assumed were all linear for our GLMMs, given the complexity of already fitting up to 4-way interactions in these models. For the number of larva per gall and gall density, we aggregated larva survival at the gall or plant level, respectively, to avoid pseudoreplication in our GAMs. 
 
+We used Aikaike Information Criteria to compare models that varied in complexity. This analysis enabled us to explore the appropriate complexity of the model to include for our analyses (i.e. include non-linear and correlational selection gradients and whether they varied with food-web treatment).
+
 Results
 =======
+
+We found that more phenotypic traits were under selection in the simple vs. complex food web. In both complex and simple food webs, gall diameter was under strong directional selection, with larger galls resulting in higher larval survival (complex Beta = ; simple Beta = )(Fig. 2A). In complex food webs, there was no evidence of selection on clutch size ($\beta_{clutch}=$) or female preference ($\beta_{preference}=$)(orange lines in Fig. 2B,C). In simple food webs, however, clutch size and female preference were under strong directional selection, with smaller clutch sizes and weaker preferences resulting in higher larval survival (blue lines in Fig. 2B,C). These different selection pressures resulted in different adaptive landscapes in complex vs. simple food webs, with evidence for more rugged landscapes in the simple rather than the complex food web (Fig. 3). Depending on the trait combinations used to create the landscape, we found that the ruggedness of the adaptive landscape ranged from 10\% higher (Fig. 3A) to 274\% higher (Fig. 3C) in the simple vs. complex food web. Our model comparison suggested that it was unnecessary to test for the effects of non-linear or correlational selection gradients (ref. supp. mat.).
 
 Discussion
 ==========
