@@ -49,7 +49,7 @@ In contrast, ecologists have begun to embrace the complexity of the natural worl
 
 <!-- III. Generate expectations for how food-web complexity may alter selection gradients -->
 
-Food-web complexity may influence selection gradients in multiple ways. First, if more diverse predator communities are more efficient as suppressing prey densities (e.g. biodiversity-ecosystem fucntion; Ives 2005 Ecology Letters), then this will result in lower mean fitness. A reduction in mean fitness, all else equal, will intensify natural selection and thus could increase the rate of evolutionary change. Alternatively, if predators are functionally distinct, more diverse communities can reduce the strength of selection. This is because each predator has a different functional relationship between prey phenotype and the probability of an interaction. 
+Food-web complexity may influence selection gradients in at least two ways. First, if more diverse predator communities are more efficient as suppressing prey densities (e.g. biodiversity-ecosystem fucntion; Ives 2005 Ecology Letters), then this will result in lower mean fitness. A reduction in mean fitness, all else equal, will intensify natural selection and thus could increase the rate of evolutionary change. Alternatively, if predators are functionally distinct, more diverse communities can reduce the strength of selection. This is because each predator has a different functional relationship between prey phenotype and the probability of an interaction. 
 
 <!-- IV. Introduce study system -->
 
