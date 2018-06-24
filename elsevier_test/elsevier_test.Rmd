@@ -109,22 +109,19 @@ All larva collected from the same plant were scored with the same female prefere
 
 <!-- % IV. Describe statistical analysis to test the effects of food-web complexity -->
 
-To identify the appropriate level of model complexity for testing the effects of food-web complexity on the fitness landscapes, we compared models using Aikaike Information Criteria. 
-The maximal complexity we explored was a generalized additive mixed model that fit cubic splines to each trait as well as linear interactions between a maximum of two traits as well as an interaction with food-web treatment.
-We then examined simpler models where 
+To characterize the shape of the fitness landscape, we quantified selection gradients acting on each trait in simple vs. complex food webs. We did this by fitting separate statistical models to data from each food-web treatment. We used generalized linear mixed models (GLMMs, @Bolker2009) with larval survival (0 or 1) as our response variable and measure of fitness. We specified linear and quadratic terms for each gall trait as well as linear interaction terms between each gall trait, as fixed effects in the statistical models. To account for the correlated structure of clutch size (gall level) and female preference (plant level) as well as any other independent effects of willow genotype on larval survival, we specified gall ID nested within plant ID nested within plant genotype as random intercepts in our statistical models. Since we were interested in characterizing the fitness landscape -- the relationship between mean trait values and population mean fitness -- we assumed the mean value of our random effects (i.e. setting them to zero) to estimate selection gradients. We then used the method of @Janzen1998 to calculate directional ($\beta_{z_i}$), nonlinear ($\gamma_{z_i}$), and correlational ($\gamma_{z_i,z_j}$) selection gradients and used parametric bootstrapping (1000 replicates) to calculate their 95% confidence intervals (@Bolker2009). To test whether selection gradients differed between treatments, we used our bootstrapped estimates to calculate the probability that selection gradients in the simple food web were larger/smaller than in the complex food web (i.e. the p-value). 
 
 <!--$$logit(E(W))=\mu+\beta_{diameter}+\beta_{clutch}+\beta_{preference}+$$
 $$logit(E(W))=\mu+treatment+s(diam):treat+s(clutch)+s(pref)+diam:cluch+diam:pref+clutch:pref+(1|Genotype/Plant/Gall)$$-->
 
-This analysis enabled us to explore the appropriate complexity of the model to include for our analyses (i.e. include non-linear and correlational selection gradients and whether they varied with food-web treatment).
-
-We used generalized additive mixed models (GAMMs, cite Bolker et al. 2008) to test the effects of food-web complexity on the shape of fitness landscape. Larva survival (0 or 1) was our response variable and measure of fitness. We specified our food-web treatment, each gall trait, and all possible statistical interactions, as fixed effects to fully explore the effects of food-web complexity on the fitness landscape. This analysis implicitly assumes that selection is linear, which we felt was a necessary trade-off for exploring the shape of the fitness landscape. We specified plant genotype, plant individual nested within genotype, and multi-chambered gall nested within plant individual, as random effects.
-
-To quantify selection gradients, we fit separate statistical models to data from each food-web treatment. We used the method of @Janzen1998 to calculate selection gradients and used parametric bootstrapping to calculate their 95% confidence intervals (@Bolker2009).
-
-To account for the correlated structure of our gall phenotypes (oviposition preference at plant-level; clutch size at gall-level; gall diameter at chamber-level), we specified gall ID nested within plant ID nested within plant genotype as random intercepts in our statistical models. 
-
-From these GAMMs, we estimate selection gradients by assuming the mean value of our random effects (i.e. setting them to zero). This was appropriate for our analysis, since we were interested in estimating the fitness landscape, which is function of population mean fitness and mean trait values.
+<!-- We used generalized linear mixed models (GLMMs, @Bolker2009) to test the effects of food-web complexity on the shape of the fitness landscape. 
+Larva survival (0 or 1) was our response variable and measure of fitness. 
+<!-- Need to clean up the language part of this section without it being too complicated and confusing. I should also include tests of non-linear selection gradients. -->
+<!-- We specified our food-web treatment, each gall trait, two-way interactions between gall traits, as well interactions between gall trait and food-web treatment, as fixed effects to fully explore the effects of food-web complexity on the fitness landscape. 
+This analysis implicitly assumes that selection is linear, which we felt was a necessary trade-off for exploring the shape of the fitness landscape. 
+To account for the correlated structure of clutch size (gall level) and female preference (plant level) as well as any other independent effects of willow genotype on parasitism rates, we specified gall ID nested within plant ID nested within plant genotype as random intercepts in our statistical models. 
+<!-- To identify the appropriate level of model complexity for testing the effects of food-web complexity on the fitness landscapes, we compared models using Aikaike Information Criteria. 
+The maximal complexity we explored was a generalized additive mixed model that fit cubic splines to each trait as well as linear interactions between a maximum of two traits as well as an interaction with food-web treatment. -->
 
 <!-- We used a spline-based semiparametric regression (Schluter 1988, Morrissey and Sakedra 2014). These analyses are desirable because they lead to inferences of the form of selection that make few \textit{a priori} assumptions (Schluter 1988), and can now be used to quantify standardized selection gradients (Morrissey and Sakrera 2014).
 
