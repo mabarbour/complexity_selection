@@ -22,6 +22,166 @@ output: rticles::elsevier_article
 
 _Text based on elsarticle sample manuscript, see [http://www.elsevier.com/author-schemas/latex-instructions#elsarticle](http://www.elsevier.com/author-schemas/latex-instructions#elsarticle)_
 
+```{r setup, include=FALSE}
+
+## Load required libraries ----
+library(tidyverse)
+library(cowplot) # pretty default ggplots
+library(broom) # for tidying multiple linear models
+library(mgcv) # generalized additive models
+library(gamm4) # generalized additive mixed-models
+library(gsg) # calculating selection gradients
+library(visreg)
+library(viridis) # for color palette
+
+## Load and manage data ----
+
+gall_selection.df <- read_csv("gall_selection_data.csv") %>%
+  # convert appropriate variables to characters instead of integers
+  mutate(Plant_Position = as.character(Plant_Position),
+         Gall_Number = as.character(Gall_Number)) %>%
+  unite(Gall_ID, Gall_Number, Gall_Letter, remove = FALSE) %>%
+  
+  # subset data for analysis
+  filter(phenology == "early", Location == "tree",
+         platy > 0 | ectos > 0 | pupa > 0) %>%                  # eliminate unknown sources of mortality
+  mutate(gall_survival = as.numeric(ifelse(pupa > 0, 1, 0)),
+         egg_parasitoid = as.numeric(ifelse(platy > 0, 1, 0))) 
+
+# convert treatment to factor to use as 'by' variable in generalized additive models
+gall_selection.df <- gall_selection.df %>%
+  mutate(Treatment_contr.sum=factor(Treatment.focus), 
+         sc.gall_size = as.numeric(scale(Gall_Height_mm)),
+         sc.clutch_size = as.numeric(scale(gall_individuals)),
+         sc.female_preference = as.numeric(scale(Density_per_100_shoots)))
+contrasts(gall_selection.df$Treatment_contr.sum) <- 'contr.sum'
+
+## Create separate datasets for quantifying selection gradients ----
+control_df <- gall_selection.df %>%
+  filter(Treatment.focus == "Control") %>%
+  mutate(sc.gall_size = (Gall_Height_mm - mean(Gall_Height_mm))/sd(Gall_Height_mm),
+         sc.clutch_size = (gall_individuals - mean(gall_individuals))/sd(gall_individuals),
+         sc.female_preference = (Density_per_100_shoots - mean(Density_per_100_shoots))/sd(Density_per_100_shoots))
+
+treatment_df <- gall_selection.df %>%
+  filter(Treatment.focus == "Ectoparasitoid exclusion") %>%
+  mutate(sc.gall_size = (Gall_Height_mm - mean(Gall_Height_mm))/sd(Gall_Height_mm),
+         sc.clutch_size = (gall_individuals - mean(gall_individuals))/sd(gall_individuals),
+         sc.female_preference = (Density_per_100_shoots - mean(Density_per_100_shoots))/sd(Density_per_100_shoots))
+
+## Custom functions to avoid repetitive code ----
+gamm.model <- function(formula, data) {
+  gamm4(formula, data, 
+        random = ~(1|Genotype/Plant_Position/Gall_Number), 
+        family = binomial(link = logit))
+}
+
+gam.plot <- function(gam.model, ...) {
+  plot(gam.model, se = TRUE, seWithMean = T, shift = mean(predict(gam.model)), trans = function(x) {exp(x)/(1+exp(x))}, ...)
+}
+
+# experimenting with boot.case gave bootstrapped distributions that weren't centered near the model mean estimate.
+# also, using 'refit.smooth = T' also generated some very skewed distributions
+# the recipe below provided the most sensible estimates for my data
+gradient.calc <- function(mod, phenotype, covariates = NULL) {
+  gam.gradients(mod, phenotype, covariates, parallel = 'multicore', ncpus = 32, 
+                refit.smooth = F,
+                n.boot = 1000,
+                se.method = 'boot.para', #'posterior', #'boot.para', #'permute', 'boot.case'#  
+                standardized = T)
+} 
+
+insect_FL <- function(mod, phenotype, covariates = NULL) {
+  fitness.landscape(mod, phenotype, covariates, parallel = 'multicore', ncpus = 32,
+                    PI.method = 'boot.para',
+                    refit.smooth = F,
+                    PI.interval = c(0.025,0.975),
+                    plt.density = 100)
+}
+
+get_insect_FL.df <- function(FL){
+  data.frame(mean_fitness = FL$Wbar, FL$points, t(FL$WbarPI)) %>%
+    mutate(lower_2.5 = X2.5., upper_97.5 = X97.5.)
+}
+
+overdisp_fun <- function(model) {
+  ## number of variance parameters in 
+  ##   an n-by-n variance-covariance matrix
+  vpars <- function(m) {
+    nrow(m)*(nrow(m)+1)/2
+  }
+  model.df <- sum(sapply(VarCorr(model),vpars))+length(fixef(model))
+  rdf <- nrow(model.frame(model))-model.df
+  rp <- residuals(model,type="pearson")
+  Pearson.chisq <- sum(rp^2)
+  prat <- Pearson.chisq/rdf
+  pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
+  c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
+}
+
+inverse_logit <- function(x) exp(x)/(1+exp(x))
+
+#Beta_avg_grad <- function(logistic_model, mean_fitness) {
+#  brackets <- predict(logistic_model, type = "response") * (1 - predict(logistic_model, type="response"))
+#  gradient <- mean(brackets) * fixef(logistic_model) / mean_fitness 
+#  return(gradient)
+#}
+
+## Calculate directional selection gradients
+# following method of Janzen and Stern 1998, Evolution
+Beta_avg_grad <- function(.) {
+  mean_fitness <- inverse_logit(fixef(update(., .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
+  brackets <- predict(., type = "response") * (1 - predict(., type="response"))
+  mean(brackets) * fixef(.)[-1] / mean_fitness 
+}
+
+## Bootstrap fitness estimates
+bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0.025,0.975)){
+  model_matrix <- model.matrix(~ sc.gall_size + sc.clutch_size + sc.female_preference, newdata)
+  
+  # Absolute fitness
+  get_absolute_fitness <- function(.) inverse_logit(model_matrix %*% fixef(.))
+  
+  if(is.null(bootstraps) == FALSE){
+    get_bootstraps_absolute_fitness <-bootMer(logistic_model, FUN = get_absolute_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
+  
+   get_intervals_absolute_fitness <- apply(get_bootstraps_absolute_fitness$t, 2, function(x) x[order(x)][c(round(bootstraps*intervals[1],0),round(bootstraps*intervals[2],0))])
+   
+  absolute_fitness_df <- data.frame(newdata, 
+                    average = get_absolute_fitness(logistic_model), 
+                    lower = get_intervals_absolute_fitness[1, ],
+                    upper = get_intervals_absolute_fitness[2, ],
+                    t(get_bootstraps_absolute_fitness$t))
+  } else {
+    absolute_fitness_df <- data.frame(newdata, 
+                    average = get_absolute_fitness(logistic_model))
+  }
+  
+  
+  # Relative fitness
+  get_relative_fitness <- function(.) get_absolute_fitness(.)/mean(get_absolute_fitness(.))
+  
+  if(is.null(bootstraps) == FALSE){
+    get_bootstraps_relative_fitness <-bootMer(logistic_model, FUN = get_relative_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
+  
+  get_intervals_relative_fitness <- apply(get_bootstraps_relative_fitness$t, 2, function(x) x[order(x)][c(round(bootstraps*intervals[1],0),round(bootstraps*intervals[2],0))])
+    
+  relative_fitness_df <- data.frame(newdata, 
+                    average = get_relative_fitness(logistic_model), 
+                    lower = get_intervals_relative_fitness[1, ],
+                    upper = get_intervals_relative_fitness[2, ],
+                    t(get_bootstraps_relative_fitness$t))
+  } else {
+      relative_fitness_df <- data.frame(newdata, 
+                    average = get_relative_fitness(logistic_model))
+  }
+  
+  # Organize data
+  return(list(absolute_fitness = absolute_fitness_df, relative_fitness = relative_fitness_df))
+}
+```
+
+
 
 Introduction
 ============
@@ -109,7 +269,69 @@ All larva collected from the same plant were scored with the same female prefere
 
 <!-- % IV. Describe statistical analysis to test the effects of food-web complexity -->
 
-To characterize the shape of the fitness landscape, we quantified selection gradients acting on each trait in simple vs. complex food webs. We did this by fitting separate statistical models to data from each food-web treatment. We used generalized linear mixed models (GLMMs, @Bolker2009) with larval survival (0 or 1) as our response variable and measure of fitness. We specified linear and quadratic terms for each gall trait as well as linear interaction terms between each gall trait, as fixed effects in the statistical models. To account for the correlated structure of clutch size (gall level) and female preference (plant level) as well as any other independent effects of willow genotype on larval survival, we specified gall ID nested within plant ID nested within plant genotype as random intercepts in our statistical models. Since we were interested in characterizing the fitness landscape -- the relationship between mean trait values and population mean fitness -- we assumed the mean value of our random effects (i.e. setting them to zero) to estimate selection gradients. We then used the method of @Janzen1998 to calculate directional ($\beta_{z_i}$), nonlinear ($\gamma_{z_i}$), and correlational ($\gamma_{z_i,z_j}$) selection gradients and used parametric bootstrapping (1000 replicates) to calculate their 95% confidence intervals (@Bolker2009). To test whether selection gradients differed between treatments, we used our bootstrapped estimates to calculate the probability that selection gradients in the simple food web were larger/smaller than in the complex food web (i.e. the p-value). 
+To characterize the shape of the fitness landscape, we quantified selection gradients acting on each trait in simple vs. complex food webs. We did this by fitting separate statistical models to data from each food-web treatment. We used generalized linear mixed models (GLMMs, @Bolker2009) with larval survival (0 or 1) as our response variable and measure of fitness. We specified linear and quadratic terms for each gall trait as well as linear interaction terms between each gall trait, as fixed effects in the statistical models. To account for the correlated structure of clutch size (gall level) and female preference (plant level) as well as any other independent effects of willow genotype on larval survival, we specified gall ID nested within plant ID nested within plant genotype as random intercepts in our statistical models. Since we were interested in characterizing the fitness landscape -- the relationship between mean trait values and population mean fitness -- we assumed the mean value of our random effects (i.e. setting them to zero) to estimate selection gradients. We then used the method of @Janzen1998 to calculate directional ($\beta_{z_i}$), nonlinear ($\gamma_{z_i}$), and correlational ($\gamma_{z_i,z_j}$) selection gradients and used parametric bootstrapping (1000 replicates) to calculate their 95% confidence intervals (@Bolker2009). To test whether selection gradients differed between treatments, we used our bootstrapped estimates to calculate the probability that selection gradients in the simple food web were larger/smaller than in the complex food web (i.e. the p-value). All analyses and visualizations were conducted in R. 
+
+```{r Selection Gradients - Complex Food Web, cache=TRUE}
+# note that I've switched to using the lme4 package to analyzing the GLMM
+
+# GLMM ----
+glmer_control <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference +
+                         I(sc.gall_size^2) + I(sc.clutch_size^2) + I(sc.female_preference^2) +
+                         sc.gall_size:sc.clutch_size + sc.gall_size:sc.female_preference + sc.clutch_size:sc.female_preference +
+                           (1|Genotype/Plant_Position/Gall_Number),
+                         data = control_df,
+                         family = binomial(link = logit), optimizer = "bobyqa")
+# summary(glmer_control)
+
+# Mean fitness ----
+Wbar_control <- inverse_logit(fixef(update(glmer_control, .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
+
+# Confidence intervals for selection gradients ----
+boot_Beta_control <- bootMer(glmer_control, FUN = Beta_avg_grad, nsim=100, parallel="multicore", ncpus=32)
+
+## Summary ----
+summary_Beta_glmm_control <- data.frame(
+  Phenotype = c("Gall size", "Clutch size", "Female preference"),
+  Food_Web = "Complex",
+  Model = "GLMM",
+  Beta = round(Beta_avg_grad(glmer_control),3),
+  lower_2.5 = round(apply(boot_Beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3),
+  upper_97.5 = round(apply(boot_Beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3)) 
+
+summary_Beta_glmm_control
+```
+
+
+```{r Selection Gradients - Simple Food Web, cache=TRUE}
+
+## GLMM ----
+glmer_treatment <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference +
+                         I(sc.gall_size^2) + I(sc.clutch_size^2) + I(sc.female_preference^2) +
+                         sc.gall_size:sc.clutch_size + 
+                          sc.gall_size:sc.female_preference + 
+                           sc.clutch_size:sc.female_preference +
+                           (1|Genotype/Plant_Position/Gall_Number),
+                         data = treatment_df,
+                         family = binomial(link = logit), optimizer = "bobyqa")
+summary(glmer_treatment)
+
+## Mean fitness ----
+Wbar_treatment <- inverse_logit(fixef(update(glmer_treatment, .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
+
+## Confidence intervals for selection gradients ----
+boot_Beta_treatment <- bootMer(glmer_treatment, FUN = Beta_avg_grad, nsim=100, parallel="multicore", ncpus=32)
+
+## Summary ----
+summary_Beta_glmm_treatment <- data.frame(
+  Phenotype = c("Gall size", "Clutch size", "Female preference"),
+  Food_Web = "Simple",
+  Model = "GLMM",
+  Beta = round(Beta_avg_grad(glmer_treatment),2),
+  lower_2.5 = round(apply(boot_Beta_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),2),
+  upper_97.5 = round(apply(boot_Beta_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),2)) 
+
+summary_Beta_glmm_treatment
+```
 
 <!--$$logit(E(W))=\mu+\beta_{diameter}+\beta_{clutch}+\beta_{preference}+$$
 $$logit(E(W))=\mu+treatment+s(diam):treat+s(clutch)+s(pref)+diam:cluch+diam:pref+clutch:pref+(1|Genotype/Plant/Gall)$$-->
