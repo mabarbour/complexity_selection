@@ -186,33 +186,33 @@ bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0
 Introduction
 ============
 
+<!-- Alternative intro, "the fitness landscape as the unifying concept between ecology and evolutionary biology "-->
+
 <!-- I. Community context can affect evolutionary change -->
 
-Biological diversity -- from genes, to phenotypes, to species -- has fascinated evolutionary biologists for decades.
+Biological diversity -- from genes, to phenotypes, to species -- has fascinated evolutionary biologists for decades. <!-- need to improve this instead of just saying its fascinated a small group of people --> Much of this biological diversity has been shaped by natural selection via trophic interactions, such as resource competition (@Schluter2000), mutualistic exchanges of resource (@Jordano1987), and predation (@Abrams2000). While there is clear evidence for pairwise trophic interactions to drive evolution by natural selection, we also know that many species are embedded within complex networks of interacting species. <!-- need to make the link to multiple traits and the adaptive landscape here --> Nevertheless, the dynamics of natural selection in species-rich communities remains poorly explored (@McPeek2017). 
 
-Much of this biological diversity has been shaped by natural selection via trophic interactions, such as resource competition (cite charater displacement), mutualistic exchanges of resource (cite? ), and predation (cite recent Heath and Stireman paper).
+More recently, researchers have begun to explore how the community context drives evolutionary change (@McPeek2017; @TerHorst2018). 
 
 NEED to recognize that evolutionary biologists have begun to explore how community context affects evolutionary change (work by Sharon Strauss, Casey terHorst, Lutz Becks, etc.). These results have begun to show interesting patterns whereby the composition of species in a community can alter the direction and strength of natural selection imposed on species embedded within these communities (cite). 
 
-Put another way, these results have begun to show biological diversity, in terms of differences between species, can drive evolutionary change. 
-
-While there is clear evidence for pairwise trophic interactions to drive evolution by natural selection, its unclear how biological diversity itself imposes natural selection and drives evolutionary change.
+In other words, these results have begun to illustrate show how biological diversity, in terms of differences between species, can shape evolution. Nevertheless, predicting the how the composition of species in a community requires moving beyond a description of community composition. simply knowing the composition of species in a community will 
 
 <!-- II. Still unclear how biological diversity shapes evolutionary change -->
 
-Exploring the effects of biological diversity requires an explicit examination of the network structure of trophic interactions between species in a community. Theoretical models have begun to examine how the network structure of species interactions drives evolutionary change (Nuismer paper; Guimeras paper; Ecology Letters paper from a spanish guy...); however, we are currently lacking experimental tests. 
+Predicting the effects of biological diversity on requires an explicit examination of the network structure of trophic interactions between species in a community. Theoretical models have begun to examine how the network structure of species interactions drives evolutionary change (Nuismer paper; Guimeras paper; Ecology Letters paper from a spanish guy...; @McPeek2017); however, we are currently lacking experimental tests. 
 
 <!-- II. Ecologists have incorporated community context --> 
 
-In contrast, ecologists have begun to embrace the complexity of the natural world, and seeking to identify the complex networks of interactions that underlie community structure and ecosystem function. However, these studies have not examined how evolutionary processes feedback to shape the structure and evolution of these interaction networks.
+<!-- In contrast, ecologists have begun to embrace the complexity of the natural world, and seeking to identify the complex networks of interactions that underlie community structure and ecosystem function. However, these studies have not examined how evolutionary processes feedback to shape the structure and evolution of these interaction networks. -->
 
 <!-- III. Generate expectations for how food-web complexity may alter selection gradients -->
 
-Food-web complexity may influence selection gradients in at least two ways. First, if more diverse predator communities are more efficient as suppressing prey densities (e.g. biodiversity-ecosystem fucntion; Ives 2005 Ecology Letters), then this will result in lower mean fitness. A reduction in mean fitness, all else equal, will intensify natural selection and thus could increase the rate of evolutionary change. Alternatively, if predators are functionally distinct, more diverse communities can reduce the strength of selection. This is because each predator has a different functional relationship between prey phenotype and the probability of an interaction. 
+Food-web complexity can shape the fitness landscape in at least two ways. First, if more diverse predator communities are more efficient at suppressing prey densities (e.g. biodiversity-ecosystem fucntion; Ives 2005 Ecology Letters), then this will result in lower mean fitness. A reduction in mean fitness, all else equal, will intensify natural selection (@Hunter2018) and thus could speed up the rate of evolutionary change. Alternatively, if predators are functionally distinct, more diverse communities can reduce the strength of selection. This is because each predator has a different functional relationship between prey phenotype and the probability of an interaction. 
 
 <!-- IV. Introduce study system -->
 
-Here, we conducted a field experiment to test the effect of food-web complexity on the fitness landscape of a species embedded within this food web. To do this, we used a common garden experiment with a host plant (*Salix hooeriana*), an abundant herbivore (*Iteomyia salicisverruca*), and the diverse community of insect parasitoids that attack it. Prior work in this system has shown that there is directional selection for larger galls, likely because larger galls provide more of a refuge from parasitoid attack. However, there is also evidence that different parasitoid species impose differential selection on gall phenotypes.  
+Here, we conducted a field experiment to test the effect of network complexity on the fitness landscape of a constituent species. To do this, we used a common garden experiment with a host plant (*Salix hooeriana*), an abundant herbivore (*Iteomyia salicisverruca*), and the diverse community of insect parasitoids that attack it. Prior work in this system has shown that there is directional selection for larger galls, likely because larger galls provide more of a refuge from parasitoid attack. However, there is also evidence that different parasitoid species impose differential selection on gall phenotypes.  
 
 <!-- IV. Relationship between entropy and fitness landscape 
 In more complex communities, there is greater uncertainty for an individual prey in which predator species will be imposing the trophic interaction. This also means the --> 
