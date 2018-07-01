@@ -45,6 +45,46 @@
 \fi
 % use microtype if available
 \IfFileExists{microtype.sty}{\usepackage{microtype}}{}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
 \ifxetex
   \usepackage[setpagesize=false, % page size defined by xetex
               unicode=false, % unicode breaks when used with xetex
@@ -96,65 +136,78 @@ of Zurich, Zurich, Switzerland]{Matthew A. Barbour\corref{c1}}
 \emph{Text based on elsarticle sample manuscript, see
 \url{http://www.elsevier.com/author-schemas/latex-instructions\#elsarticle}}
 
+\begin{quote}
+\emph{There is a much more insidious kind of extinction: the extinction
+of ecological interactions.} \emph{(Janzen, D.H. 1974. The deflowering
+of Central America. Natural History. 83:48--53).}
+\end{quote}
+
 \section{Introduction}\label{introduction}
 
-Biological diversity -- from genes, to phenotypes, to species -- has
-fascinated evolutionary biologists for decades.
+Biological diversity -- from genes, to phenotypes, to species -- has and
+continues to be shaped by the interplay between ecological and
+evolutionary processes. Much of this biological diversity has been
+molded by natural selection arising from species interactions, such as
+resource competition (Schluter (2000)), mutualisms (Jordano (1987)), and
+predation (Abrams (2000)). While there is clear evidence that pairwise
+interactions can drive evolution, we also know that most species
+interact with multiple species in an ecological community. Understanding
+how evolutionary dynamics unfold in a community context is challenging
+and eminently theoretical (({\textbf{???}}), Nuismer paper, Guimeras
+paper, also McGill paper about biodiversity effects on evolution). Given
+the rapid loss of species diversity we are experiencing throughout the
+world (cite), we are in urgent need of work that makes and tests
+predictions for how the loss of species will affect the evolutionary
+process in natural communities.
 
-Much of this biological diversity has been shaped by natural selection
-via trophic interactions, such as resource competition (cite charater
-displacement), mutualistic exchanges of resource (cite? ), and predation
-(cite recent Heath and Stireman paper).
+Predicting the evolutionary consequences of biodiversity loss first
+requires an understanding of the concommitant change in the network
+structure of species interactions. Knowing the interaction network is
+crucial because the loss of biodiversity, in and of itself, will not
+alter evolution -- it is the associated loss of ecological interactions
+that will affect evolutionary change (Janzen (1974)). For a network of
+directly connected species, we would expect that the loss of species to
+result in a loss of network complexity. Network complexity is a property
+that describes the diversity of interactions in an ecological community
+(Banasek-Richter et al. (2009)). Thus, all else equal, species loss will
+decrease the diversity of interactions, resulting in a more simple
+network.
 
-NEED to recognize that evolutionary biologists have begun to explore how
-community context affects evolutionary change (work by Sharon Strauss,
-Casey terHorst, Lutz Becks, etc.). These results have begun to show
-interesting patterns whereby the composition of species in a community
-can alter the direction and strength of natural selection imposed on
-species embedded within these communities (cite).
+Predicting how a change in network complexity will alter evolution also
+requires an understanding of the relationship between network structure
+and the adaptive landscape. The adaptive landscape (i.e.~fitness
+landscape or selective surface) describes the relationship between the
+average trait value of a population and its average fitness (cite
+Arnold). For a trophic network, such as a food web, changes in network
+complexity can shape the adaptive landscape of constituent species in at
+least two ways. First, if a more diverse community of consumers is more
+efficient at suppressing resource densities (Ives, Cardinale, and Snyder
+(2005)), then this will result in lower mean fitness of the resource
+population. A reduction in mean fitness, all else equal, will intensify
+natural selection (Hunter et al. (2018)) and thus could speed up the
+rate of evolutionary change. On the other hand, if consumers are
+functionally distinct, then more diverse communities can dampen the
+strength of selection. This is because each consumer has a different
+functional relationship with resource traits. In addition, there is a
+reduced probability in interacting with a specific consumer species in a
+more diverse community. Thus, a more diverse consumer community may
+impose more diffuse selection across the adaptive landscape.
 
-Put another way, these results have begun to show biological diversity,
-in terms of differences between species, can drive evolutionary change.
-
-While there is clear evidence for pairwise trophic interactions to drive
-evolution by natural selection, its unclear how biological diversity
-itself imposes natural selection and drives evolutionary change.
-
-Exploring the effects of biological diversity requires an explicit
-examination of the network structure of trophic interactions between
-species in a community. Theoretical models have begun to examine how the
-network structure of species interactions drives evolutionary change
-(Nuismer paper; Guimeras paper; Ecology Letters paper from a spanish
-guy\ldots{}); however, we are currently lacking experimental tests.
-
-In contrast, ecologists have begun to embrace the complexity of the
-natural world, and seeking to identify the complex networks of
-interactions that underlie community structure and ecosystem function.
-However, these studies have not examined how evolutionary processes
-feedback to shape the structure and evolution of these interaction
-networks.
-
-Food-web complexity may influence selection gradients in at least two
-ways. First, if more diverse predator communities are more efficient as
-suppressing prey densities (e.g.~biodiversity-ecosystem fucntion; Ives
-2005 Ecology Letters), then this will result in lower mean fitness. A
-reduction in mean fitness, all else equal, will intensify natural
-selection and thus could increase the rate of evolutionary change.
-Alternatively, if predators are functionally distinct, more diverse
-communities can reduce the strength of selection. This is because each
-predator has a different functional relationship between prey phenotype
-and the probability of an interaction.
-
-Here, we conducted a field experiment to test the effect of food-web
-complexity on the fitness landscape of a species embedded within this
-food web. To do this, we used a common garden experiment with a host
-plant (\emph{Salix hooeriana}), an abundant herbivore (\emph{Iteomyia
-salicisverruca}), and the diverse community of insect parasitoids that
-attack it. Prior work in this system has shown that there is directional
-selection for larger galls, likely because larger galls provide more of
-a refuge from parasitoid attack. However, there is also evidence that
-different parasitoid species impose differential selection on gall
-phenotypes.
+Here, we provide a quantitative test of how the loss of species
+diversity -- and concomittant loss of network complexity -- shapes the
+adaptive landscape of a consitutent species in a natural community. We
+conducted a field experiment that manipulated the diversity of insect
+parasitoids that were able to impose selection on the insect herbivore,
+\emph{Iteomyia salicisverruca}. The larva of this herbivore species
+induces tooth-shaped galls when they feed on the developing leaves of
+willow trees (\emph{Salix} sp., Russo (2006)). Prior work with this
+study system has shown that there is directional selection for larger
+galls, likely because larger galls provide a refuge from parasitoid
+attack (Barbour et al. (2016)). However, there is also evidence that
+each parasitoid species imposes differential selection on gall traits
+(Barbour et al. (2016)). Taken together, our aim is to provide evidence
+for how the simplification of natural communities affects the adaptive
+potential of constituent species.
 
 \section{Materials \& Methods}\label{materials-methods}
 
@@ -205,19 +258,19 @@ measure of fitness) or were parasitized.
 We collected data on three different traits that we anticipated would
 experience selection based on our previous work (Barbour et al. (2016))
 and others work with Cecidomyiid midges (Weis, Price, and Lynch (1983),
-Heath, Abbot, and Stireman (2018)). First, we measured gall diameter as
-the size of each gall chamber to the nearest 0.01 mm at its maximum
-diameter (perpendicular to the direction of plant tissue growth). Our
-previous work has shown that a larger gall diameter provides a refuge
-for larva from parasitoid attack (Barbour et al. (2016)). Second, we
-measured the clutch size of adult female midges by counting the number
-of chambers in each gall (Weis, Price, and Lynch (1983)). All larva
-collected from the same multi-chambered gall were scored with the same
-clutch size. Third, we measured female preference for oviposition
-(egg-laying) sites as the density of larva observed on a plant. The
-measurement of larval densities on plants in the field is a commonly
-used index for measuring oviposition preference (Gripenberg et al.
-(2010)), although caution must be taken in inferring `preference'
+J. J. Heath, Abbot, and Stireman (2018)). First, we measured gall
+diameter as the size of each gall chamber to the nearest 0.01 mm at its
+maximum diameter (perpendicular to the direction of plant tissue
+growth). Our previous work has shown that a larger gall diameter
+provides a refuge for larva from parasitoid attack (Barbour et al.
+(2016)). Second, we measured the clutch size of adult female midges by
+counting the number of chambers in each gall (Weis, Price, and Lynch
+(1983)). All larva collected from the same multi-chambered gall were
+scored with the same clutch size. Third, we measured female preference
+for oviposition (egg-laying) sites as the density of larva observed on a
+plant. The measurement of larval densities on plants in the field is a
+commonly used index for measuring oviposition preference (Gripenberg et
+al. (2010)), although caution must be taken in inferring `preference'
 (Singer (1986)). This is because larval densities can be influenced by
 processes other than preference. For example, if an ovipositing female
 is not exposed to the full spectrum of plant types (in this case
@@ -266,6 +319,70 @@ estimates to calculate the probability that selection gradients in the
 simple food web were larger/smaller than in the complex food web
 (i.e.~the p-value). All analyses and visualizations were conducted in R.
 
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# note that I've switched to using the lme4 package to analyzing the GLMM}
+
+\CommentTok{# GLMM ----}
+\NormalTok{glmer_control <-}\StringTok{ }\KeywordTok{glmer}\NormalTok{(gall_survival }\OperatorTok{~}\StringTok{ }\NormalTok{sc.gall_size }\OperatorTok{+}\StringTok{ }\NormalTok{sc.clutch_size }\OperatorTok{+}\StringTok{ }\NormalTok{sc.female_preference }\OperatorTok{+}
+\StringTok{                         }\KeywordTok{I}\NormalTok{(sc.gall_size}\OperatorTok{^}\DecValTok{2}\NormalTok{) }\OperatorTok{+}\StringTok{ }\KeywordTok{I}\NormalTok{(sc.clutch_size}\OperatorTok{^}\DecValTok{2}\NormalTok{) }\OperatorTok{+}\StringTok{ }\KeywordTok{I}\NormalTok{(sc.female_preference}\OperatorTok{^}\DecValTok{2}\NormalTok{) }\OperatorTok{+}
+\StringTok{                         }\NormalTok{sc.gall_size}\OperatorTok{:}\NormalTok{sc.clutch_size }\OperatorTok{+}\StringTok{ }\NormalTok{sc.gall_size}\OperatorTok{:}\NormalTok{sc.female_preference }\OperatorTok{+}\StringTok{ }\NormalTok{sc.clutch_size}\OperatorTok{:}\NormalTok{sc.female_preference }\OperatorTok{+}
+\StringTok{                           }\NormalTok{(}\DecValTok{1}\OperatorTok{|}\NormalTok{Genotype}\OperatorTok{/}\NormalTok{Plant_Position}\OperatorTok{/}\NormalTok{Gall_Number),}
+                         \DataTypeTok{data =}\NormalTok{ control_df,}
+                         \DataTypeTok{family =} \KeywordTok{binomial}\NormalTok{(}\DataTypeTok{link =}\NormalTok{ logit), }\DataTypeTok{optimizer =} \StringTok{"bobyqa"}\NormalTok{)}
+\CommentTok{# summary(glmer_control)}
+
+\CommentTok{# Mean fitness ----}
+\NormalTok{Wbar_control <-}\StringTok{ }\KeywordTok{inverse_logit}\NormalTok{(}\KeywordTok{fixef}\NormalTok{(}\KeywordTok{update}\NormalTok{(glmer_control, .}\OperatorTok{~}\NormalTok{. }\OperatorTok{-}\NormalTok{sc.gall_size }\OperatorTok{-}\NormalTok{sc.clutch_size }\OperatorTok{-}\NormalTok{sc.female_preference)))}
+
+\CommentTok{# Confidence intervals for selection gradients ----}
+\NormalTok{boot_Beta_control <-}\StringTok{ }\KeywordTok{bootMer}\NormalTok{(glmer_control, }\DataTypeTok{FUN =}\NormalTok{ Beta_avg_grad, }\DataTypeTok{nsim=}\DecValTok{100}\NormalTok{, }\DataTypeTok{parallel=}\StringTok{"multicore"}\NormalTok{, }\DataTypeTok{ncpus=}\DecValTok{32}\NormalTok{)}
+
+\NormalTok{## Summary ----}
+\NormalTok{summary_Beta_glmm_control <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}
+  \DataTypeTok{Phenotype =} \KeywordTok{c}\NormalTok{(}\StringTok{"Gall size"}\NormalTok{, }\StringTok{"Clutch size"}\NormalTok{, }\StringTok{"Female preference"}\NormalTok{),}
+  \DataTypeTok{Food_Web =} \StringTok{"Complex"}\NormalTok{,}
+  \DataTypeTok{Model =} \StringTok{"GLMM"}\NormalTok{,}
+  \DataTypeTok{Beta =} \KeywordTok{round}\NormalTok{(}\KeywordTok{Beta_avg_grad}\NormalTok{(glmer_control),}\DecValTok{3}\NormalTok{),}
+  \DataTypeTok{lower_2.5 =} \KeywordTok{round}\NormalTok{(}\KeywordTok{apply}\NormalTok{(boot_Beta_control}\OperatorTok{$}\NormalTok{t, }\DecValTok{2}\NormalTok{, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(bootstraps) }\KeywordTok{quantile}\NormalTok{(bootstraps, }\FloatTok{0.025}\NormalTok{)),}\DecValTok{3}\NormalTok{),}
+  \DataTypeTok{upper_97.5 =} \KeywordTok{round}\NormalTok{(}\KeywordTok{apply}\NormalTok{(boot_Beta_control}\OperatorTok{$}\NormalTok{t, }\DecValTok{2}\NormalTok{, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(bootstraps) }\KeywordTok{quantile}\NormalTok{(bootstraps, }\FloatTok{0.975}\NormalTok{)),}\DecValTok{3}\NormalTok{)) }
+
+\NormalTok{summary_Beta_glmm_control}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{## GLMM ----}
+\NormalTok{glmer_treatment <-}\StringTok{ }\KeywordTok{glmer}\NormalTok{(gall_survival }\OperatorTok{~}\StringTok{ }\NormalTok{sc.gall_size }\OperatorTok{+}\StringTok{ }\NormalTok{sc.clutch_size }\OperatorTok{+}\StringTok{ }\NormalTok{sc.female_preference }\OperatorTok{+}
+\StringTok{                         }\KeywordTok{I}\NormalTok{(sc.gall_size}\OperatorTok{^}\DecValTok{2}\NormalTok{) }\OperatorTok{+}\StringTok{ }\KeywordTok{I}\NormalTok{(sc.clutch_size}\OperatorTok{^}\DecValTok{2}\NormalTok{) }\OperatorTok{+}\StringTok{ }\KeywordTok{I}\NormalTok{(sc.female_preference}\OperatorTok{^}\DecValTok{2}\NormalTok{) }\OperatorTok{+}
+\StringTok{                         }\NormalTok{sc.gall_size}\OperatorTok{:}\NormalTok{sc.clutch_size }\OperatorTok{+}\StringTok{ }
+\StringTok{                          }\NormalTok{sc.gall_size}\OperatorTok{:}\NormalTok{sc.female_preference }\OperatorTok{+}\StringTok{ }
+\StringTok{                           }\NormalTok{sc.clutch_size}\OperatorTok{:}\NormalTok{sc.female_preference }\OperatorTok{+}
+\StringTok{                           }\NormalTok{(}\DecValTok{1}\OperatorTok{|}\NormalTok{Genotype}\OperatorTok{/}\NormalTok{Plant_Position}\OperatorTok{/}\NormalTok{Gall_Number),}
+                         \DataTypeTok{data =}\NormalTok{ treatment_df,}
+                         \DataTypeTok{family =} \KeywordTok{binomial}\NormalTok{(}\DataTypeTok{link =}\NormalTok{ logit), }\DataTypeTok{optimizer =} \StringTok{"bobyqa"}\NormalTok{)}
+\KeywordTok{summary}\NormalTok{(glmer_treatment)}
+
+\NormalTok{## Mean fitness ----}
+\NormalTok{Wbar_treatment <-}\StringTok{ }\KeywordTok{inverse_logit}\NormalTok{(}\KeywordTok{fixef}\NormalTok{(}\KeywordTok{update}\NormalTok{(glmer_treatment, .}\OperatorTok{~}\NormalTok{. }\OperatorTok{-}\NormalTok{sc.gall_size }\OperatorTok{-}\NormalTok{sc.clutch_size }\OperatorTok{-}\NormalTok{sc.female_preference)))}
+
+\NormalTok{## Confidence intervals for selection gradients ----}
+\NormalTok{boot_Beta_treatment <-}\StringTok{ }\KeywordTok{bootMer}\NormalTok{(glmer_treatment, }\DataTypeTok{FUN =}\NormalTok{ Beta_avg_grad, }\DataTypeTok{nsim=}\DecValTok{100}\NormalTok{, }\DataTypeTok{parallel=}\StringTok{"multicore"}\NormalTok{, }\DataTypeTok{ncpus=}\DecValTok{32}\NormalTok{)}
+
+\NormalTok{## Summary ----}
+\NormalTok{summary_Beta_glmm_treatment <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}
+  \DataTypeTok{Phenotype =} \KeywordTok{c}\NormalTok{(}\StringTok{"Gall size"}\NormalTok{, }\StringTok{"Clutch size"}\NormalTok{, }\StringTok{"Female preference"}\NormalTok{),}
+  \DataTypeTok{Food_Web =} \StringTok{"Simple"}\NormalTok{,}
+  \DataTypeTok{Model =} \StringTok{"GLMM"}\NormalTok{,}
+  \DataTypeTok{Beta =} \KeywordTok{round}\NormalTok{(}\KeywordTok{Beta_avg_grad}\NormalTok{(glmer_treatment),}\DecValTok{2}\NormalTok{),}
+  \DataTypeTok{lower_2.5 =} \KeywordTok{round}\NormalTok{(}\KeywordTok{apply}\NormalTok{(boot_Beta_treatment}\OperatorTok{$}\NormalTok{t, }\DecValTok{2}\NormalTok{, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(bootstraps) }\KeywordTok{quantile}\NormalTok{(bootstraps, }\FloatTok{0.025}\NormalTok{)),}\DecValTok{2}\NormalTok{),}
+  \DataTypeTok{upper_97.5 =} \KeywordTok{round}\NormalTok{(}\KeywordTok{apply}\NormalTok{(boot_Beta_treatment}\OperatorTok{$}\NormalTok{t, }\DecValTok{2}\NormalTok{, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(bootstraps) }\KeywordTok{quantile}\NormalTok{(bootstraps, }\FloatTok{0.975}\NormalTok{)),}\DecValTok{2}\NormalTok{)) }
+
+\NormalTok{summary_Beta_glmm_treatment}
+\end{Highlighting}
+\end{Shaded}
+
 \section{Results}\label{results}
 
 We found that more phenotypic traits were under selection in the simple
@@ -290,6 +407,24 @@ supp. mat.).
 
 \section{Discussion}\label{discussion}
 
+More recently, researchers have begun to explore how the community
+context drives evolutionary change (({\textbf{???}}); terHorst et al.
+(2018)).
+
+NEED to recognize that evolutionary biologists have begun to explore how
+community context affects evolutionary change (work by Sharon Strauss,
+Casey terHorst, Lutz Becks, etc.). These results have begun to show
+interesting patterns whereby the composition of species in a community
+can alter the direction and strength of natural selection imposed on
+species embedded within these communities (cite).
+
+In other words, these results have begun to illustrate show how
+biological diversity, in terms of differences between species, can shape
+evolution. Nevertheless, predicting the how the composition of species
+in a community requires moving beyond a description of community
+composition. simply knowing the composition of species in a community
+will
+
 There are various bibliography styles available. You can select the
 style of your choice in the preamble of this document. These styles are
 Elsevier styles based on standard styles like Harvard and Vancouver.
@@ -302,6 +437,17 @@ Here are two sample references: ({\textbf{???}}; {\textbf{???}}).
 \addcontentsline{toc}{section}{References}
 
 \hypertarget{refs}{}
+\hypertarget{ref-Abrams2000}{}
+Abrams, Peter A. 2000. ``The Evolution of Predator-Prey Interactions:
+Theory and Evidence.'' \emph{Annu. Rev. Ecol. Syst.} 31. Annual Reviews:
+79--105.
+
+\hypertarget{ref-Banasek-Richter2009}{}
+Banasek-Richter, Carolin, Louis-Félix Bersier, Marie-France Cattin,
+Richard Baltensperger, Jean-Pierre Gabriel, Yves Merz, Robert E
+Ulanowicz, et al. 2009. ``Complexity in Quantitative Food Webs.''
+\emph{Ecology} 90 (6): 1470--7.
+
 \hypertarget{ref-Barbour2016}{}
 Barbour, Matthew A, Miguel A Fortuna, Jordi Bascompte, Joshua R
 Nicholson, Riitta Julkunen-Tiitto, Erik S Jules, and Gregory M
@@ -344,11 +490,46 @@ Heath, Jeremy J, Patrick Abbot, and John O Stireman 3rd. 2018.
 ``Adaptive Divergence in a Defense Symbiosis Driven from the Top down.''
 \emph{Am. Nat.} 192 (1): E21--E36.
 
+\hypertarget{ref-Hunter2018}{}
+Hunter, Darren C, Josephine M Pemberton, Jill G Pilkington, and Michael
+B Morrissey. 2018. ``Quantification and Decomposition of
+Environment-Selection Relationships.'' \emph{Evolution}, March.
+
+\hypertarget{ref-Ives2005}{}
+Ives, Anthony R, Bradley J Cardinale, and William E Snyder. 2005. ``A
+Synthesis of Subdisciplines: Predator--prey Interactions, and
+Biodiversity and Ecosystem Functioning.'' \emph{Ecol. Lett.} 8 (1).
+Blackwell Science Ltd: 102--16.
+
+\hypertarget{ref-Janzen1974}{}
+Janzen, Daniel. 1974. ``The Deflowering of Central America.''
+\emph{Natural History} 83 (January): 49--53.
+
+\hypertarget{ref-Jordano1987}{}
+Jordano, Pedro. 1987. ``Patterns of Mutualistic Interactions in
+Pollination and Seed Dispersal: Connectance, Dependence Asymmetries, and
+Coevolution.'' \emph{Am. Nat.} 129 (5): 657--77.
+
+\hypertarget{ref-Russo2006}{}
+Russo, Ron. 2006. \emph{Field Guide to Plant Galls of California and
+Other Western States}. 1st ed. University of California Press.
+
+\hypertarget{ref-Schluter2000}{}
+Schluter, Dolph. 2000. ``Ecological Character Displacement in Adaptive
+Radiation.'' \emph{Am. Nat.} 156 (S4): S4--S16.
+
 \hypertarget{ref-Singer1986}{}
 Singer, Michael C. 1986. ``The Definition and Measurement of Oviposition
 Preference in Plant-Feeding Insects.'' In \emph{Insect-Plant
 Interactions}, edited by James R Miller and Thomas A Miller, 65--94. New
 York, NY: Springer New York.
+
+\hypertarget{ref-TerHorst2018}{}
+terHorst, Casey P, Peter C Zee, Katy D Heath, Thomas E Miller, Abigail I
+Pastore, Swati Patel, Sebastian J Schreiber, Michael J Wade, and Matthew
+R Walsh. 2018. ``Evolution in a Community Context: Trait Responses to
+Multiple Species Interactions*.'' \emph{Am. Nat.}, January. University
+of Chicago PressChicago, IL.
 
 \hypertarget{ref-Weis1983}{}
 Weis, Arthur E, Peter W Price, and Michael Lynch. 1983. ``Selective
