@@ -33,6 +33,7 @@ library(gamm4) # generalized additive mixed-models
 library(gsg) # calculating selection gradients
 library(visreg)
 library(viridis) # for color palette
+library(lme4) # for generalized linear mixed models
 
 ## Load and manage data ----
 
@@ -70,40 +71,8 @@ treatment_df <- gall_selection.df %>%
          sc.female_preference = (Density_per_100_shoots - mean(Density_per_100_shoots))/sd(Density_per_100_shoots))
 
 ## Custom functions to avoid repetitive code ----
-gamm.model <- function(formula, data) {
-  gamm4(formula, data, 
-        random = ~(1|Genotype/Plant_Position/Gall_Number), 
-        family = binomial(link = logit))
-}
 
-gam.plot <- function(gam.model, ...) {
-  plot(gam.model, se = TRUE, seWithMean = T, shift = mean(predict(gam.model)), trans = function(x) {exp(x)/(1+exp(x))}, ...)
-}
-
-# experimenting with boot.case gave bootstrapped distributions that weren't centered near the model mean estimate.
-# also, using 'refit.smooth = T' also generated some very skewed distributions
-# the recipe below provided the most sensible estimates for my data
-gradient.calc <- function(mod, phenotype, covariates = NULL) {
-  gam.gradients(mod, phenotype, covariates, parallel = 'multicore', ncpus = 32, 
-                refit.smooth = F,
-                n.boot = 1000,
-                se.method = 'boot.para', #'posterior', #'boot.para', #'permute', 'boot.case'#  
-                standardized = T)
-} 
-
-insect_FL <- function(mod, phenotype, covariates = NULL) {
-  fitness.landscape(mod, phenotype, covariates, parallel = 'multicore', ncpus = 32,
-                    PI.method = 'boot.para',
-                    refit.smooth = F,
-                    PI.interval = c(0.025,0.975),
-                    plt.density = 100)
-}
-
-get_insect_FL.df <- function(FL){
-  data.frame(mean_fitness = FL$Wbar, FL$points, t(FL$WbarPI)) %>%
-    mutate(lower_2.5 = X2.5., upper_97.5 = X97.5.)
-}
-
+## Test for overdispersion
 overdisp_fun <- function(model) {
   ## number of variance parameters in 
   ##   an n-by-n variance-covariance matrix
@@ -119,16 +88,10 @@ overdisp_fun <- function(model) {
   c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
 }
 
+## Transform logit to probability
 inverse_logit <- function(x) exp(x)/(1+exp(x))
 
-#Beta_avg_grad <- function(logistic_model, mean_fitness) {
-#  brackets <- predict(logistic_model, type = "response") * (1 - predict(logistic_model, type="response"))
-#  gradient <- mean(brackets) * fixef(logistic_model) / mean_fitness 
-#  return(gradient)
-#}
-
-## Calculate directional selection gradients
-# following method of Janzen and Stern 1998, Evolution
+## Calculate selection gradients following method of Janzen and Stern 1998, Evolution
 Beta_avg_grad <- function(.) {
   mean_fitness <- inverse_logit(fixef(update(., .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
   brackets <- predict(., type = "response") * (1 - predict(., type="response"))
@@ -136,8 +99,8 @@ Beta_avg_grad <- function(.) {
 }
 
 ## Bootstrap fitness estimates
-bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0.025,0.975)){
-  model_matrix <- model.matrix(~ sc.gall_size + sc.clutch_size + sc.female_preference, newdata)
+bootstrap_fitness <- function(logistic_model, fixed_effects, newdata, bootstraps, intervals=c(0.025,0.975)){
+  model_matrix <- model.matrix(formula(fixed_effects), newdata)
   
   # Absolute fitness
   get_absolute_fitness <- function(.) inverse_logit(model_matrix %*% fixef(.))
@@ -179,6 +142,10 @@ bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0
   # Organize data
   return(list(absolute_fitness = absolute_fitness_df, relative_fitness = relative_fitness_df))
 }
+
+## Number of bootstrap replicates ----
+n_boots_analysis <- 50
+n_boots_plots <- 50
 ```
 
 > *There is a much more insidious kind of extinction: the extinction of ecological interactions.* 
@@ -192,7 +159,7 @@ Introduction
 Biological diversity -- from genes, to phenotypes, to species -- has and continues to be shaped by the interplay between ecological and evolutionary processes. <!-- need to improve this instead of just saying its fascinated a small group of people --> 
 Much of this biological diversity has been molded by natural selection arising from species interactions, such as resource competition (@Schluter2000), mutualisms (@Jordano1987), and predation (@Abrams2000). 
 While there is clear evidence that pairwise interactions can drive evolution, we also know that most species interact with multiple species in an ecological community. <!-- are embedded within species-rich communities.--> <!-- complex networks of interacting species. <!-- need to make the link to multiple traits and the adaptive landscape here --> <!-- Somthing about the this work remaining eminently theoretical --> 
-Understanding how evolutionary dynamics unfold in a community context<!-- when moving beyond pairwise interactions--><!-- in more species-rich communities--> is challenging and eminently theoretical (@McPeek2017, Nuismer paper, Guimeras paper, also McGill paper about biodiversity effects on evolution). 
+Understanding how evolutionary dynamics unfold in a community context<!-- when moving beyond pairwise interactions--><!-- in more species-rich communities--> is challenging and eminently theoretical (@McPeek2017, @De_Mazancourt2008, @Guimaraes2017, @Nuismer2013). 
 <!-- Do I need to give more credit here to work by @TerHorst2018 and others?). I think it would be useful to show that there is some field and lab experiments demonstrating that community context can alter evolutionary trajectories -->
 Given the rapid loss of species diversity we are experiencing throughout the world (cite), we are in urgent need of work that makes and tests predictions for how the loss of species will affect the evolutionary process in natural communities.
 
@@ -200,7 +167,7 @@ Given the rapid loss of species diversity we are experiencing throughout the wor
 
 <!-- II. Linking species loss to changes in network complexity -->
 
-Predicting the evolutionary consequences of biodiversity loss first requires an understanding of the concommitant change in the network structure of species interactions.<!-- the relationship between the network structure of a community and the fitness landscape of its constituent species.--> 
+Predicting the evolutionary consequences of species loss first requires an understanding of the concommitant change in the species-interaction networks.<!-- the relationship between the network structure of a community and the fitness landscape of its constituent species.--> 
 Knowing the interaction network is crucial because the loss of biodiversity, in and of itself, will not alter evolution -- it is the associated loss of ecological interactions that will affect evolutionary change (@Janzen1974). 
 For a network of directly connected species, we would expect that the loss of species to result in a loss of network complexity.<!-- Need to formalize this logic more, because the loss of a specialist species in a highly generalist food web, would actually increase network complexity... Maybe I need to focus on the node/species level property --> 
 Network complexity is a property that describes the diversity of interactions in an ecological community (@Banasek-Richter2009). 
@@ -302,69 +269,140 @@ All larva collected from the same plant were scored with the same female prefere
 
 <!-- % IV. Describe statistical analysis to test the effects of food-web complexity -->
 
-To characterize the shape of the fitness landscape, we quantified selection gradients acting on each trait in simple vs. complex food webs. We did this by fitting separate statistical models to data from each food-web treatment. We used generalized linear mixed models (GLMMs, @Bolker2009) with larval survival (0 or 1) as our response variable and measure of fitness. We specified linear and quadratic terms for each gall trait as well as linear interaction terms between each gall trait, as fixed effects in the statistical models. To account for the correlated structure of clutch size (gall level) and female preference (plant level) as well as any other independent effects of willow genotype on larval survival, we specified gall ID nested within plant ID nested within plant genotype as random intercepts in our statistical models. Since we were interested in characterizing the fitness landscape -- the relationship between mean trait values and population mean fitness -- we assumed the mean value of our random effects (i.e. setting them to zero) to estimate selection gradients. We then used the method of @Janzen1998 to calculate directional ($\beta_{z_i}$), nonlinear ($\gamma_{z_i}$), and correlational ($\gamma_{z_i,z_j}$) selection gradients and used parametric bootstrapping (1000 replicates) to calculate their 95% confidence intervals (@Bolker2009). To test whether selection gradients differed between treatments, we used our bootstrapped estimates to calculate the probability that selection gradients in the simple food web were larger/smaller than in the complex food web (i.e. the p-value). All analyses and visualizations were conducted in R. 
+To characterize the shape of the fitness landscape, we quantified selection gradients acting on each trait in simple vs. complex food webs. We did this by fitting separate statistical models to data from each food-web treatment. We used generalized linear mixed models (GLMMs, @Bolker2009) with larval survival (0 or 1) as our response variable and measure of fitness. We specified linear and quadratic terms for each gall trait as well as linear interaction terms between each gall trait as fixed effects in the statistical models. To account for the correlated structure of clutch size (gall level) and female preference (plant level) as well as any other independent effects of willow genotype on larval survival, we specified gall ID nested within plant ID nested within plant genotype as random intercepts in our statistical models. Since we were interested in characterizing the fitness landscape -- the relationship between mean trait values and population mean fitness -- we assumed the mean value of our random effects (i.e. setting them to zero) to estimate selection gradients. We then used the method of @Janzen1998 to calculate directional ($\beta_{z_i}$), quadratic ($\gamma_{z_i}$), and correlational ($\gamma_{z_i,z_j}$) selection gradients and used parametric bootstrapping (1000 replicates) to calculate their 95% confidence intervals (@Bolker2009). To test whether selection gradients differed between treatments, we used our bootstrapped estimates to calculate the probability that selection gradients in the simple food web were larger/smaller than in the complex food web (i.e. the p-value). All analyses and visualizations were conducted in R (@R2018). 
 
-```{r Selection Gradients - Complex Food Web, cache=TRUE, eval=FALSE}
+```{r Selection Gradients - Complex Food Web, cache=TRUE, include=FALSE}
 # note that I've switched to using the lme4 package to analyzing the GLMM
 
-# GLMM ----
-glmer_control <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference +
-                         I(sc.gall_size^2) + I(sc.clutch_size^2) + I(sc.female_preference^2) +
-                         sc.gall_size:sc.clutch_size + sc.gall_size:sc.female_preference + sc.clutch_size:sc.female_preference +
+# Directional selection ----
+beta_control <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference +
                            (1|Genotype/Plant_Position/Gall_Number),
                          data = control_df,
-                         family = binomial(link = logit), optimizer = "bobyqa")
-# summary(glmer_control)
+                         family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
+
+summary(beta_control)
+overdisp_fun(beta_control)
+
+# Quadratic selection ----
+quad_control <- update(beta_control, .~. + I(sc.gall_size^2) + I(sc.clutch_size^2) + I(sc.female_preference^2))
+
+summary(quad_control)
+overdisp_fun(quad_control)
+
+# Correlational selection ----
+corr_control <- update(quad_control, .~. + sc.gall_size:sc.clutch_size + sc.gall_size:sc.female_preference + sc.clutch_size:sc.female_preference)
+
+summary(corr_control)
+overdisp_fun(corr_control)
 
 # Mean fitness ----
-Wbar_control <- inverse_logit(fixef(update(glmer_control, .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
+Wbar_control <- inverse_logit(fixef(update(beta_control, .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
 
-# Confidence intervals for selection gradients ----
-boot_Beta_control <- bootMer(glmer_control, FUN = Beta_avg_grad, nsim=100, parallel="multicore", ncpus=32)
-
-## Summary ----
-summary_Beta_glmm_control <- data.frame(
-  Phenotype = c("Gall size", "Clutch size", "Female preference"),
-  Food_Web = "Complex",
-  Model = "GLMM",
-  Beta = round(Beta_avg_grad(glmer_control),3),
-  lower_2.5 = round(apply(boot_Beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3),
-  upper_97.5 = round(apply(boot_Beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3)) 
-
-summary_Beta_glmm_control
+# Confidence intervals ----
+boot_beta_control <- bootMer(beta_control, FUN = Beta_avg_grad, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+boot_quad_control <- bootMer(quad_control, FUN = Beta_avg_grad, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+boot_corr_control <- bootMer(corr_control, FUN = Beta_avg_grad, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
 ```
 
 
-```{r Selection Gradients - Simple Food Web, cache=TRUE, eval=FALSE}
+```{r Selection Gradients - Simple Food Web, cache=TRUE, include=FALSE}
 
-## GLMM ----
-glmer_treatment <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference +
-                         I(sc.gall_size^2) + I(sc.clutch_size^2) + I(sc.female_preference^2) +
-                         sc.gall_size:sc.clutch_size + 
-                          sc.gall_size:sc.female_preference + 
-                           sc.clutch_size:sc.female_preference +
+# Directional selection ----
+beta_treatment <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference +
                            (1|Genotype/Plant_Position/Gall_Number),
                          data = treatment_df,
-                         family = binomial(link = logit), optimizer = "bobyqa")
-summary(glmer_treatment)
+                         family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
 
-## Mean fitness ----
-Wbar_treatment <- inverse_logit(fixef(update(glmer_treatment, .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
+summary(beta_treatment)
+overdisp_fun(beta_treatment)
 
-## Confidence intervals for selection gradients ----
-boot_Beta_treatment <- bootMer(glmer_treatment, FUN = Beta_avg_grad, nsim=100, parallel="multicore", ncpus=32)
+# Quadratic selection ----
+quad_treatment <- update(beta_treatment, .~. + I(sc.gall_size^2) + I(sc.clutch_size^2) + I(sc.female_preference^2))
 
-## Summary ----
-summary_Beta_glmm_treatment <- data.frame(
+summary(quad_treatment)
+overdisp_fun(quad_treatment)
+
+# Correlational selection ----
+corr_treatment <- update(quad_treatment, .~. + sc.gall_size:sc.clutch_size + sc.gall_size:sc.female_preference + sc.clutch_size:sc.female_preference)
+
+summary(corr_treatment)
+overdisp_fun(corr_treatment)
+
+# Mean fitness ----
+Wbar_treatment <- inverse_logit(fixef(update(beta_treatment, .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
+
+# Confidence intervals ----
+boot_beta_treatment <- bootMer(beta_treatment, FUN = Beta_avg_grad, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+boot_quad_treatment <- bootMer(quad_treatment, FUN = Beta_avg_grad, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+boot_corr_treatment <- bootMer(corr_treatment, FUN = Beta_avg_grad, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+```
+
+```{r Table of Selection Gradients, echo=FALSE, message=FALSE, warning=FALSE}
+
+## Summarize Control Selection Gradients ----
+summary_beta_control <- data.frame(
+  Phenotype = c("Gall diameter", "Clutch size", "Female preference"),
+  Food_Web = "Complex",
+  Model = "GLMM",
+  Type = "Beta",
+  Estimate = round(Beta_avg_grad(beta_control),3),
+  lower_2.5 = round(apply(boot_beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3),
+  upper_97.5 = round(apply(boot_beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3)) 
+
+# doubled quadratic estimates to make comparable to directional selection gradients (Stinchcombe et al. 2008, Evolution)
+summary_quad_control <- data.frame(
+  Phenotype = c("Gall diameter", "Clutch size", "Female preference"),
+  Food_Web = "Complex",
+  Model = "GLMM",
+  Type = "Quadratic",
+  Estimate = 2*round(Beta_avg_grad(quad_control),3)[-c(1:3)],
+  lower_2.5 = 2*round(apply(boot_quad_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3)[-c(1:3)],
+  upper_97.5 = 2*round(apply(boot_quad_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3)[-c(1:3)]) 
+
+summary_corr_control <- data.frame(
+  Phenotype = c("Diam,Clutch", "Diam,Pref", "Clutch,Pref"),
+  Food_Web = "Complex",
+  Model = "GLMM",
+  Type = "Correlational",
+  Estimate = round(Beta_avg_grad(corr_control),3)[-c(1:6)],
+  lower_2.5 = round(apply(boot_corr_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3)[-c(1:6)],
+  upper_97.5 = round(apply(boot_corr_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3)[-c(1:6)]) 
+
+
+## Summarize Treatment Selection Gradients ----
+summary_beta_treatment <- data.frame(
   Phenotype = c("Gall size", "Clutch size", "Female preference"),
   Food_Web = "Simple",
   Model = "GLMM",
-  Beta = round(Beta_avg_grad(glmer_treatment),2),
-  lower_2.5 = round(apply(boot_Beta_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),2),
-  upper_97.5 = round(apply(boot_Beta_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),2)) 
+  Type = "Beta",
+  Estimate = round(Beta_avg_grad(beta_treatment),3),
+  lower_2.5 = round(apply(boot_beta_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3),
+  upper_97.5 = round(apply(boot_beta_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3)) 
 
-summary_Beta_glmm_treatment
+# doubled quadratic estimates to make comparable to directional selection gradients (Stinchcombe et al. 2008, Evolution)
+summary_quad_treatment <- data.frame(
+  Phenotype = c("Gall size", "Clutch size", "Female preference"),
+  Food_Web = "Simple",
+  Model = "GLMM",
+  Type = "Quadratic",
+  Estimate = 2*round(Beta_avg_grad(quad_treatment),3)[-c(1:3)],
+  lower_2.5 = 2*round(apply(boot_quad_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3)[-c(1:3)],
+  upper_97.5 = 2*round(apply(boot_quad_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3)[-c(1:3)]) 
+
+summary_corr_treatment <- data.frame(
+  Phenotype = c("Diam,Clutch", "Diam,Pref", "Clutch,Pref"),
+  Food_Web = "Simple",
+  Model = "GLMM",
+  Type = "Correlational",
+  Estimate = round(Beta_avg_grad(corr_treatment),3)[-c(1:6)],
+  lower_2.5 = round(apply(boot_corr_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3)[-c(1:6)],
+  upper_97.5 = round(apply(boot_corr_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3)[-c(1:6)]) 
+
+bind_rows(summary_beta_control, summary_beta_treatment)
+bind_rows(summary_quad_control, summary_quad_treatment)
+bind_rows(summary_corr_control, summary_corr_treatment)
 ```
+
 
 <!--$$logit(E(W))=\mu+\beta_{diameter}+\beta_{clutch}+\beta_{preference}+$$
 $$logit(E(W))=\mu+treatment+s(diam):treat+s(clutch)+s(pref)+diam:cluch+diam:pref+clutch:pref+(1|Genotype/Plant/Gall)$$-->
@@ -399,6 +437,326 @@ These different selection pressures resulted in different adaptive landscapes in
 Depending on the trait combinations used to create the landscape, we found that the ruggedness of the adaptive landscape ranged from 10\% higher (Fig. 3A) to 274\% higher (Fig. 3C) in the simple vs. complex food web. 
 Our model comparison suggested that it was unnecessary to test for the effects of non-linear or correlational selection gradients (ref. supp. mat.).
 
+BREAK UP INTO INDIVIDUAL PIECES: E.G. GALL SIZE. THIS SHOULD BE SMALL ENOUGH TO ALLOW CACHING
+
+```{r Get Univariate Fitness Landscapes, echo=FALSE, message=FALSE, warning=FALSE}
+## Gall size ----
+
+# Control
+RF_control_gall_size <- bootstrap_fitness(
+  logistic_model = beta_control, 
+  fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000), 
+     sc.clutch_size = 0,
+     sc.female_preference = 0),
+  bootstraps=100)
+
+
+# Treatment
+RF_treatment_gall_size <- bootstrap_fitness(
+  logistic_model = beta_treatment, 
+  fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.clutch_size = 0,
+     sc.female_preference = 0),
+  bootstraps=100)
+
+## Clutch size ----
+
+# Control
+RF_control_clutch_size <- bootstrap_fitness(
+  logistic_model = beta_control, 
+  fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = seq(-1,1,length.out=1000),
+     sc.female_preference = 0),
+  bootstraps=100)
+
+# Treatment 
+RF_treatment_clutch_size <- bootstrap_fitness(
+  logistic_model = beta_treatment, 
+  fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = seq(-1,1,length.out=1000),
+     sc.female_preference = 0),
+  bootstraps=100)
+
+## Female preference ----
+
+# Control 
+RF_control_female_preference <- bootstrap_fitness(
+  logistic_model = beta_control, 
+  fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = 0, 
+     sc.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=100)
+
+# Treatment
+RF_treatment_female_preference <- bootstrap_fitness(
+  logistic_model = beta_treatment, 
+  fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = 0,
+     sc.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=100)
+```
+
+```{r Plot Univariate Landscapes, echo=FALSE, message=FALSE, warning=FALSE}
+## Relative fitness plots ----
+
+# Get range in relative fitness for accurate scaling across all plots
+RF_gradient_range <- bind_rows(RF_treatment_gall_size$relative_fitness, RF_control_gall_size$relative_fitness,
+          RF_treatment_clutch_size$relative_fitness, RF_control_clutch_size$relative_fitness,
+          RF_treatment_female_preference$relative_fitness, RF_control_female_preference$relative_fitness) %>%
+  select(-sc.clutch_size, -sc.female_preference) %>%
+  gather(ID, relative_fitness, -sc.gall_size) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  summarise(min = min(relative_fitness), max = max(relative_fitness))
+RF_gradient_scale <- c(0,0.5,1,1.5,2,2.5) # adjusted based on range
+
+# Color palette: order -> orange, light blue, green, yellow, dark blue, red, pink
+cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#000000", "#999999")
+complex_color <- cbPalette[6]
+simple_color <- cbPalette[5]
+treatment_colors <- c(complex_color, simple_color)
+   
+# Gall size    
+RF_uni_size <- bind_rows(mutate(RF_treatment_gall_size$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size$relative_fitness, Food_Web = "Complex")) %>%
+  select(-sc.clutch_size, -sc.female_preference) %>%
+  gather(ID, relative_fitness, -sc.gall_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.gall_size, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  geom_hline(yintercept = 1, linetype = "dotted") +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Relative fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = RF_gradient_scale, limits = c(min(RF_gradient_scale), max(RF_gradient_scale))) 
+
+# Clutch size
+RF_uni_clutch <- bind_rows(mutate(RF_treatment_clutch_size$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch_size$relative_fitness, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.female_preference) %>%
+  gather(ID, relative_fitness, -sc.clutch_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.clutch_size, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  geom_hline(yintercept = 1, linetype = "dotted") +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Clutch size (SDs)") +
+  ylab("Relative fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = RF_gradient_scale, limits = c(min(RF_gradient_scale), max(RF_gradient_scale)))
+
+
+# Female preference 
+RF_uni_pref <- bind_rows(mutate(RF_treatment_female_preference$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_female_preference$relative_fitness, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.clutch_size) %>%
+  gather(ID, relative_fitness, -sc.female_preference, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.female_preference, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  geom_hline(yintercept = 1, linetype = "dotted") +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Female preference (SDs)") +
+  ylab("Relative fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = RF_gradient_scale, limits = c(min(RF_gradient_scale), max(RF_gradient_scale)))
+
+# Get legend
+RF_uni_legend <- get_legend(RF_uni_size)
+
+# Make plots
+RF_uni_plots <- plot_grid(RF_uni_size + theme(legend.position = "none"), 
+                       RF_uni_clutch + theme(legend.position = "none", 
+                                          axis.title.y = element_blank(), axis.text.y = element_blank()),
+                       RF_uni_pref + theme(legend.position = "none", 
+                                        axis.title.y = element_blank(), axis.text.y = element_blank()),
+                       labels = "AUTO", ncol = 4, align='hv')
+
+RF_gradients <- ggdraw(RF_uni_plots) + draw_grob(RF_uni_legend, x = 0.8, y=0)
+RF_gradients
+#save_plot("RF_gradients.png", RF_gradients, base_height=6, base_width = 8)
+#save_plot("RF_gradients.pdf", RF_gradients, base_height=6, base_width = 8)
+```
+
+
+```{r Get Multivariate Landscapes, echo=FALSE, message=FALSE, warning=FALSE}
+
+## Clutch size x Female preference ----
+
+# Control
+RF_control_clutch.x.preference <- bootstrap_fitness(
+  logistic_model = beta_control, 
+  fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = seq(-1,1,length.out=1000), 
+     sc.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=NULL)
+
+# Treatment
+RF_treatment_clutch.x.preference <- bootstrap_fitness(
+  logistic_model = beta_treatment, 
+  fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = seq(-1,1,length.out=1000),
+     sc.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=NULL)
+
+## Gall size x Clutch size ----
+
+# Control
+RF_control_size.x.clutch <- bootstrap_fitness(
+  logistic_model = beta_control, 
+  fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.clutch_size = seq(-1,1,length.out=1000), 
+     sc.female_preference = 0), 
+  bootstraps=NULL)
+
+# Treatment
+RF_treatment_size.x.clutch <- bootstrap_fitness(
+  logistic_model = beta_treatment, 
+  fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.clutch_size = seq(-1,1,length.out=1000),
+     sc.female_preference = 0), 
+  bootstraps=NULL)
+
+## Gall size x Female preference ----
+
+# Control
+RF_control_size.x.preference <- bootstrap_fitness(
+  logistic_model = beta_control, 
+  fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.clutch_size = 0, 
+     sc.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=NULL)
+
+# Treatment
+RF_treatment_size.x.preference <- bootstrap_fitness(
+  logistic_model = beta_treatment, 
+  fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.clutch_size = 0,
+     sc.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=NULL)
+```
+
+```{r Plot Multivariate Fitness Landscape, echo=FALSE, message=FALSE, warning=FALSE}
+
+## Relative fitness plots ----
+
+# Get range in relative fitness for accurate scaling across all plots
+RF_range <- bind_rows(RF_treatment_clutch.x.preference$relative_fitness, RF_control_clutch.x.preference$relative_fitness,
+          RF_treatment_size.x.clutch$relative_fitness, RF_control_size.x.clutch$relative_fitness,
+          RF_treatment_size.x.preference$relative_fitness, RF_control_size.x.preference$relative_fitness) %>%
+  summarise(min = min(average), max = max(average))
+
+# Clutch x Preference
+RF_plot_clutch.x.preference <- bind_rows(mutate(RF_treatment_clutch.x.preference$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch.x.preference$relative_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.female_preference, y=sc.clutch_size, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Female preference (SDs)") +
+  ylab("Clutch size (SDs)") +
+  #scale_fill_gradient2(midpoint=1, limits = c(RF_range$min, RF_range$max))
+  scale_fill_viridis(limits = c(RF_range$min, RF_range$max), name = "Relative fitness")
+
+# Size x Clutch
+RF_plot_size.x.clutch <- bind_rows(mutate(RF_treatment_size.x.clutch$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_size.x.clutch$relative_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=sc.clutch_size, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Clutch size (SDs)") +
+  #scale_fill_gradient2(midpoint=1, limits = c(RF_range$min, RF_range$max))
+  scale_fill_viridis(limits = c(RF_range$min, RF_range$max), name = "Relative fitness")
+
+# Size x Preference
+RF_plot_size.x.preference <- bind_rows(mutate(RF_treatment_size.x.preference$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_size.x.preference$relative_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=sc.female_preference, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Female preference (SDs)") +
+  #scale_fill_gradient2(midpoint=1, limits = c(RF_range$min, RF_range$max))
+  scale_fill_viridis(limits = c(RF_range$min, RF_range$max), name = "Relative fitness")
+
+# Get legend
+RF_landscape_legend <- get_legend(RF_plot_size.x.preference)
+
+# Format plots
+RF_landscape_plots <- plot_grid(
+  RF_plot_size.x.clutch + theme(legend.position = "none", axis.title.x = element_blank()),
+  RF_plot_clutch.x.preference + theme(legend.position = "none", axis.title.y = element_blank()),
+  RF_plot_size.x.preference + theme(legend.position = "none"), 
+  nrow=2, align="hv", labels = "AUTO")
+RF_landscape_2d <- ggdraw(RF_landscape_plots) + draw_grob(RF_landscape_legend, x = 0.7, y=-0.2)
+RF_landscape_2d
+#save_plot("RF_landscapes_2d.png", RF_landscape_2d, base_height=6, base_width = 8)
+#save_plot("RF_landscapes_2d.pdf", RF_landscape_2d, base_height=6, base_width = 8)
+```
+
+
+```{r AIC Model Comparison, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE}
+
+# Control ----
+AIC(beta_control, quad_control, corr_control)
+
+glm.beta_control <- glm(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference, data=control_df, family=binomial(link=logit))
+
+beta_control.REonlyGallID <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference +
+                                   (1|Gall_Number),
+                                 data = control_df,
+                                 family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
+
+AIC(beta_control, glm.beta_control)
+AIC(beta_control, beta_control.REonlyGallID)
+overdisp_fun(beta_control)
+
+# Treatment ----
+AIC(beta_treatment, quad_treatment, corr_treatment)
+
+glm.beta_treatment <- glm(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference, data=treatment_df, family=binomial(link=logit))
+
+beta_treatment.REonlyGallID <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference +
+                                   (1|Genotype/Plant_Position),
+                                 data = treatment_df,
+                                 family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
+
+overdisp_fun(beta_treatment)
+
+AIC(beta_treatment, glm.beta_treatment)
+AIC(beta_treatment, beta_treatment.REonlyGallID)
+anova(beta_treatment, beta_treatment.REonlyGallID)
+anova(beta_treatment, glm.beta_treatment)
+```
+
+
 Discussion
 ==========
 
@@ -422,3 +780,169 @@ Here are two sample references: @Feynman1963118 [@Dirac1953888].
 
 References {#references .unnumbered}
 ==========
+
+```{r Univariate Absolute Fitness Landscapes, echo=FALSE, message=FALSE, warning=FALSE}
+## Absolute fitness plots ----
+
+# Get range in relative fitness for accurate scaling across all plots
+AF_gradient_scale <- c(0,0.25,0.5,0.75,1) # adjusted based on range
+
+# Gall size 
+AF_uni_size <- bind_rows(mutate(RF_treatment_gall_size$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size$absolute_fitness, Food_Web = "Complex")) %>%
+  select(-sc.clutch_size, -sc.female_preference) %>%
+  gather(ID, absolute_fitness, -sc.gall_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.gall_size, y=absolute_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Absolute fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = AF_gradient_scale, limits = c(min(AF_gradient_scale), max(AF_gradient_scale)))
+
+# Clutch size
+AF_uni_clutch <- bind_rows(mutate(RF_treatment_clutch_size$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch_size$absolute_fitness, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.female_preference) %>%
+  gather(ID, absolute_fitness, -sc.clutch_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.clutch_size, y=absolute_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Clutch size (SDs)") +
+  ylab("Absolute fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = AF_gradient_scale, limits = c(min(AF_gradient_scale), max(AF_gradient_scale)))
+
+# Female preference
+AF_uni_pref <- bind_rows(mutate(RF_treatment_female_preference$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_female_preference$absolute_fitness, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.clutch_size) %>%
+  gather(ID, absolute_fitness, -sc.female_preference, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.female_preference, y=absolute_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Female preference (SDs)") +
+  ylab("Absolute fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = AF_gradient_scale, limits = c(min(AF_gradient_scale), max(AF_gradient_scale)))
+
+# Get legend
+AF_uni_legend <- get_legend(AF_uni_size)
+
+# Make plots
+AF_uni_plots <- plot_grid(AF_uni_size + theme(legend.position = "none"), 
+                       AF_uni_clutch + theme(legend.position = "none", 
+                                          axis.title.y = element_blank(), axis.text.y = element_blank()),
+                       AF_uni_pref + theme(legend.position = "none", 
+                                        axis.title.y = element_blank(), axis.text.y = element_blank()),
+                       labels = "AUTO", ncol = 4, align='hv')
+
+AF_gradients <- ggdraw(AF_uni_plots) + draw_grob(AF_uni_legend, x = 0.8, y=0)
+AF_gradients
+#save_plot("AF_gradients.png", AF_gradients, base_height=6, base_width = 8)
+#save_plot("AF_gradients.pdf", AF_gradients, base_height=6, base_width = 8)
+```
+
+```{r Multivariate Absolute Fitness Landscapes, echo=FALSE, message=FALSE, warning=FALSE}
+
+## Absolute fitness landscapes ----
+AF_range <- bind_rows(RF_treatment_clutch.x.preference$absolute_fitness, RF_control_clutch.x.preference$absolute_fitness,
+          RF_treatment_size.x.clutch$absolute_fitness, RF_control_size.x.clutch$absolute_fitness,
+          RF_treatment_size.x.preference$absolute_fitness, RF_control_size.x.preference$absolute_fitness) %>%
+  summarise(min = min(average), max = max(average))
+
+# Size x Preference
+AF_plot_size.x.preference <- bind_rows(mutate(RF_treatment_size.x.preference$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_size.x.preference$absolute_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=sc.female_preference, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Female preference (SDs)") +
+  scale_fill_viridis(limits = c(AF_range$min, AF_range$max), name = "Absolute fitness")
+
+# Size x Clutch
+AF_plot_size.x.clutch <- bind_rows(mutate(RF_treatment_size.x.clutch$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_size.x.clutch$absolute_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=sc.clutch_size, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Clutch size (SDs)") +
+  scale_fill_viridis(limits = c(AF_range$min, AF_range$max), name = "Absolute fitness")
+
+# Clutch x Preference
+AF_plot_clutch.x.preference <- bind_rows(mutate(RF_treatment_clutch.x.preference$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch.x.preference$absolute_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.female_preference, y=sc.clutch_size, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Female preference (SDs)") +
+  ylab("Clutch size (SDs)") +
+  scale_fill_viridis(limits = c(AF_range$min, AF_range$max), name = "Absolute fitness")
+
+# Get legend
+AF_landscape_legend <- get_legend(AF_plot_size.x.preference)
+
+# Format plots
+AF_landscape_plots <- plot_grid(
+  AF_plot_size.x.clutch + theme(legend.position = "none", axis.title.x = element_blank()),
+  AF_plot_clutch.x.preference + theme(legend.position = "none", axis.title.y = element_blank()),
+  AF_plot_size.x.preference + theme(legend.position = "none"), 
+  nrow=2, align="hv", labels = "AUTO")
+AF_landscape_2d <- ggdraw(AF_landscape_plots) + draw_grob(AF_landscape_legend, x = 0.7, y=-0.2)
+AF_landscape_2d
+#save_plot("AF_landscapes_2d.png", AF_landscape_2d, base_height=6, base_width = 8)
+#save_plot("AF_landscapes_2d.pdf", AF_landscape_2d, base_height=6, base_width = 8)
+```
+
+
+```{r OLD GAMM comparison, eval=FALSE, include=FALSE}
+gamm_control <- gamm.model(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference +
+                         I(sc.gall_size^2) + I(sc.clutch_size^2) + I(sc.female_preference^2) +
+                         sc.gall_size:sc.clutch_size + sc.gall_size:sc.female_preference + sc.clutch_size:sc.female_preference, 
+                         data = control_df)
+summary(gamm_control$gam)
+
+gam.gradients(gamm_control$gam, phenotype=c("sc.gall_size","sc.clutch_size"), covariates = c("sc.female_preference"), se.method="none")
+gam.gradients(gamm_control$gam, phenotype=c("sc.gall_size","sc.female_preference"), covariates = c("sc.clutch_size"), se.method="none")
+gam.gradients(gamm_control$gam, phenotype=c("sc.clutch_size","sc.female_preference"), covariates = c("sc.gall_size"), se.method="none")
+
+AIC(corr_control, gamm_control$mer)
+```
+
+```{r OLD Selection Gradients - Complex Food Web, eval=FALSE, include=FALSE}
+# note that I've switched to using the lme4 package to analyzing the GLMM
+
+# GLMM ----
+glmer_control <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference +
+                         I(sc.gall_size^2) + I(sc.clutch_size^2) + I(sc.female_preference^2) +
+                         sc.gall_size:sc.clutch_size + sc.gall_size:sc.female_preference + sc.clutch_size:sc.female_preference +
+                           (1|Genotype/Plant_Position/Gall_Number),
+                         data = control_df,
+                         family = binomial(link = logit), optimizer = "bobyqa")
+summary(glmer_control)
+
+# Mean fitness ----
+Wbar_control <- inverse_logit(fixef(update(glmer_control, .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
+
+# Confidence intervals for selection gradients ----
+boot_Beta_control <- bootMer(glmer_control, FUN = Beta_avg_grad, nsim=100, parallel="multicore", ncpus=32)
+
+## Summary ----
+summary_Beta_glmm_control <- data.frame(
+  Phenotype = c("Gall size", "Clutch size", "Female preference"),
+  Food_Web = "Complex",
+  Model = "GLMM",
+  Beta = round(Beta_avg_grad(glmer_control),3),
+  lower_2.5 = round(apply(boot_Beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3),
+  upper_97.5 = round(apply(boot_Beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3)) 
+
+summary_Beta_glmm_control
+```

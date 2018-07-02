@@ -45,46 +45,16 @@
 \fi
 % use microtype if available
 \IfFileExists{microtype.sty}{\usepackage{microtype}}{}
-\usepackage{color}
-\usepackage{fancyvrb}
-\newcommand{\VerbBar}{|}
-\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
-\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
-% Add ',fontsize=\small' for more characters per line
-\usepackage{framed}
-\definecolor{shadecolor}{RGB}{248,248,248}
-\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
-\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
-\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
-\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
-\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
-\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
-\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
-\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
-\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
-\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
-\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
-\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
-\newcommand{\ImportTok}[1]{#1}
-\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
-\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
-\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
-\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
-\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
-\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
-\newcommand{\BuiltInTok}[1]{#1}
-\newcommand{\ExtensionTok}[1]{#1}
-\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
-\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
-\newcommand{\RegionMarkerTok}[1]{#1}
-\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
-\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
-\newcommand{\NormalTok}[1]{#1}
+\usepackage{graphicx}
+% We will generate all images so they have a width \maxwidth. This means
+% that they will get their normal width if they fit onto the page, but
+% are scaled down if they would overflow the margins.
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth
+\else\Gin@nat@width\fi}
+\makeatother
+\let\Oldincludegraphics\includegraphics
+\renewcommand{\includegraphics}[1]{\Oldincludegraphics[width=\maxwidth]{#1}}
 \ifxetex
   \usepackage[setpagesize=false, % page size defined by xetex
               unicode=false, % unicode breaks when used with xetex
@@ -153,25 +123,24 @@ predation (Abrams (2000)). While there is clear evidence that pairwise
 interactions can drive evolution, we also know that most species
 interact with multiple species in an ecological community. Understanding
 how evolutionary dynamics unfold in a community context is challenging
-and eminently theoretical (({\textbf{???}}), Nuismer paper, Guimeras
-paper, also McGill paper about biodiversity effects on evolution). Given
-the rapid loss of species diversity we are experiencing throughout the
-world (cite), we are in urgent need of work that makes and tests
-predictions for how the loss of species will affect the evolutionary
-process in natural communities.
+and eminently theoretical (Mcpeek (2017), Mazancourt, Johnson, and
+Barraclough (2008), Guimarães et al. (2017), Nuismer, Jordano, and
+Bascompte (2013)). Given the rapid loss of species diversity we are
+experiencing throughout the world (cite), we are in urgent need of work
+that makes and tests predictions for how the loss of species will affect
+the evolutionary process in natural communities.
 
-Predicting the evolutionary consequences of biodiversity loss first
-requires an understanding of the concommitant change in the network
-structure of species interactions. Knowing the interaction network is
-crucial because the loss of biodiversity, in and of itself, will not
-alter evolution -- it is the associated loss of ecological interactions
-that will affect evolutionary change (Janzen (1974)). For a network of
-directly connected species, we would expect that the loss of species to
-result in a loss of network complexity. Network complexity is a property
-that describes the diversity of interactions in an ecological community
-(Banasek-Richter et al. (2009)). Thus, all else equal, species loss will
-decrease the diversity of interactions, resulting in a more simple
-network.
+Predicting the evolutionary consequences of species loss first requires
+an understanding of the concommitant change in the species-interaction
+networks. Knowing the interaction network is crucial because the loss of
+biodiversity, in and of itself, will not alter evolution -- it is the
+associated loss of ecological interactions that will affect evolutionary
+change (Janzen (1974)). For a network of directly connected species, we
+would expect that the loss of species to result in a loss of network
+complexity. Network complexity is a property that describes the
+diversity of interactions in an ecological community (Banasek-Richter et
+al. (2009)). Thus, all else equal, species loss will decrease the
+diversity of interactions, resulting in a more simple network.
 
 Predicting how a change in network complexity will alter evolution also
 requires an understanding of the relationship between network structure
@@ -300,7 +269,7 @@ each food-web treatment. We used generalized linear mixed models (GLMMs,
 Bolker et al. (2009)) with larval survival (0 or 1) as our response
 variable and measure of fitness. We specified linear and quadratic terms
 for each gall trait as well as linear interaction terms between each
-gall trait, as fixed effects in the statistical models. To account for
+gall trait as fixed effects in the statistical models. To account for
 the correlated structure of clutch size (gall level) and female
 preference (plant level) as well as any other independent effects of
 willow genotype on larval survival, we specified gall ID nested within
@@ -310,78 +279,45 @@ fitness landscape -- the relationship between mean trait values and
 population mean fitness -- we assumed the mean value of our random
 effects (i.e.~setting them to zero) to estimate selection gradients. We
 then used the method of Frederic J Janzen and Hal S Stearn (1998) to
-calculate directional (\(\beta_{z_i}\)), nonlinear (\(\gamma_{z_i}\)),
+calculate directional (\(\beta_{z_i}\)), quadratic (\(\gamma_{z_i}\)),
 and correlational (\(\gamma_{z_i,z_j}\)) selection gradients and used
 parametric bootstrapping (1000 replicates) to calculate their 95\%
 confidence intervals (Bolker et al. (2009)). To test whether selection
 gradients differed between treatments, we used our bootstrapped
 estimates to calculate the probability that selection gradients in the
 simple food web were larger/smaller than in the complex food web
-(i.e.~the p-value). All analyses and visualizations were conducted in R.
+(i.e.~the p-value). All analyses and visualizations were conducted in R
+(R Core Team (2018)).
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{# note that I've switched to using the lme4 package to analyzing the GLMM}
+\begin{verbatim}
+##           Phenotype Food_Web Model Type Estimate lower_2.5 upper_97.5
+## 1     Gall diameter  Complex  GLMM Beta    0.555     0.426      0.683
+## 2       Clutch size  Complex  GLMM Beta    0.036    -0.090      0.169
+## 3 Female preference  Complex  GLMM Beta    0.003    -0.185      0.131
+## 4         Gall size   Simple  GLMM Beta    0.289     0.208      0.339
+## 5       Clutch size   Simple  GLMM Beta   -0.102    -0.190     -0.010
+## 6 Female preference   Simple  GLMM Beta   -0.204    -0.291     -0.097
+\end{verbatim}
 
-\CommentTok{# GLMM ----}
-\NormalTok{glmer_control <-}\StringTok{ }\KeywordTok{glmer}\NormalTok{(gall_survival }\OperatorTok{~}\StringTok{ }\NormalTok{sc.gall_size }\OperatorTok{+}\StringTok{ }\NormalTok{sc.clutch_size }\OperatorTok{+}\StringTok{ }\NormalTok{sc.female_preference }\OperatorTok{+}
-\StringTok{                         }\KeywordTok{I}\NormalTok{(sc.gall_size}\OperatorTok{^}\DecValTok{2}\NormalTok{) }\OperatorTok{+}\StringTok{ }\KeywordTok{I}\NormalTok{(sc.clutch_size}\OperatorTok{^}\DecValTok{2}\NormalTok{) }\OperatorTok{+}\StringTok{ }\KeywordTok{I}\NormalTok{(sc.female_preference}\OperatorTok{^}\DecValTok{2}\NormalTok{) }\OperatorTok{+}
-\StringTok{                         }\NormalTok{sc.gall_size}\OperatorTok{:}\NormalTok{sc.clutch_size }\OperatorTok{+}\StringTok{ }\NormalTok{sc.gall_size}\OperatorTok{:}\NormalTok{sc.female_preference }\OperatorTok{+}\StringTok{ }\NormalTok{sc.clutch_size}\OperatorTok{:}\NormalTok{sc.female_preference }\OperatorTok{+}
-\StringTok{                           }\NormalTok{(}\DecValTok{1}\OperatorTok{|}\NormalTok{Genotype}\OperatorTok{/}\NormalTok{Plant_Position}\OperatorTok{/}\NormalTok{Gall_Number),}
-                         \DataTypeTok{data =}\NormalTok{ control_df,}
-                         \DataTypeTok{family =} \KeywordTok{binomial}\NormalTok{(}\DataTypeTok{link =}\NormalTok{ logit), }\DataTypeTok{optimizer =} \StringTok{"bobyqa"}\NormalTok{)}
-\CommentTok{# summary(glmer_control)}
+\begin{verbatim}
+##           Phenotype Food_Web Model      Type Estimate lower_2.5 upper_97.5
+## 1     Gall diameter  Complex  GLMM Quadratic    0.050    -0.084      0.164
+## 2       Clutch size  Complex  GLMM Quadratic    0.000    -0.232      0.260
+## 3 Female preference  Complex  GLMM Quadratic    0.032    -0.098      0.154
+## 4         Gall size   Simple  GLMM Quadratic    0.090    -0.104      0.236
+## 5       Clutch size   Simple  GLMM Quadratic    0.032    -0.070      0.170
+## 6 Female preference   Simple  GLMM Quadratic    0.204     0.078      0.408
+\end{verbatim}
 
-\CommentTok{# Mean fitness ----}
-\NormalTok{Wbar_control <-}\StringTok{ }\KeywordTok{inverse_logit}\NormalTok{(}\KeywordTok{fixef}\NormalTok{(}\KeywordTok{update}\NormalTok{(glmer_control, .}\OperatorTok{~}\NormalTok{. }\OperatorTok{-}\NormalTok{sc.gall_size }\OperatorTok{-}\NormalTok{sc.clutch_size }\OperatorTok{-}\NormalTok{sc.female_preference)))}
-
-\CommentTok{# Confidence intervals for selection gradients ----}
-\NormalTok{boot_Beta_control <-}\StringTok{ }\KeywordTok{bootMer}\NormalTok{(glmer_control, }\DataTypeTok{FUN =}\NormalTok{ Beta_avg_grad, }\DataTypeTok{nsim=}\DecValTok{100}\NormalTok{, }\DataTypeTok{parallel=}\StringTok{"multicore"}\NormalTok{, }\DataTypeTok{ncpus=}\DecValTok{32}\NormalTok{)}
-
-\NormalTok{## Summary ----}
-\NormalTok{summary_Beta_glmm_control <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}
-  \DataTypeTok{Phenotype =} \KeywordTok{c}\NormalTok{(}\StringTok{"Gall size"}\NormalTok{, }\StringTok{"Clutch size"}\NormalTok{, }\StringTok{"Female preference"}\NormalTok{),}
-  \DataTypeTok{Food_Web =} \StringTok{"Complex"}\NormalTok{,}
-  \DataTypeTok{Model =} \StringTok{"GLMM"}\NormalTok{,}
-  \DataTypeTok{Beta =} \KeywordTok{round}\NormalTok{(}\KeywordTok{Beta_avg_grad}\NormalTok{(glmer_control),}\DecValTok{3}\NormalTok{),}
-  \DataTypeTok{lower_2.5 =} \KeywordTok{round}\NormalTok{(}\KeywordTok{apply}\NormalTok{(boot_Beta_control}\OperatorTok{$}\NormalTok{t, }\DecValTok{2}\NormalTok{, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(bootstraps) }\KeywordTok{quantile}\NormalTok{(bootstraps, }\FloatTok{0.025}\NormalTok{)),}\DecValTok{3}\NormalTok{),}
-  \DataTypeTok{upper_97.5 =} \KeywordTok{round}\NormalTok{(}\KeywordTok{apply}\NormalTok{(boot_Beta_control}\OperatorTok{$}\NormalTok{t, }\DecValTok{2}\NormalTok{, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(bootstraps) }\KeywordTok{quantile}\NormalTok{(bootstraps, }\FloatTok{0.975}\NormalTok{)),}\DecValTok{3}\NormalTok{)) }
-
-\NormalTok{summary_Beta_glmm_control}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{## GLMM ----}
-\NormalTok{glmer_treatment <-}\StringTok{ }\KeywordTok{glmer}\NormalTok{(gall_survival }\OperatorTok{~}\StringTok{ }\NormalTok{sc.gall_size }\OperatorTok{+}\StringTok{ }\NormalTok{sc.clutch_size }\OperatorTok{+}\StringTok{ }\NormalTok{sc.female_preference }\OperatorTok{+}
-\StringTok{                         }\KeywordTok{I}\NormalTok{(sc.gall_size}\OperatorTok{^}\DecValTok{2}\NormalTok{) }\OperatorTok{+}\StringTok{ }\KeywordTok{I}\NormalTok{(sc.clutch_size}\OperatorTok{^}\DecValTok{2}\NormalTok{) }\OperatorTok{+}\StringTok{ }\KeywordTok{I}\NormalTok{(sc.female_preference}\OperatorTok{^}\DecValTok{2}\NormalTok{) }\OperatorTok{+}
-\StringTok{                         }\NormalTok{sc.gall_size}\OperatorTok{:}\NormalTok{sc.clutch_size }\OperatorTok{+}\StringTok{ }
-\StringTok{                          }\NormalTok{sc.gall_size}\OperatorTok{:}\NormalTok{sc.female_preference }\OperatorTok{+}\StringTok{ }
-\StringTok{                           }\NormalTok{sc.clutch_size}\OperatorTok{:}\NormalTok{sc.female_preference }\OperatorTok{+}
-\StringTok{                           }\NormalTok{(}\DecValTok{1}\OperatorTok{|}\NormalTok{Genotype}\OperatorTok{/}\NormalTok{Plant_Position}\OperatorTok{/}\NormalTok{Gall_Number),}
-                         \DataTypeTok{data =}\NormalTok{ treatment_df,}
-                         \DataTypeTok{family =} \KeywordTok{binomial}\NormalTok{(}\DataTypeTok{link =}\NormalTok{ logit), }\DataTypeTok{optimizer =} \StringTok{"bobyqa"}\NormalTok{)}
-\KeywordTok{summary}\NormalTok{(glmer_treatment)}
-
-\NormalTok{## Mean fitness ----}
-\NormalTok{Wbar_treatment <-}\StringTok{ }\KeywordTok{inverse_logit}\NormalTok{(}\KeywordTok{fixef}\NormalTok{(}\KeywordTok{update}\NormalTok{(glmer_treatment, .}\OperatorTok{~}\NormalTok{. }\OperatorTok{-}\NormalTok{sc.gall_size }\OperatorTok{-}\NormalTok{sc.clutch_size }\OperatorTok{-}\NormalTok{sc.female_preference)))}
-
-\NormalTok{## Confidence intervals for selection gradients ----}
-\NormalTok{boot_Beta_treatment <-}\StringTok{ }\KeywordTok{bootMer}\NormalTok{(glmer_treatment, }\DataTypeTok{FUN =}\NormalTok{ Beta_avg_grad, }\DataTypeTok{nsim=}\DecValTok{100}\NormalTok{, }\DataTypeTok{parallel=}\StringTok{"multicore"}\NormalTok{, }\DataTypeTok{ncpus=}\DecValTok{32}\NormalTok{)}
-
-\NormalTok{## Summary ----}
-\NormalTok{summary_Beta_glmm_treatment <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}
-  \DataTypeTok{Phenotype =} \KeywordTok{c}\NormalTok{(}\StringTok{"Gall size"}\NormalTok{, }\StringTok{"Clutch size"}\NormalTok{, }\StringTok{"Female preference"}\NormalTok{),}
-  \DataTypeTok{Food_Web =} \StringTok{"Simple"}\NormalTok{,}
-  \DataTypeTok{Model =} \StringTok{"GLMM"}\NormalTok{,}
-  \DataTypeTok{Beta =} \KeywordTok{round}\NormalTok{(}\KeywordTok{Beta_avg_grad}\NormalTok{(glmer_treatment),}\DecValTok{2}\NormalTok{),}
-  \DataTypeTok{lower_2.5 =} \KeywordTok{round}\NormalTok{(}\KeywordTok{apply}\NormalTok{(boot_Beta_treatment}\OperatorTok{$}\NormalTok{t, }\DecValTok{2}\NormalTok{, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(bootstraps) }\KeywordTok{quantile}\NormalTok{(bootstraps, }\FloatTok{0.025}\NormalTok{)),}\DecValTok{2}\NormalTok{),}
-  \DataTypeTok{upper_97.5 =} \KeywordTok{round}\NormalTok{(}\KeywordTok{apply}\NormalTok{(boot_Beta_treatment}\OperatorTok{$}\NormalTok{t, }\DecValTok{2}\NormalTok{, }\DataTypeTok{FUN =} \ControlFlowTok{function}\NormalTok{(bootstraps) }\KeywordTok{quantile}\NormalTok{(bootstraps, }\FloatTok{0.975}\NormalTok{)),}\DecValTok{2}\NormalTok{)) }
-
-\NormalTok{summary_Beta_glmm_treatment}
-\end{Highlighting}
-\end{Shaded}
+\begin{verbatim}
+##     Phenotype Food_Web Model          Type Estimate lower_2.5 upper_97.5
+## 1 Diam,Clutch  Complex  GLMM Correlational   -0.028    -0.145      0.055
+## 2   Diam,Pref  Complex  GLMM Correlational   -0.104    -0.302      0.165
+## 3 Clutch,Pref  Complex  GLMM Correlational    0.004    -0.079      0.120
+## 4 Diam,Clutch   Simple  GLMM Correlational   -0.106    -0.161      0.048
+## 5   Diam,Pref   Simple  GLMM Correlational    0.003    -0.052      0.093
+## 6 Clutch,Pref   Simple  GLMM Correlational   -0.021    -0.167      0.085
+\end{verbatim}
 
 \section{Results}\label{results}
 
@@ -405,10 +341,98 @@ food web. Our model comparison suggested that it was unnecessary to test
 for the effects of non-linear or correlational selection gradients (ref.
 supp. mat.).
 
+BREAK UP INTO INDIVIDUAL PIECES: E.G. GALL SIZE. THIS SHOULD BE SMALL
+ENOUGH TO ALLOW CACHING
+
+\includegraphics{elsevier_test_files/figure-latex/Plot Univariate Landscapes-1.pdf}
+
+\includegraphics{elsevier_test_files/figure-latex/Plot Multivariate Fitness Landscape-1.pdf}
+
+\begin{verbatim}
+##              df      AIC
+## beta_control  7 809.1027
+## quad_control 10 814.3022
+## corr_control 13 817.6910
+\end{verbatim}
+
+\begin{verbatim}
+##                  df      AIC
+## beta_control      7 809.1027
+## glm.beta_control  4 881.0152
+\end{verbatim}
+
+\begin{verbatim}
+##                           df      AIC
+## beta_control               7 809.1027
+## beta_control.REonlyGallID  5 816.4817
+\end{verbatim}
+
+\begin{verbatim}
+##       chisq       ratio         rdf           p 
+## 349.7811634   0.5025591 696.0000000   1.0000000
+\end{verbatim}
+
+\begin{verbatim}
+##                df      AIC
+## beta_treatment  7 619.1030
+## quad_treatment 10 620.1640
+## corr_treatment 13 622.3247
+\end{verbatim}
+
+\begin{verbatim}
+##       chisq       ratio         rdf           p 
+## 190.3351784   0.3215121 592.0000000   1.0000000
+\end{verbatim}
+
+\begin{verbatim}
+##                    df      AIC
+## beta_treatment      7 619.1030
+## glm.beta_treatment  4 712.4146
+\end{verbatim}
+
+\begin{verbatim}
+##                             df      AIC
+## beta_treatment               7 619.1030
+## beta_treatment.REonlyGallID  6 669.5617
+\end{verbatim}
+
+\begin{verbatim}
+## Data: treatment_df
+## Models:
+## beta_treatment.REonlyGallID: gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference + 
+## beta_treatment.REonlyGallID:     (1 | Genotype/Plant_Position)
+## beta_treatment: gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference + 
+## beta_treatment:     (1 | Genotype/Plant_Position/Gall_Number)
+##                             Df    AIC    BIC  logLik deviance  Chisq
+## beta_treatment.REonlyGallID  6 669.56 695.93 -328.78   657.56       
+## beta_treatment               7 619.10 649.87 -302.55   605.10 52.459
+##                             Chi Df Pr(>Chisq)    
+## beta_treatment.REonlyGallID                      
+## beta_treatment                   1  4.394e-13 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
+\begin{verbatim}
+## Data: treatment_df
+## Models:
+## glm.beta_treatment: gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference
+## beta_treatment: gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference + 
+## beta_treatment:     (1 | Genotype/Plant_Position/Gall_Number)
+##                    Df    AIC    BIC  logLik deviance  Chisq Chi Df
+## glm.beta_treatment  4 712.41 730.00 -352.21   704.41              
+## beta_treatment      7 619.10 649.87 -302.55   605.10 99.311      3
+##                    Pr(>Chisq)    
+## glm.beta_treatment               
+## beta_treatment      < 2.2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
 \section{Discussion}\label{discussion}
 
 More recently, researchers have begun to explore how the community
-context drives evolutionary change (({\textbf{???}}); terHorst et al.
+context drives evolutionary change (Mcpeek (2017); terHorst et al.
 (2018)).
 
 NEED to recognize that evolutionary biologists have begun to explore how
@@ -435,6 +459,10 @@ Here are two sample references: ({\textbf{???}}; {\textbf{???}}).
 
 \section*{References}\label{references}
 \addcontentsline{toc}{section}{References}
+
+\includegraphics{elsevier_test_files/figure-latex/Univariate Absolute Fitness Landscapes-1.pdf}
+
+\includegraphics{elsevier_test_files/figure-latex/Multivariate Absolute Fitness Landscapes-1.pdf}
 
 \hypertarget{refs}{}
 \hypertarget{ref-Abrams2000}{}
@@ -479,6 +507,11 @@ Gripenberg, Sofia, Peter J Mayhew, Mark Parnell, and Tomas Roslin. 2010.
 ``A Meta-Analysis of Preference-Performance Relationships in
 Phytophagous Insects.'' \emph{Ecol. Lett.} 13 (3): 383--93.
 
+\hypertarget{ref-Guimaraes2017}{}
+Guimarães, Paulo R, Jr, Mathias M Pires, Pedro Jordano, Jordi Bascompte,
+and John N Thompson. 2017. ``Indirect Effects Drive Coevolution in
+Mutualistic Networks.'' \emph{Nature} 550 (7677): 511--14.
+
 \hypertarget{ref-Hawkins1997}{}
 Hawkins, Bradford A, Howard V Cornell, and Michael E Hochberg. 1997.
 ``Predators, Parasitoids, and Pathogens as Mortality Agents in
@@ -509,6 +542,25 @@ Janzen, Daniel. 1974. ``The Deflowering of Central America.''
 Jordano, Pedro. 1987. ``Patterns of Mutualistic Interactions in
 Pollination and Seed Dispersal: Connectance, Dependence Asymmetries, and
 Coevolution.'' \emph{Am. Nat.} 129 (5): 657--77.
+
+\hypertarget{ref-De_Mazancourt2008}{}
+Mazancourt, C de, E Johnson, and T G Barraclough. 2008. ``Biodiversity
+Inhibits Species' Evolutionary Responses to Changing Environments.''
+\emph{Ecol. Lett.} 11 (4): 380--88.
+
+\hypertarget{ref-McPeek2017}{}
+Mcpeek, Mark A. 2017. \emph{Evolutionary Community Ecology}. Princeton
+University Press.
+
+\hypertarget{ref-Nuismer2013}{}
+Nuismer, Scott L, Pedro Jordano, and Jordi Bascompte. 2013.
+``Coevolution and the Architecture of Mutualistic Networks.''
+\emph{Evolution} 67 (2): 338--54.
+
+\hypertarget{ref-R2018}{}
+R Core Team. 2018. \emph{R: A Language and Environment for Statistical
+Computing}. Vienna, Austria: R Foundation for Statistical Computing.
+\url{https://www.R-project.org/}.
 
 \hypertarget{ref-Russo2006}{}
 Russo, Ron. 2006. \emph{Field Guide to Plant Galls of California and
