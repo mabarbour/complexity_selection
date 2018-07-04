@@ -146,6 +146,7 @@ bootstrap_fitness <- function(logistic_model, fixed_effects, newdata, bootstraps
 ## Number of bootstrap replicates ----
 n_boots_analysis <- 50
 n_boots_plots <- 50
+
 ```
 
 > *There is a much more insidious kind of extinction: the extinction of ecological interactions.* 
@@ -422,6 +423,9 @@ We then calculated selection gradients as the partial derivatives in absolute fi
 
 <!-- Our GLMMs are useful for testing the effects of food-web complexity on the fitness landscape within the context of our experimental design; however, coefficients from GLMMs cannot be easily converted into quantitative estimates of selection gradients (cite Morrissey's work). Therefore, for each treatment, we fit separate generalized additive models (GAMs) for gall traits that we identified as being under selection from our GLMMs. Estimating selection gradients from GAMs can give insight to both linear and non-linear selection gradients, which we assumed were all linear for our GLMMs, given the complexity of already fitting up to 4-way interactions in these models. For the number of larva per gall and gall density, we aggregated larva survival at the gall or plant level, respectively, to avoid pseudoreplication in our GAMs. -->
 
+```{r Figure 1, echo=FALSE, fig.cap="Illustrations of complex (A) and simple (B) food webs associated with the insect herbivore, *Iteomyia salicisverruca*."}
+knitr::include_graphics("complex_simple_foodwebs_compressed.pdf")
+```
 
 
 Results
@@ -437,12 +441,9 @@ These different selection pressures resulted in different adaptive landscapes in
 Depending on the trait combinations used to create the landscape, we found that the ruggedness of the adaptive landscape ranged from 10\% higher (Fig. 3A) to 274\% higher (Fig. 3C) in the simple vs. complex food web. 
 Our model comparison suggested that it was unnecessary to test for the effects of non-linear or correlational selection gradients (ref. supp. mat.).
 
-BREAK UP INTO INDIVIDUAL PIECES: E.G. GALL SIZE. THIS SHOULD BE SMALL ENOUGH TO ALLOW CACHING
+```{r Get Gall Diameter Relative Fitness Landscape, include=FALSE, cache=TRUE}
 
-```{r Get Univariate Fitness Landscapes, echo=FALSE, message=FALSE, warning=FALSE}
-## Gall size ----
-
-# Control
+# Control ----
 RF_control_gall_size <- bootstrap_fitness(
   logistic_model = beta_control, 
   fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
@@ -450,10 +451,10 @@ RF_control_gall_size <- bootstrap_fitness(
      sc.gall_size = seq(-1,1,length.out=1000), 
      sc.clutch_size = 0,
      sc.female_preference = 0),
-  bootstraps=100)
+  bootstraps=n_boots_plots)
 
 
-# Treatment
+# Treatment ----
 RF_treatment_gall_size <- bootstrap_fitness(
   logistic_model = beta_treatment, 
   fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
@@ -461,11 +462,12 @@ RF_treatment_gall_size <- bootstrap_fitness(
      sc.gall_size = seq(-1,1,length.out=1000),
      sc.clutch_size = 0,
      sc.female_preference = 0),
-  bootstraps=100)
+  bootstraps=n_boots_plots)
+```
 
-## Clutch size ----
+```{r Get Clutch Size Fitness Landscape, include=FALSE, cache=TRUE}
 
-# Control
+# Control ----
 RF_control_clutch_size <- bootstrap_fitness(
   logistic_model = beta_control, 
   fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
@@ -473,9 +475,9 @@ RF_control_clutch_size <- bootstrap_fitness(
      sc.gall_size = 0,
      sc.clutch_size = seq(-1,1,length.out=1000),
      sc.female_preference = 0),
-  bootstraps=100)
+  bootstraps=n_boots_plots)
 
-# Treatment 
+# Treatment ----
 RF_treatment_clutch_size <- bootstrap_fitness(
   logistic_model = beta_treatment, 
   fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
@@ -483,11 +485,12 @@ RF_treatment_clutch_size <- bootstrap_fitness(
      sc.gall_size = 0,
      sc.clutch_size = seq(-1,1,length.out=1000),
      sc.female_preference = 0),
-  bootstraps=100)
+  bootstraps=n_boots_plots)
+```
 
-## Female preference ----
+```{r Get Female Preference Fitness Landscape, include=FALSE, cache=TRUE}
 
-# Control 
+# Control ----
 RF_control_female_preference <- bootstrap_fitness(
   logistic_model = beta_control, 
   fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
@@ -495,9 +498,9 @@ RF_control_female_preference <- bootstrap_fitness(
      sc.gall_size = 0,
      sc.clutch_size = 0, 
      sc.female_preference = seq(-1,1,length.out=1000)), 
-  bootstraps=100)
+  bootstraps=n_boots_plots)
 
-# Treatment
+# Treatment ----
 RF_treatment_female_preference <- bootstrap_fitness(
   logistic_model = beta_treatment, 
   fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
@@ -505,100 +508,14 @@ RF_treatment_female_preference <- bootstrap_fitness(
      sc.gall_size = 0,
      sc.clutch_size = 0,
      sc.female_preference = seq(-1,1,length.out=1000)), 
-  bootstraps=100)
-```
+  bootstraps=n_boots_plots)
 
-```{r Plot Univariate Landscapes, echo=FALSE, message=FALSE, warning=FALSE}
-## Relative fitness plots ----
-
-# Get range in relative fitness for accurate scaling across all plots
-RF_gradient_range <- bind_rows(RF_treatment_gall_size$relative_fitness, RF_control_gall_size$relative_fitness,
-          RF_treatment_clutch_size$relative_fitness, RF_control_clutch_size$relative_fitness,
-          RF_treatment_female_preference$relative_fitness, RF_control_female_preference$relative_fitness) %>%
-  select(-sc.clutch_size, -sc.female_preference) %>%
-  gather(ID, relative_fitness, -sc.gall_size) %>%
-  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
-  summarise(min = min(relative_fitness), max = max(relative_fitness))
-RF_gradient_scale <- c(0,0.5,1,1.5,2,2.5) # adjusted based on range
-
-# Color palette: order -> orange, light blue, green, yellow, dark blue, red, pink
-cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#000000", "#999999")
-complex_color <- cbPalette[6]
-simple_color <- cbPalette[5]
-treatment_colors <- c(complex_color, simple_color)
-   
-# Gall size    
-RF_uni_size <- bind_rows(mutate(RF_treatment_gall_size$relative_fitness, Food_Web = "Simple"), 
-          mutate(RF_control_gall_size$relative_fitness, Food_Web = "Complex")) %>%
-  select(-sc.clutch_size, -sc.female_preference) %>%
-  gather(ID, relative_fitness, -sc.gall_size, -Food_Web) %>%
-  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
-  ggplot(., aes(x=sc.gall_size, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
-  geom_line() +
-  geom_hline(yintercept = 1, linetype = "dotted") +
-  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
-  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
-  xlab("Gall diameter (SDs)") +
-  ylab("Relative fitness") +
-  scale_color_manual(values = treatment_colors, name = "Food web") +
-  scale_y_continuous(breaks = RF_gradient_scale, limits = c(min(RF_gradient_scale), max(RF_gradient_scale))) 
-
-# Clutch size
-RF_uni_clutch <- bind_rows(mutate(RF_treatment_clutch_size$relative_fitness, Food_Web = "Simple"), 
-          mutate(RF_control_clutch_size$relative_fitness, Food_Web = "Complex")) %>%
-  select(-sc.gall_size, -sc.female_preference) %>%
-  gather(ID, relative_fitness, -sc.clutch_size, -Food_Web) %>%
-  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
-  ggplot(., aes(x=sc.clutch_size, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
-  geom_line() +
-  geom_hline(yintercept = 1, linetype = "dotted") +
-  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
-  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
-  xlab("Clutch size (SDs)") +
-  ylab("Relative fitness") +
-  scale_color_manual(values = treatment_colors, name = "Food web") +
-  scale_y_continuous(breaks = RF_gradient_scale, limits = c(min(RF_gradient_scale), max(RF_gradient_scale)))
-
-
-# Female preference 
-RF_uni_pref <- bind_rows(mutate(RF_treatment_female_preference$relative_fitness, Food_Web = "Simple"), 
-          mutate(RF_control_female_preference$relative_fitness, Food_Web = "Complex")) %>%
-  select(-sc.gall_size, -sc.clutch_size) %>%
-  gather(ID, relative_fitness, -sc.female_preference, -Food_Web) %>%
-  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
-  ggplot(., aes(x=sc.female_preference, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
-  geom_line() +
-  geom_hline(yintercept = 1, linetype = "dotted") +
-  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
-  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
-  xlab("Female preference (SDs)") +
-  ylab("Relative fitness") +
-  scale_color_manual(values = treatment_colors, name = "Food web") +
-  scale_y_continuous(breaks = RF_gradient_scale, limits = c(min(RF_gradient_scale), max(RF_gradient_scale)))
-
-# Get legend
-RF_uni_legend <- get_legend(RF_uni_size)
-
-# Make plots
-RF_uni_plots <- plot_grid(RF_uni_size + theme(legend.position = "none"), 
-                       RF_uni_clutch + theme(legend.position = "none", 
-                                          axis.title.y = element_blank(), axis.text.y = element_blank()),
-                       RF_uni_pref + theme(legend.position = "none", 
-                                        axis.title.y = element_blank(), axis.text.y = element_blank()),
-                       labels = "AUTO", ncol = 4, align='hv')
-
-RF_gradients <- ggdraw(RF_uni_plots) + draw_grob(RF_uni_legend, x = 0.8, y=0)
-RF_gradients
-#save_plot("RF_gradients.png", RF_gradients, base_height=6, base_width = 8)
-#save_plot("RF_gradients.pdf", RF_gradients, base_height=6, base_width = 8)
 ```
 
 
-```{r Get Multivariate Landscapes, echo=FALSE, message=FALSE, warning=FALSE}
+```{r Get Clutch Size x Female Preference Landscape, include=FALSE, cache=TRUE}
 
-## Clutch size x Female preference ----
-
-# Control
+# Control ----
 RF_control_clutch.x.preference <- bootstrap_fitness(
   logistic_model = beta_control, 
   fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
@@ -608,7 +525,7 @@ RF_control_clutch.x.preference <- bootstrap_fitness(
      sc.female_preference = seq(-1,1,length.out=1000)), 
   bootstraps=NULL)
 
-# Treatment
+# Treatment ----
 RF_treatment_clutch.x.preference <- bootstrap_fitness(
   logistic_model = beta_treatment, 
   fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
@@ -617,10 +534,12 @@ RF_treatment_clutch.x.preference <- bootstrap_fitness(
      sc.clutch_size = seq(-1,1,length.out=1000),
      sc.female_preference = seq(-1,1,length.out=1000)), 
   bootstraps=NULL)
+```
 
-## Gall size x Clutch size ----
 
-# Control
+```{r Get Gall Diameter x Clutch Size Landscape, include=FALSE, cache=TRUE}
+
+# Control ----
 RF_control_size.x.clutch <- bootstrap_fitness(
   logistic_model = beta_control, 
   fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
@@ -630,7 +549,7 @@ RF_control_size.x.clutch <- bootstrap_fitness(
      sc.female_preference = 0), 
   bootstraps=NULL)
 
-# Treatment
+# Treatment ----
 RF_treatment_size.x.clutch <- bootstrap_fitness(
   logistic_model = beta_treatment, 
   fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
@@ -639,10 +558,11 @@ RF_treatment_size.x.clutch <- bootstrap_fitness(
      sc.clutch_size = seq(-1,1,length.out=1000),
      sc.female_preference = 0), 
   bootstraps=NULL)
+```
 
-## Gall size x Female preference ----
+```{r Get Gall Diameter x Female Preference Landscape, include=FALSE, cache=TRUE}
 
-# Control
+# Control ----
 RF_control_size.x.preference <- bootstrap_fitness(
   logistic_model = beta_control, 
   fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
@@ -652,7 +572,7 @@ RF_control_size.x.preference <- bootstrap_fitness(
      sc.female_preference = seq(-1,1,length.out=1000)), 
   bootstraps=NULL)
 
-# Treatment
+# Treatment ----
 RF_treatment_size.x.preference <- bootstrap_fitness(
   logistic_model = beta_treatment, 
   fixed_effects = "~ sc.gall_size + sc.clutch_size + sc.female_preference",
@@ -663,57 +583,181 @@ RF_treatment_size.x.preference <- bootstrap_fitness(
   bootstraps=NULL)
 ```
 
-```{r Plot Multivariate Fitness Landscape, echo=FALSE, message=FALSE, warning=FALSE}
+```{r Fitness Landscape Plot Helpers, include=FALSE, cache=TRUE}
 
-## Relative fitness plots ----
+## Color palette ----
 
-# Get range in relative fitness for accurate scaling across all plots
+# order -> orange, light blue, green, yellow, dark blue, red, pink
+cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#000000", "#999999")
+complex_color <- cbPalette[6]
+simple_color <- cbPalette[5]
+treatment_colors <- c(complex_color, simple_color)
+
+## Scale relative fitness across plots ----
+
+# 1D
+RF_gradient_range <- bind_rows(RF_treatment_gall_size$relative_fitness, RF_control_gall_size$relative_fitness,
+          RF_treatment_clutch_size$relative_fitness, RF_control_clutch_size$relative_fitness,
+          RF_treatment_female_preference$relative_fitness, RF_control_female_preference$relative_fitness) %>%
+  select(-sc.clutch_size, -sc.female_preference) %>%
+  gather(ID, relative_fitness, -sc.gall_size) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  summarise(min = min(relative_fitness), max = max(relative_fitness))
+RF_gradient_scale <- c(0,0.5,1,1.5,2) #,2.5) # adjusted based on range
+
+# 2D
 RF_range <- bind_rows(RF_treatment_clutch.x.preference$relative_fitness, RF_control_clutch.x.preference$relative_fitness,
           RF_treatment_size.x.clutch$relative_fitness, RF_control_size.x.clutch$relative_fitness,
           RF_treatment_size.x.preference$relative_fitness, RF_control_size.x.preference$relative_fitness) %>%
   summarise(min = min(average), max = max(average))
 
-# Clutch x Preference
+## Scale absolute fitness across plots ----
+
+# 1D
+AF_gradient_scale <- c(0,0.25,0.5,0.75,1) # adjusted based on range
+
+# 2D
+AF_range <- bind_rows(RF_treatment_clutch.x.preference$absolute_fitness, RF_control_clutch.x.preference$absolute_fitness,
+          RF_treatment_size.x.clutch$absolute_fitness, RF_control_size.x.clutch$absolute_fitness,
+          RF_treatment_size.x.preference$absolute_fitness, RF_control_size.x.preference$absolute_fitness) %>%
+  summarise(min = min(average), max = max(average))
+```
+
+
+```{r Plot Univariate Landscapes, include=FALSE, cache=TRUE}
+
+# Gall Diameter ----   
+RF_uni_size <- bind_rows(mutate(RF_treatment_gall_size$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size$relative_fitness, Food_Web = "Complex")) %>%
+  select(-sc.clutch_size, -sc.female_preference) %>%
+  gather(ID, relative_fitness, -sc.gall_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.gall_size, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  geom_hline(yintercept = 1, linetype = "dotted") +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Gall diameter (SD)") +
+  ylab("Relative fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = RF_gradient_scale, limits = c(min(RF_gradient_scale), max(RF_gradient_scale)), labels = RF_gradient_scale) +
+  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1))
+
+# Clutch size ----
+RF_uni_clutch <- bind_rows(mutate(RF_treatment_clutch_size$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch_size$relative_fitness, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.female_preference) %>%
+  gather(ID, relative_fitness, -sc.clutch_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.clutch_size, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  geom_hline(yintercept = 1, linetype = "dotted") +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Clutch size (SD)") +
+  ylab("Relative fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = RF_gradient_scale, limits = c(min(RF_gradient_scale), max(RF_gradient_scale)), labels = RF_gradient_scale) +
+  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1))
+
+# Female preference ----
+RF_uni_pref <- bind_rows(mutate(RF_treatment_female_preference$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_female_preference$relative_fitness, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.clutch_size) %>%
+  gather(ID, relative_fitness, -sc.female_preference, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.female_preference, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  geom_hline(yintercept = 1, linetype = "dotted") +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Female preference (SD)") +
+  ylab("Relative fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = RF_gradient_scale, limits = c(min(RF_gradient_scale), max(RF_gradient_scale)), labels = RF_gradient_scale) +
+  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1))
+```
+
+```{r Figure 2 Univariate Landscapes, echo=FALSE, fig.cap="Selection gradients acting on gall traits in complex vs. simple food webs. Each panel corresponds to a different gall trait: gall diameter (A); clutch size (B); and female preference (C). Solid lines represent the estimated gradients in complex (orange) and simple (blue) food webs. Transparent lines represent bootstrapped replicates (n=100) to show the uncertainty in estimated gradients."}
+
+# Get legend
+RF_uni_legend <- get_legend(RF_uni_size)
+
+# Make plots
+RF_uni_plots <- plot_grid(RF_uni_size + theme(legend.position = "none",
+                                              axis.text.x = element_text(size=10),
+                                              axis.title.x = element_text(size=11)), 
+                       RF_uni_clutch + theme(legend.position = "none", 
+                                          axis.title.y = element_blank(), axis.text.y = element_blank(),
+                                          axis.text.x = element_text(size=10),
+                                          axis.title.x = element_text(size=11)),
+                       RF_uni_pref + theme(legend.position = "none", 
+                                        axis.title.y = element_blank(), axis.text.y = element_blank(),
+                                        axis.text.x = element_text(size=10),
+                                        axis.title.x = element_text(size=11)),
+                       labels = "AUTO", ncol = 3, align='hv') 
+
+RF_gradients <- ggdraw(RF_uni_plots) + draw_grob(RF_uni_legend, x = 0.8, y=0)
+#RF_gradients
+RF_uni_plots
+#save_plot("RF_gradients.png", RF_gradients, base_height=6, base_width = 8)
+#save_plot("RF_gradients.pdf", RF_gradients, base_height=6, base_width = 8)
+```
+
+---
+
+```{r Plot Multivariate Fitness Landscape, include=FALSE, cache=TRUE}
+
+# Clutch x Preference ----
 RF_plot_clutch.x.preference <- bind_rows(mutate(RF_treatment_clutch.x.preference$relative_fitness, Food_Web = "Simple"), 
           mutate(RF_control_clutch.x.preference$relative_fitness, Food_Web = "Complex")) %>%
   ggplot(., aes(x=sc.female_preference, y=sc.clutch_size, fill=average)) +
   geom_raster() +
   facet_wrap(~Food_Web) +
-  xlab("Female preference (SDs)") +
-  ylab("Clutch size (SDs)") +
+  xlab("Female preference (SD)") +
+  ylab("Clutch size (SD)") +
   #scale_fill_gradient2(midpoint=1, limits = c(RF_range$min, RF_range$max))
-  scale_fill_viridis(limits = c(RF_range$min, RF_range$max), name = "Relative fitness")
+  scale_fill_viridis(limits = c(RF_range$min, RF_range$max), name = "Relative fitness") + 
+  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_y_continuous(labels = c(-1,-0.5,0,0.5,1))
 
-# Size x Clutch
+# Size x Clutch ----
 RF_plot_size.x.clutch <- bind_rows(mutate(RF_treatment_size.x.clutch$relative_fitness, Food_Web = "Simple"), 
           mutate(RF_control_size.x.clutch$relative_fitness, Food_Web = "Complex")) %>%
   ggplot(., aes(x=sc.gall_size, y=sc.clutch_size, fill=average)) +
   geom_raster() +
   facet_wrap(~Food_Web) +
-  xlab("Gall diameter (SDs)") +
-  ylab("Clutch size (SDs)") +
+  xlab("Gall diameter (SD)") +
+  ylab("Clutch size (SD)") +
   #scale_fill_gradient2(midpoint=1, limits = c(RF_range$min, RF_range$max))
-  scale_fill_viridis(limits = c(RF_range$min, RF_range$max), name = "Relative fitness")
+  scale_fill_viridis(limits = c(RF_range$min, RF_range$max), name = "Relative fitness") + 
+  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_y_continuous(labels = c(-1,-0.5,0,0.5,1))
 
-# Size x Preference
+# Size x Preference ----
 RF_plot_size.x.preference <- bind_rows(mutate(RF_treatment_size.x.preference$relative_fitness, Food_Web = "Simple"), 
           mutate(RF_control_size.x.preference$relative_fitness, Food_Web = "Complex")) %>%
   ggplot(., aes(x=sc.gall_size, y=sc.female_preference, fill=average)) +
   geom_raster() +
   facet_wrap(~Food_Web) +
-  xlab("Gall diameter (SDs)") +
-  ylab("Female preference (SDs)") +
+  xlab("Gall diameter (SD)") +
+  ylab("Female preference (SD)") +
   #scale_fill_gradient2(midpoint=1, limits = c(RF_range$min, RF_range$max))
-  scale_fill_viridis(limits = c(RF_range$min, RF_range$max), name = "Relative fitness")
+  scale_fill_viridis(limits = c(RF_range$min, RF_range$max), name = "Relative fitness") + 
+  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_y_continuous(labels = c(-1,-0.5,0,0.5,1))
+```
+
+```{r Figure 3 Multivariate Landscapes, echo=FALSE, fig.cap="Relative fitness landscapes of gall traits in complex vs. simple food webs. Each panel corresponds to a different combination of traits: clutch size and gall diameter (A); clutch size and female preference (B); female preference and gall diameter (C). Note that traits for all plots range 1 SD below and above the mean (=0)."}
 
 # Get legend
-RF_landscape_legend <- get_legend(RF_plot_size.x.preference)
+RF_landscape_legend <- get_legend((RF_plot_size.x.preference + theme(legend.title = element_text(size=12), legend.text=element_text(size=10))))
 
 # Format plots
 RF_landscape_plots <- plot_grid(
-  RF_plot_size.x.clutch + theme(legend.position = "none", axis.title.x = element_blank()),
-  RF_plot_clutch.x.preference + theme(legend.position = "none", axis.title.y = element_blank()),
-  RF_plot_size.x.preference + theme(legend.position = "none"), 
+  RF_plot_size.x.clutch + theme(legend.position = "none", axis.title.x = element_blank(), axis.text.x = element_blank(), axis.text = element_text(size=9), axis.title = element_text(size=11), strip.text = element_text(size=11)),
+  RF_plot_clutch.x.preference + theme(legend.position = "none", axis.title.y = element_blank(), axis.text = element_text(size=9), axis.text.y = element_blank(), axis.title = element_text(size=11), strip.text = element_text(size=11)),
+  RF_plot_size.x.preference + theme(legend.position = "none", axis.text = element_text(size=9), axis.title = element_text(size=11), strip.text = element_text(size=11)), 
   nrow=2, align="hv", labels = "AUTO")
 RF_landscape_2d <- ggdraw(RF_landscape_plots) + draw_grob(RF_landscape_legend, x = 0.7, y=-0.2)
 RF_landscape_2d
@@ -721,6 +765,7 @@ RF_landscape_2d
 #save_plot("RF_landscapes_2d.pdf", RF_landscape_2d, base_height=6, base_width = 8)
 ```
 
+---
 
 ```{r AIC Model Comparison, echo=FALSE, message=FALSE, warning=FALSE, cache=TRUE}
 
@@ -784,8 +829,7 @@ References {#references .unnumbered}
 ```{r Univariate Absolute Fitness Landscapes, echo=FALSE, message=FALSE, warning=FALSE}
 ## Absolute fitness plots ----
 
-# Get range in relative fitness for accurate scaling across all plots
-AF_gradient_scale <- c(0,0.25,0.5,0.75,1) # adjusted based on range
+
 
 # Gall size 
 AF_uni_size <- bind_rows(mutate(RF_treatment_gall_size$absolute_fitness, Food_Web = "Simple"), 
@@ -831,6 +875,9 @@ AF_uni_pref <- bind_rows(mutate(RF_treatment_female_preference$absolute_fitness,
   ylab("Absolute fitness") +
   scale_color_manual(values = treatment_colors, name = "Food web") +
   scale_y_continuous(breaks = AF_gradient_scale, limits = c(min(AF_gradient_scale), max(AF_gradient_scale)))
+```
+
+```{r Figure S1 Univariate Absolute Fitness Landscapes, echo=FALSE, message=FALSE, warning=FALSE}
 
 # Get legend
 AF_uni_legend <- get_legend(AF_uni_size)
@@ -849,13 +896,8 @@ AF_gradients
 #save_plot("AF_gradients.pdf", AF_gradients, base_height=6, base_width = 8)
 ```
 
-```{r Multivariate Absolute Fitness Landscapes, echo=FALSE, message=FALSE, warning=FALSE}
 
-## Absolute fitness landscapes ----
-AF_range <- bind_rows(RF_treatment_clutch.x.preference$absolute_fitness, RF_control_clutch.x.preference$absolute_fitness,
-          RF_treatment_size.x.clutch$absolute_fitness, RF_control_size.x.clutch$absolute_fitness,
-          RF_treatment_size.x.preference$absolute_fitness, RF_control_size.x.preference$absolute_fitness) %>%
-  summarise(min = min(average), max = max(average))
+```{r Multivariate Absolute Fitness Landscapes, echo=FALSE, message=FALSE, warning=FALSE}
 
 # Size x Preference
 AF_plot_size.x.preference <- bind_rows(mutate(RF_treatment_size.x.preference$absolute_fitness, Food_Web = "Simple"), 
@@ -886,7 +928,10 @@ AF_plot_clutch.x.preference <- bind_rows(mutate(RF_treatment_clutch.x.preference
   xlab("Female preference (SDs)") +
   ylab("Clutch size (SDs)") +
   scale_fill_viridis(limits = c(AF_range$min, AF_range$max), name = "Absolute fitness")
+```
 
+
+```{r Figure S2 Multivariate Absolute Fitness Landscapes, echo=FALSE, message=FALSE, warning=FALSE}
 # Get legend
 AF_landscape_legend <- get_legend(AF_plot_size.x.preference)
 
