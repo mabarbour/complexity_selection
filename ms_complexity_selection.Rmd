@@ -269,90 +269,51 @@ All analyses and visualizations were conducted in R (@R2018).
 
 ```{r Effects of food-web complexity on absolute fitness, cache=TRUE, include=FALSE}
 
-## Fit GLMMs
+## FIT GLMMs ---
+
+# Null Model
 null_glmer <- glmer(gall_survival ~ 1 +
                       (1|Genotype/Plant_Position/Gall_Number),
                     data = gall_selection.df,
                     family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
 
-trait_glmer <- glmer(gall_survival ~ (sc.Diam + sc.log.Clutch + sc.log1p.Pref)^2 + #sc.Diam*sc.log.Clutch*sc.log1p.Pref + 
+# Model assuming no effect of food-web treatment
+trait_glmer <- glmer(gall_survival ~ (sc.Diam + sc.log.Clutch + sc.log1p.Pref)^2 + 
                       I(sc.Diam^2) + I(sc.log.Clutch^2) + I(sc.log1p.Pref^2) +
                       (1|Genotype/Plant_Position/Gall_Number),
                     data = gall_selection.df,
                     family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
 
+# Model allowing for an effect of food-web treatment
 foodweb_glmer <- glmer(gall_survival ~ Foodweb*(sc.Diam + sc.log.Clutch + sc.log1p.Pref)^2 +
                          Foodweb*(I(sc.Diam^2) + I(sc.log.Clutch^2) + I(sc.log1p.Pref^2)) +
                          (1|Genotype/Plant_Position/Gall_Number),
                        data = gall_selection.df,
                        family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
 
-## Test for overdispersion
-overdisp_fun(null_glmer)     # no evidence
-overdisp_fun(trait_glmer)    # no evidence
-overdisp_fun(foodweb_glmer)  # no evidence 
+## STATISTICAL TESTS ----
 
-## Test for multicollinearity
-vif.mer(trait_glmer)
-vif.mer(foodweb_glmer)
+# There is clear evidence that the traits we have measured influence larva survival
+anova(null_glmer, trait_glmer, test="Chisq")
+rsquared(list(null_glmer, trait_glmer))
 
-## Compare statistical summaries of each model
-summary(null_glmer)
-summary(trait_glmer)
-summary(foodweb_glmer)
+# There is also clear evidence that our food-web treatment altered natural selection
+anova(trait_glmer, foodweb_glmer)
+rsquared(list(trait_glmer, foodweb_glmer), method="delta") # 3-4% increase in amount of variance explained when including effect of food-web treatment
 
-rsquared(trait_glmer, method="delta")
-rsquared(foodweb_glmer, method="delta")
+## EVALUATING MODEL ASSUMPTIONS ---
+
+# There is no evidence of overdispersion
+overdisp_fun(foodweb_glmer)
+
+# There are no clear patterns in the distribution of the residuals (= good)
+visreg(foodweb_glmer)
+
 
 ## Test statistical significance of effects ----
 
 # Overall, there is clear evidence that food-web treatment alters absolute fitness
 anova(null_glmer, trait_glmer, foodweb_glmer, test = "Chisq") 
-
-
-## Parse out mechanisms of food-web effects ----
-foodweb_glmer_beta <- glmer(gall_survival ~ Foodweb*(sc.Diam + sc.log.Clutch + sc.log1p.Pref) +
-                         (1|Genotype/Plant_Position/Gall_Number),
-                       data = gall_selection.df,
-                       family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
-test <- tidy(foodweb_glmer_beta, confint=T) %>%
-  filter(term %in% c("(Intercept)","FoodwebSimple","sc.Diam","sc.log.Clutch","sc.log1p.Pref",
-                     "FoodwebSimple:sc.Diam","FoodwebSimple:sc.log.Clutch","FoodwebSimple:sc.log1p.Pref")) %>%
-  select(-group)
-data.frame(term = test[,1], round(test[,-1],3))
-
-# Use drop1 to test highest order effects and visreg to visualize the effects
-# Use update to remove highest order effects from more complex models.
-
-# Evidence that food-web treatment alters nonlinear selection acting on female preference. Appears to be evidence for disruptive selection in complex food web, but a lack of nonlinear selection in the simple food web.
-drop1(foodweb_glmer, test="Chisq")
-summary(foodweb_glmer)
-visreg::visreg(foodweb_glmer, xvar="sc.log1p.Pref", by="Foodweb", scale = "response") 
-
-foodweb_glmer_TEST <- update(foodweb_glmer, .~. -Foodweb:I(sc.Diam^2) -Foodweb:I(sc.log.Clutch^2) -Foodweb:I(sc.log1p.Pref^2) -Foodweb:sc.Diam:sc.log.Clutch -Foodweb:sc.Diam:sc.log1p.Pref -Foodweb:sc.log.Clutch:sc.log1p.Pref)
-vif.mer(foodweb_glmer_TEST)
-
-# Evidence of nonlinear selection acting on gall size. No evidence of disruptive selection.
-foodweb_glmer_2 <- update(foodweb_glmer, .~. -Foodweb:I(sc.Diam^2) -Foodweb:I(sc.log.Clutch^2) -Foodweb:I(sc.log1p.Pref^2) -Foodweb:sc.Diam:sc.log.Clutch:sc.log1p.Pref)
-drop1(foodweb_glmer_2, test="Chisq") 
-summary(foodweb_glmer_2)
-visreg::visreg(foodweb_glmer_2, xvar="sc.Diam", scale = "response") 
-
-# Evidence of food-web treatment altering directional selection on clutch size; marginal evidence of correlational selection acting on gall size and clutch size.
-foodweb_glmer_3 <- update(foodweb_glmer_2, .~. -I(sc.Diam^2) -I(sc.log.Clutch^2) -I(sc.log1p.Pref^2) -sc.Diam:sc.log.Clutch:sc.log1p.Pref -Foodweb:sc.Diam:sc.log.Clutch -Foodweb:sc.Diam:sc.log1p.Pref -Foodweb:sc.log.Clutch:sc.log1p.Pref)
-drop1(foodweb_glmer_3, test="Chisq") 
-summary(foodweb_glmer_3)
-visreg::visreg(foodweb_glmer_3, xvar="sc.log.Clutch", by="Foodweb", scale="response")
-visreg::visreg(foodweb_glmer_3, xvar="sc.Diam", by="sc.log.Clutch", scale="response")
-visreg::visreg(foodweb_glmer_3, xvar="sc.log.Clutch", by="sc.Diam", scale="response") # a different perspective
-
-# Evidence that food-web treatment alters absolute fitness; evidence of directional selection acting on gall size; evidence of directional selection acting on female preference
-foodweb_glmer_4 <- update(foodweb_glmer_3, .~. -sc.Diam:sc.log.Clutch -sc.Diam:sc.log1p.Pref -sc.log.Clutch:sc.log1p.Pref -Foodweb:sc.Diam -Foodweb:sc.log.Clutch -Foodweb:sc.log1p.Pref)
-drop1(foodweb_glmer_4, test="Chisq") 
-summary(foodweb_glmer_4)
-visreg::visreg(foodweb_glmer_4, xvar="Foodweb", scale="response")
-visreg::visreg(foodweb_glmer_4, xvar="sc.Diam", scale="response")
-visreg::visreg(foodweb_glmer_4, xvar="sc.log1p.Pref", scale="response")
 ```
 
 I need to go back to estimate a common alpha coefficient if the treatments do not differ from each other.
