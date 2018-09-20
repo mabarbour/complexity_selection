@@ -267,6 +267,8 @@ If we assume that there is additive genetic variance and covariance between thes
 
 All analyses and visualizations were conducted in R (@R2018). 
 
+I need to go back to estimate a common alpha coefficient if the treatments do not differ from each other.
+
 ```{r Effects of food-web complexity on absolute fitness, cache=TRUE, include=FALSE}
 
 ## FIT GLMMs ---
@@ -291,6 +293,12 @@ foodweb_glmer <- glmer(gall_survival ~ Foodweb*(sc.Diam + sc.log.Clutch + sc.log
                        data = gall_selection.df,
                        family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
 
+# Model excluding quadratic and trait:trait interactions. This is necessary for accurately estimating directional selection gradients (Betas, Lande and Arnold 1983)
+betas_glmer <- glmer(gall_survival ~ Foodweb*(sc.Diam + sc.log.Clutch + sc.log1p.Pref) +
+                         (1|Genotype/Plant_Position/Gall_Number),
+                       data = gall_selection.df,
+                       family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
+
 ## STATISTICAL TESTS ----
 
 # There is clear evidence that the traits we have measured influence larva survival
@@ -298,7 +306,7 @@ anova(null_glmer, trait_glmer, test="Chisq")
 rsquared(list(null_glmer, trait_glmer))
 
 # There is also clear evidence that our food-web treatment altered natural selection
-anova(trait_glmer, foodweb_glmer)
+foodweb_test <- tidy(anova(trait_glmer, foodweb_glmer, test="Chisq"))
 rsquared(list(trait_glmer, foodweb_glmer), method="delta") # 3-4% increase in amount of variance explained when including effect of food-web treatment
 
 ## EVALUATING MODEL ASSUMPTIONS ---
@@ -308,19 +316,13 @@ overdisp_fun(foodweb_glmer)
 
 # There are no clear patterns in the distribution of the residuals (= good)
 visreg(foodweb_glmer)
-
-
-## Test statistical significance of effects ----
-
-# Overall, there is clear evidence that food-web treatment alters absolute fitness
-anova(null_glmer, trait_glmer, foodweb_glmer, test = "Chisq") 
 ```
 
-I need to go back to estimate a common alpha coefficient if the treatments do not differ from each other.
+```{r Get Selection Gradients for GLMER}
 
-```{r REVISED Get Selection Gradients for GLMER}
+## METHOD OF JANZEN AND STERN 1998 ----
 
-## Estimate mean fitness and mean brackets (ref: Janzen and Stern 1998)
+# Estimate mean fitness and mean "brackets" for each food-web treatment (see Janzen and Stern 1998 equation 4 for details about "brackets")
 complex_predict <- predict(foodweb_glmer, newdata=filter(gall_selection.df, Foodweb=="Complex"), type="response")
 complex_mean_brackets <- mean(complex_predict * (1 - complex_predict))
 complex_mean_fitness <- mean(complex_predict)
@@ -329,22 +331,24 @@ simple_predict <- predict(foodweb_glmer, newdata=filter(gall_selection.df, Foodw
 simple_mean_brackets <- mean(simple_predict * (1 - simple_predict))
 simple_mean_fitness <- mean(simple_predict)
 
-# test whether using alternative models influences estimes of mean "brackets" and mean fitness 
-alt_predict <- predict(foodweb_glmer_beta, newdata=filter(gall_selection.df, Foodweb=="Complex"), type="response")
+# Double-check that using the Beta-only model doesn't influence estimes of mean "brackets" and mean fitness. Using Complex food web as an example, but it doesn't matter 
+alt_predict <- predict(betas_glmer, newdata=filter(gall_selection.df, Foodweb=="Complex"), type="response")
 alt_mean_brackets <- mean(alt_predict * (1 - alt_predict))
 alt_mean_fitness <- mean(alt_predict)
-complex_mean_brackets - alt_mean_brackets
-complex_mean_fitness - alt_mean_fitness
+test_mean_brackets <- complex_mean_brackets
+test_mean_fitness <- complex_mean_fitness
+test_mean_brackets - alt_mean_brackets # virtually the same
+test_mean_fitness - alt_mean_fitness # virtually the same
 
-# Altering so that coefficients that differed between food webs are reported, but ones that weren't are simply reported as there baselines.
-# Added multiplier column so that quadratic (nonlinear) selection coefficients can be multiplied by 2 for fair comparison
-foodweb_tidy_betas <- tidy(foodweb_glmer_beta, conf.int=T) %>%
+# Tidy data for beta terms
+foodweb_tidy_betas <- tidy(betas_glmer, conf.int=T) %>%
   filter(term %in% c("(Intercept)","FoodwebSimple","sc.Diam","sc.log.Clutch","sc.log1p.Pref",
                      "FoodwebSimple:sc.Diam","FoodwebSimple:sc.log.Clutch","FoodwebSimple:sc.log1p.Pref")) %>%
   mutate(Foodweb = c("Complex","Simple",rep("Complex",3),rep("Simple",3)),
          Selection_form = c(NA,NA,rep("Directional",6)),
          Multiplier = rep(1,8))
 
+# Tidy data for gamma terms. Note that we multiply quadratic (nonlinear) selection coefficients by 2 so they are on the same scale as other coefficients (detailed explanation in Stinchcombe et al. 2008)
 foodweb_tidy_gammas <- tidy(foodweb_glmer, conf.int=T) %>%
   filter(term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.log1p.Pref^2)",
                      "sc.Diam:sc.log.Clutch","sc.Diam:sc.log1p.Pref","sc.log.Clutch:sc.log1p.Pref",
@@ -354,13 +358,13 @@ foodweb_tidy_gammas <- tidy(foodweb_glmer, conf.int=T) %>%
          Selection_form = c(rep("Nonlinear",3),rep("Correlational",3),rep("Nonlinear",3),rep("Correlational",3)),
          Multiplier = c(rep(2,3),rep(1,3),rep(2,3),rep(1,3)))
 
+# Combine and tidy the regression (alpha) coefficients
 get_alphas <- bind_rows(foodweb_tidy_betas, foodweb_tidy_gammas) %>% 
   mutate(alpha = estimate, alpha_2.5 = conf.low, alpha_97.5 = conf.high, P = p.value) %>%
   select(term, Foodweb, alpha, alpha_2.5, alpha_97.5, P, Selection_form, Multiplier)
 
 complex_alphas <- filter(get_alphas, Foodweb == "Complex"); complex_alphas
 simple_alphas <- filter(get_alphas, Foodweb == "Simple"); simple_alphas
-
 
 coefs_gradients <- data.frame(Variable = complex_alphas$term, 
            a_complex = complex_alphas$alpha,
@@ -1273,7 +1277,7 @@ knitr::include_graphics("complex_simple_foodwebs_compressed.pdf")
 Results
 =======
 
-We found that changes in food-web complexity fundamentally altered the shape of *Iteomyia*'s fitness landscape (statistical test for trait vs. food-web*traits). 
+We found that changes in food-web complexity altered the shape of *Iteomyia*'s fitness landscape ($\chi^2_{`r foodweb_test$[2,"Chi.Df"]`}=`r foodweb_test$[2,"statistic"]`, P=`r foodweb_test$[2,"p.value"]`$). 
 
 For example, there was directional selection for larger gall diameter in both complex and simple food webs, but the magnitude of the selection gradient was X-fold higher in the complex food web. The steeper selection gradient in the complex food web was not a result of stronger covariance between gall diameter and larval survival, but a result of average larval survival being X-fold lower in the complex food web.
 
