@@ -1,0 +1,36 @@
+---
+title: "playground"
+author: "Matt Barbour"
+date: "7/22/2018"
+output: html_document
+---
+
+The abundance of specific parasitoid species was too low to try to tease apart species specific effects on the selection gradients. This was likely due to the less than ideal environment for rearing which made it difficult to determine which parasitoid species were associated with a specific gall, but we could determine whether Platy was because they stayed within the gall and weren't found outside of it.
+```{r setup, include=FALSE}
+
+## Load required libraries ----
+library(tidyverse)
+
+## Load and manage data ----
+
+gall_selection_ALL.df <- read_csv("gall_selection_data_ALL.csv") %>%
+  # convert appropriate variables to characters instead of integers
+  mutate(Plant_Position = as.character(Plant_Position),
+         Gall_Number = as.character(Gall_Number)) %>%
+  unite(Gall_ID, Gall_Number, Gall_Letter, remove = FALSE) %>%
+  
+  # subset data for analysis
+  filter(phenology == "early", Location == "tree",
+         platy > 0 | ectos > 0 | pupa > 0) %>%                  # eliminate unknown sources of mortality
+  mutate(gall_survival = as.numeric(ifelse(pupa > 0, 1, 0)),
+         egg_parasitoid = as.numeric(ifelse(platy > 0, 1, 0))) %>%
+  mutate(Eulo = eulo.female + eulo.male + exit_none_eulo.female + eulo.us, # no Eulo? only came from unknown galls?
+         Meso = exit_none_meso.male + exit_none_meso.female + exit_none_meso.us + meso.female + meso.male + meso.us,
+         Tory = exit_none_tory.male + exit_none_tory.female + exit_none_tory.us + tory.female + tory.male + tory.us)
+
+summary(gall_selection_ALL.df)
+table(gall_selection_ALL.df$platy)
+table(gall_selection_ALL.df$Meso)
+table(gall_selection_ALL.df$Tory)
+table(gall_selection_ALL.df$ectos)
+```

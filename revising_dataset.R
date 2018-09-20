@@ -18,7 +18,7 @@ library(cowplot) # for clean multi-panel plots
 ## read in data frames ----
 
 # parasitism data
-vLG.df <- read.csv("MBGalls/VLGCollect2013.csv") %>% tbl_df
+vLG.df <- read.csv("VLGCollect2013.csv") %>% tbl_df
 
 # plant information
 plant.info <- read.csv("Willow Garden Positions.csv") %>%
@@ -139,6 +139,14 @@ write_csv(ind.tree.data, "gall_selection_data.csv")
 table(ind.tree.data$Treatment.focus, ind.tree.data$Treatment)
 table(ind.tree.data$Treatment, ind.tree.data$Location) # note that there aren't any situations with "marked" ground galls, which makes this comparison difficult.
 table(ind.tree.data$Treatment, ind.tree.data$phenology)
+
+ind.tree.data.ALL <- IGP.df.ind.galln %>%
+  ungroup() %>%
+  filter(Gall_Number != "unk") %>%
+  #select(Treatment.focus, Treatment, Location, phenology, Genotype, Plant_Position, Gall_Number:Density_per_100_shoots, gall_individuals,
+  #       platy, pupa, ectos, platy.ectos, none.none, total) %>%
+  droplevels.data.frame() 
+write_csv(ind.tree.data.ALL, "gall_selection_data_ALL.csv")
 
 ######################## EVERYTHING BELOW IS OLD, BUT MAYBE USEFUL ##########################################
 

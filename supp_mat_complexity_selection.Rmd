@@ -7,6 +7,8 @@ output:
   html_notebook: default
 ---
 
+ADD A SECTION WITH AIC SHOWING THAT ITS BETTER TO USE A MODEL WITH TRANSFORMED VARIABLES, AND IT HELPS MEET THE ASSUMPTIONS OF THE FITNESS LANDSCAPE ANALYSIS.
+
 Load dataset. This dataset is a subset that only includes larva that survive to pupation or turned into parasitoids. We omitted any data where larva mortality was unclear. This enabled us to focus on the selection pressures imposed by insect parasitoids rather than other sources.
 ```{r setup, include=FALSE}
 
@@ -166,6 +168,14 @@ bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0
   return(list(absolute_fitness = absolute_fitness_df, relative_fitness = relative_fitness_df))
 }
 ```
+
+```{r}
+length(unique(gall_selection.df$Genotype)) # 8 plant genotypes
+length(unique(gall_selection.df$Plant_Position)) # 111 plants
+length(unique(gall_selection.df$Gall_Number)) # 614 galls
+length(unique(gall_selection.df$Gall_ID)) # 1302 larva
+```
+
 
 We used Aikaike Information Criteria (AIC)
 
@@ -1591,3 +1601,6 @@ fitness_landscapes_2d <- ggdraw(landscape_plots) + draw_grob(legend_2d, x = 0.7,
 save_plot("fitness_landscapes_2d.png", fitness_landscapes_2d, base_height=6, base_width = 8)
 ```
 
+<!--stackedit_data:
+eyJoaXN0b3J5IjpbLTEzMzk3NTQwOTNdfQ==
+-->

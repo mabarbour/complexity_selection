@@ -395,7 +395,7 @@
      \let\@oddhead\@empty
      \let\@evenhead\@empty
      \def\@oddfoot{\footnotesize\itshape
-       Preprint submitted to \ifx\@journal\@empty Elsevier
+       Manuscript in preparation for \ifx\@journal\@empty Ecology Letters % Preprint submitted to \ifx\@journal\@empty Elsevier
        \else\@journal\fi\hfill\today}%
      \let\@evenfoot\@oddfoot}
 

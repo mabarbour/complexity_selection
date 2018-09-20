@@ -1,0 +1,36 @@
+\begin{figure}
+\centering
+\includegraphics{complex_simple_foodwebs_compressed.pdf}
+\caption{Illustrations of complex (A) and simple (B) food webs
+associated with the insect herbivore, \emph{Iteomyia salicisverruca}.
+Black arrows denote `who-eats-whom' in this network of trophic
+interactions.}
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}
+\centering
+\includegraphics{elsevier_test_files/figure-latex/Univariate_Landscapes-1.pdf}
+\caption{\label{fig:Univariate_Landscapes}Selection gradients acting on
+gall traits in complex vs.~simple food webs. Each panel corresponds to a
+different gall trait: gall diameter (A); clutch size (B); and female
+preference (C). Solid lines represent the estimated gradients in complex
+(orange) and simple (blue) food webs. Transparent lines represent
+bootstrapped replicates (n=100) to show the uncertainty in estimated
+gradients. Note that only 100 bootstraps are displayed here, but that
+inferences are based on 1,000 bootstrapped samples.}
+\end{figure}
+\efloatseparator
+ 
+\begin{figure}
+\centering
+\includegraphics{elsevier_test_files/figure-latex/Multivariate_Landscapes-1.pdf}
+\caption{\label{fig:Multivariate_Landscapes}Fitness landscapes of gall
+traits in complex vs.~simple food webs. Each panel corresponds to a
+different combination of traits: clutch size and gall diameter (A);
+clutch size and female preference (B); female preference and gall
+diameter (C). Note that traits for all plots range 1 SD below and above
+the mean (=0).}
+\end{figure}
+\efloatseparator
+ 
