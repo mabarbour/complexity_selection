@@ -1,0 +1,1606 @@
+---
+title: Supplementary Material for Food-web complexity alters the fitness landscape
+  of an insect herbivore
+author: "Matt Barbour"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+ADD A SECTION WITH AIC SHOWING THAT ITS BETTER TO USE A MODEL WITH TRANSFORMED VARIABLES, AND IT HELPS MEET THE ASSUMPTIONS OF THE FITNESS LANDSCAPE ANALYSIS.
+
+Load dataset. This dataset is a subset that only includes larva that survive to pupation or turned into parasitoids. We omitted any data where larva mortality was unclear. This enabled us to focus on the selection pressures imposed by insect parasitoids rather than other sources.
+```{r setup, include=FALSE}
+
+## Load required libraries ----
+library(tidyverse)
+library(cowplot) # pretty default ggplots
+library(broom) # for tidying multiple linear models
+library(mgcv) # generalized additive models
+library(gamm4) # generalized additive mixed-models
+library(gsg) # calculating selection gradients
+library(visreg)
+library(viridis) # for color palette
+
+## Load and manage data ----
+
+gall_selection.df <- read_csv("gall_selection_data.csv") %>%
+  # convert appropriate variables to characters instead of integers
+  mutate(Plant_Position = as.character(Plant_Position),
+         Gall_Number = as.character(Gall_Number)) %>%
+  unite(Gall_ID, Gall_Number, Gall_Letter, remove = FALSE) %>%
+  
+  # subset data for analysis
+  filter(phenology == "early", Location == "tree",
+         platy > 0 | ectos > 0 | pupa > 0) %>%                  # eliminate unknown sources of mortality
+  mutate(gall_survival = as.numeric(ifelse(pupa > 0, 1, 0)),
+         egg_parasitoid = as.numeric(ifelse(platy > 0, 1, 0))) 
+
+# convert treatment to factor to use as 'by' variable in generalized additive models
+gall_selection.df <- gall_selection.df %>%
+  mutate(Treatment_contr.sum=factor(Treatment.focus), 
+         sc.gall_size = as.numeric(scale(Gall_Height_mm)),
+         sc.clutch_size = as.numeric(scale(gall_individuals)),
+         sc.female_preference = as.numeric(scale(Density_per_100_shoots)))
+contrasts(gall_selection.df$Treatment_contr.sum) <- 'contr.sum'
+
+## Create separate datasets for quantifying selection gradients ----
+control_df <- gall_selection.df %>%
+  filter(Treatment.focus == "Control") %>%
+  mutate(sc.gall_size = (Gall_Height_mm - mean(Gall_Height_mm))/sd(Gall_Height_mm),
+         sc.clutch_size = (gall_individuals - mean(gall_individuals))/sd(gall_individuals),
+         sc.female_preference = (Density_per_100_shoots - mean(Density_per_100_shoots))/sd(Density_per_100_shoots))
+
+treatment_df <- gall_selection.df %>%
+  filter(Treatment.focus == "Ectoparasitoid exclusion") %>%
+  mutate(sc.gall_size = (Gall_Height_mm - mean(Gall_Height_mm))/sd(Gall_Height_mm),
+         sc.clutch_size = (gall_individuals - mean(gall_individuals))/sd(gall_individuals),
+         sc.female_preference = (Density_per_100_shoots - mean(Density_per_100_shoots))/sd(Density_per_100_shoots))
+
+## Custom functions to avoid repetitive code ----
+gamm.model <- function(formula, data) {
+  gamm4(formula, data, 
+        random = ~(1|Genotype/Plant_Position/Gall_Number), 
+        family = binomial(link = logit))
+}
+
+gam.plot <- function(gam.model, ...) {
+  plot(gam.model, se = TRUE, seWithMean = T, shift = mean(predict(gam.model)), trans = function(x) {exp(x)/(1+exp(x))}, ...)
+}
+
+# experimenting with boot.case gave bootstrapped distributions that weren't centered near the model mean estimate.
+# also, using 'refit.smooth = T' also generated some very skewed distributions
+# the recipe below provided the most sensible estimates for my data
+gradient.calc <- function(mod, phenotype, covariates = NULL) {
+  gam.gradients(mod, phenotype, covariates, parallel = 'multicore', ncpus = 32, 
+                refit.smooth = F,
+                n.boot = 1000,
+                se.method = 'boot.para', #'posterior', #'boot.para', #'permute', 'boot.case'#  
+                standardized = T)
+} 
+
+insect_FL <- function(mod, phenotype, covariates = NULL) {
+  fitness.landscape(mod, phenotype, covariates, parallel = 'multicore', ncpus = 32,
+                    PI.method = 'boot.para',
+                    refit.smooth = F,
+                    PI.interval = c(0.025,0.975),
+                    plt.density = 100)
+}
+
+get_insect_FL.df <- function(FL){
+  data.frame(mean_fitness = FL$Wbar, FL$points, t(FL$WbarPI)) %>%
+    mutate(lower_2.5 = X2.5., upper_97.5 = X97.5.)
+}
+
+overdisp_fun <- function(model) {
+  ## number of variance parameters in 
+  ##   an n-by-n variance-covariance matrix
+  vpars <- function(m) {
+    nrow(m)*(nrow(m)+1)/2
+  }
+  model.df <- sum(sapply(VarCorr(model),vpars))+length(fixef(model))
+  rdf <- nrow(model.frame(model))-model.df
+  rp <- residuals(model,type="pearson")
+  Pearson.chisq <- sum(rp^2)
+  prat <- Pearson.chisq/rdf
+  pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
+  c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
+}
+
+inverse_logit <- function(x) exp(x)/(1+exp(x))
+
+#Beta_avg_grad <- function(logistic_model, mean_fitness) {
+#  brackets <- predict(logistic_model, type = "response") * (1 - predict(logistic_model, type="response"))
+#  gradient <- mean(brackets) * fixef(logistic_model) / mean_fitness 
+#  return(gradient)
+#}
+
+## Calculate directional selection gradients
+# following method of Janzen and Stern 1998, Evolution
+Beta_avg_grad <- function(.) {
+  mean_fitness <- inverse_logit(fixef(update(., .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
+  brackets <- predict(., type = "response") * (1 - predict(., type="response"))
+  mean(brackets) * fixef(.)[-1] / mean_fitness 
+}
+
+## Bootstrap fitness estimates
+bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0.025,0.975)){
+  model_matrix <- model.matrix(~ sc.gall_size + sc.clutch_size + sc.female_preference, newdata)
+  
+  # Absolute fitness
+  get_absolute_fitness <- function(.) inverse_logit(model_matrix %*% fixef(.))
+  
+  if(is.null(bootstraps) == FALSE){
+    get_bootstraps_absolute_fitness <-bootMer(logistic_model, FUN = get_absolute_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
+  
+   get_intervals_absolute_fitness <- apply(get_bootstraps_absolute_fitness$t, 2, function(x) x[order(x)][c(round(bootstraps*intervals[1],0),round(bootstraps*intervals[2],0))])
+   
+  absolute_fitness_df <- data.frame(newdata, 
+                    average = get_absolute_fitness(logistic_model), 
+                    lower = get_intervals_absolute_fitness[1, ],
+                    upper = get_intervals_absolute_fitness[2, ],
+                    t(get_bootstraps_absolute_fitness$t))
+  } else {
+    absolute_fitness_df <- data.frame(newdata, 
+                    average = get_absolute_fitness(logistic_model))
+  }
+  
+  
+  # Relative fitness
+  get_relative_fitness <- function(.) get_absolute_fitness(.)/mean(get_absolute_fitness(.))
+  
+  if(is.null(bootstraps) == FALSE){
+    get_bootstraps_relative_fitness <-bootMer(logistic_model, FUN = get_relative_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
+  
+  get_intervals_relative_fitness <- apply(get_bootstraps_relative_fitness$t, 2, function(x) x[order(x)][c(round(bootstraps*intervals[1],0),round(bootstraps*intervals[2],0))])
+    
+  relative_fitness_df <- data.frame(newdata, 
+                    average = get_relative_fitness(logistic_model), 
+                    lower = get_intervals_relative_fitness[1, ],
+                    upper = get_intervals_relative_fitness[2, ],
+                    t(get_bootstraps_relative_fitness$t))
+  } else {
+      relative_fitness_df <- data.frame(newdata, 
+                    average = get_relative_fitness(logistic_model))
+  }
+  
+  # Organize data
+  return(list(absolute_fitness = absolute_fitness_df, relative_fitness = relative_fitness_df))
+}
+```
+
+```{r}
+length(unique(gall_selection.df$Genotype)) # 8 plant genotypes
+length(unique(gall_selection.df$Plant_Position)) # 111 plants
+length(unique(gall_selection.df$Gall_Number)) # 614 galls
+length(unique(gall_selection.df$Gall_ID)) # 1302 larva
+```
+
+
+We used Aikaike Information Criteria (AIC)
+
+```{r AIC Model Selection, echo=TRUE, cache=TRUE}
+
+## GAMM 1: models the effect of food-web treatment on univariate and multivariate fitness landscapes ----
+GAMM_1 <- gamm.model(gall_survival ~ 
+                       Treatment_contr.sum +
+                       s(sc.gall_size, by=Treatment_contr.sum) + 
+                       s(sc.clutch_size, by=Treatment_contr.sum) + 
+                       s(sc.female_preference, by=Treatment_contr.sum) + 
+                       sc.gall_size:sc.clutch_size + sc.gall_size:sc.clutch_size:Treatment_contr.sum +
+                       sc.gall_size:sc.female_preference + sc.gall_size:sc.female_preference:Treatment_contr.sum +                                sc.clutch_size:sc.female_preference + sc.clutch_size:sc.female_preference:Treatment_contr.sum,
+                     data = gall_selection.df)
+# summary(GAMM_1$gam); summary(GAMM_1$mer)
+
+## GAMM 2: models the effect of food-web treatment on univariate, but not multivariate landscape ----
+GAMM_2 <- gamm.model(gall_survival ~ 
+                       Treatment_contr.sum +
+                       s(sc.gall_size, by=Treatment_contr.sum) + 
+                       s(sc.clutch_size, by=Treatment_contr.sum) + 
+                       s(sc.female_preference, by=Treatment_contr.sum) +
+                       sc.gall_size:sc.clutch_size + 
+                       sc.gall_size:sc.female_preference +                        
+                       sc.clutch_size:sc.female_preference,
+                     data = gall_selection.df)
+# summary(GAMM_2$gam); summary(GAMM_2$mer)
+
+## GAMM 3: models the effect of food-web treatment on univariate landscape ----
+GAMM_3 <- gamm.model(gall_survival ~ 
+                       Treatment_contr.sum +
+                       s(sc.gall_size, by=Treatment_contr.sum) + 
+                       s(sc.clutch_size, by=Treatment_contr.sum) + 
+                       s(sc.female_preference, by=Treatment_contr.sum),
+                      data = gall_selection.df)
+# summary(GAMM_3$gam); summary(GAMM_3$mer)
+
+## GAMM 4: assumes that the food-web does not modify the fitness landscape 
+GAMM_4 <- gamm.model(gall_survival ~ 
+                       Treatment_contr.sum +
+                       s(sc.gall_size) + 
+                       s(sc.clutch_size) + 
+                       s(sc.female_preference),
+                     data = gall_selection.df)
+# summary(GAMM_4$gam); summary(GAMM_4$mer)
+
+## AIC Comparison of GAMMs
+knitr::kable(AIC(GAMM_1$mer, GAMM_2$mer, GAMM_3$mer, GAMM_4$mer))
+
+```
+
+AIC model comparison suggests that ....
+
+Now let's compare the best GAMMs to analog generalized linear mixed-models (GLMM). If these GLMMs have a lower AIC value than their respective GAMMs, then this suggests that there is only evidence of directional selection in our data.
+```{r GAMM vs GLMM, cache=TRUE}
+# Note that I still use gamm.model to allow for appropriate model comparisons
+
+## GLMM 3: only models the effect of food-web treatment on directional selection gradients ----
+GLMM_3 <- gamm.model(gall_survival ~ 
+                       Treatment_contr.sum +
+                       sc.gall_size + sc.gall_size:Treatment_contr.sum + 
+                       sc.clutch_size + sc.clutch_size:Treatment_contr.sum + 
+                       sc.female_preference + sc.female_preference:Treatment_contr.sum,
+                      data = gall_selection.df)
+#summary(GLMM_3$gam); summary(GLMM_3$mer)
+
+## GLMM 4: only models the effect of food-web treatment on directional selection gradients ----
+GLMM_4 <- gamm.model(gall_survival ~ 
+                       Treatment_contr.sum +
+                       sc.gall_size + 
+                       sc.clutch_size + 
+                       sc.female_preference,
+                      data = gall_selection.df)
+#summary(GLMM_4$gam); summary(GLMM_4$mer)
+
+knitr::kable(AIC(GAMM_3$mer, GLMM_3$mer, GAMM_4$mer, GLMM_4$mer)) 
+```
+
+It appears that the best predictive model is the GLMM that includes an effect of food-web treatment on directional selection gradients. Therefore, we continue by quantifying the effect of food-web treatment on directional selection gradients.
+
+The model selection procedure was useful for pairing down the complexity of our model. To actually quantify the directional selection gradients in each treatment though, we analyze each treatment separately.
+
+
+```{r Selection Gradients - Complex Food Web, cache=TRUE}
+# note that I've switched to using the lme4 package to analyzing the GLMM
+
+# GLMM ----
+glmer_control <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference +
+                           (1|Genotype/Plant_Position/Gall_Number),
+                         data = control_df,
+                         family = binomial(link = logit), optimizer = "bobyqa")
+# summary(glmer_control)
+
+# Mean fitness ----
+Wbar_control <- inverse_logit(fixef(update(glmer_control, .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
+
+# Confidence intervals for selection gradients ----
+boot_Beta_control <- bootMer(glmer_control, FUN = Beta_avg_grad, nsim=100, parallel="multicore", ncpus=32)
+
+## Summary ----
+summary_Beta_glmm_control <- data.frame(
+  Phenotype = c("Gall size", "Clutch size", "Female preference"),
+  Food_Web = "Complex",
+  Model = "GLMM",
+  Beta = round(Beta_avg_grad(glmer_control),3),
+  lower_2.5 = round(apply(boot_Beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3),
+  upper_97.5 = round(apply(boot_Beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3)) 
+```
+
+
+```{r Selection Gradients - Simple Food Web, cache=TRUE}
+
+## GLMM ----
+glmer_treatment <- glmer(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference +
+                           (1|Genotype/Plant_Position/Gall_Number),
+                         data = treatment_df,
+                         family = binomial(link = logit), optimizer = "bobyqa")
+# summary(glmer_treatment)
+
+## Mean fitness ----
+Wbar_treatment <- inverse_logit(fixef(update(glmer_treatment, .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
+
+## Confidence intervals for selection gradients ----
+boot_Beta_treatment <- bootMer(glmer_treatment, FUN = Beta_avg_grad, nsim=100, parallel="multicore", ncpus=32)
+
+## Summary ----
+summary_Beta_glmm_treatment <- data.frame(
+  Phenotype = c("Gall size", "Clutch size", "Female preference"),
+  Food_Web = "Simple",
+  Model = "GLMM",
+  Beta = round(Beta_avg_grad(glmer_treatment),2),
+  lower_2.5 = round(apply(boot_Beta_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),2),
+  upper_97.5 = round(apply(boot_Beta_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),2)) 
+```
+
+
+To ensure we are calculating these selection gradients correctly, we'll compare our results to those obtained from the *gsg* package developed by Michael Morrissey.
+```{r Check Gradient Calculations, cache=TRUE}
+
+## GAMM Control ----
+gamm_control <- gamm.model(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference,
+                             data = control_df)
+gsg_control <- data.frame(
+  Phenotype = c("Gall size", "Clutch size", "Female preference"),
+  Food_Web = "Complex",
+  Model = "GAMM",
+  Beta = round(c(gam.gradients(gamm_control$gam, 
+                         phenotype = "sc.gall_size", covariates = c("sc.clutch_size","sc.female_preference"), 
+                         se.method = "n")["B-sc.gall_size","estimates"],
+           gam.gradients(gamm_control$gam, 
+                         phenotype = "sc.clutch_size", covariates = c("sc.gall_size","sc.female_preference"), 
+                         se.method = "n")["B-sc.clutch","estimates"],
+           gam.gradients(gamm_control$gam, 
+                         phenotype = "sc.female_preference", covariates = c("sc.gall_size","sc.clutch_size"),
+                         se.method = "n")["B-sc.female_preference","estimates"]),3),
+  lower_2.5 = NA,
+  upper_97.5 = NA)
+
+## GAMM Treatment ----
+gamm_treatment <- gamm.model(gall_survival ~ sc.gall_size + sc.clutch_size + sc.female_preference,
+                             data = treatment_df)
+gsg_treatment <- data.frame(
+  Phenotype = c("Gall size", "Clutch size", "Female preference"),
+  Food_Web = "Simple",
+  Model = "GAMM",
+  Beta = round(c(gam.gradients(gamm_treatment$gam, 
+                         phenotype = "sc.gall_size", covariates = c("sc.clutch_size","sc.female_preference"), 
+                         se.method = "n")["B-sc.gall_size","estimates"],
+           gam.gradients(gamm_treatment$gam, 
+                         phenotype = "sc.clutch_size", covariates = c("sc.gall_size","sc.female_preference"), 
+                         se.method = "n")["B-sc.clutch","estimates"],
+           gam.gradients(gamm_treatment$gam, 
+                         phenotype = "sc.female_preference", covariates = c("sc.gall_size","sc.clutch_size"),
+                         se.method = "n")["B-sc.female_preference","estimates"]),3),
+  lower_2.5 = NA,
+  upper_97.5 = NA)
+
+## Compare GAMM and GLMM estimates ----
+compare_Beta <- bind_rows(gsg_control, gsg_treatment, summary_Beta_glmm_control, summary_Beta_glmm_treatment) %>%
+  select(-lower_2.5, -upper_97.5) %>%
+  spread(Model, Beta)
+
+knitr::kable(compare_Beta)
+
+```
+
+The comparisons are quite close, but why should they differ at all? This suggests that my implementation of the Janzen and Stern 1998 method and Morrisey's are slightly different. Perhaps this is because Janzen and Stern relies on the coefficient to calculate the gradient, whereas Morrisey calculates it using the finite difference methods for partial derivatives...
+
+Now let's look at how the confidence intervals vary between the GLMM and GAMMs. Note that I now fit it with a spline function to allow gsg to calculate bootstrap intervals (it won't otherwise).
+
+```{r gsg Comparison, cache=TRUE}
+
+## Fit generalized additive mixed models ----
+gamm_control_2 <- gamm.model(gall_survival ~ s(sc.gall_size) + s(sc.clutch_size,k=9) + s(sc.female_preference),
+                             data = control_df)
+
+gamm_treatment_2 <- gamm.model(gall_survival ~ s(sc.gall_size) + s(sc.clutch_size,k=9) + s(sc.female_preference),
+                             data = treatment_df)
+
+## Estimate selection gradients ----
+sg.size_control <- gradient.calc(mod = gamm_control_2$gam, 
+                                 phenotype = "sc.gall_size", 
+                                 covariates = c("sc.clutch_size","sc.female_preference"))
+sg.size_treatment <- gradient.calc(mod = gamm_treatment_2$gam, 
+                                   phenotype = "sc.gall_size", 
+                                   covariates = c("sc.clutch_size","sc.female_preference"))
+sg.clutch_control <- gradient.calc(mod = gamm_control_2$gam, 
+                                        phenotype = "sc.clutch_size", 
+                                        covariates = c("sc.gall_size","sc.female_preference"))
+sg.clutch_treatment <- gradient.calc(mod = gamm_treatment_2$gam, 
+                                          phenotype = "sc.clutch_size", 
+                                          covariates = c("sc.gall_size","sc.female_preference"))
+sg.preference_control <- gradient.calc(mod = gamm_control_2$gam, 
+                                    phenotype = "sc.female_preference", 
+                                    covariates = c("sc.clutch_size","sc.gall_size"))
+sg.preference_treatment <- gradient.calc(mod = gamm_treatment_2$gam, 
+                                      phenotype = "sc.female_preference", 
+                                      covariates = c("sc.clutch_size","sc.gall_size"))
+
+## Organize bootstrap estimates ----
+bootstrap_df <- bind_rows(
+  data.frame(Bootstrap_Estimates = sg.size_control$boot[ ,1], 
+             Phenotype = "Gall size", Selection_Type = "Beta", Food_Web = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.size_treatment$boot[ ,1], 
+             Phenotype = "Gall size", Selection_Type = "Beta", Food_Web = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.clutch_control$boot[ ,1], 
+             Phenotype = "Clutch size", Selection_Type = "Beta", Food_Web = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.clutch_treatment$boot[ ,1], 
+             Phenotype = "Clutch size", Selection_Type = "Beta", Food_Web = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.preference_control$boot[ ,1], 
+             Phenotype = "Female preference", Selection_Type = "Beta", Food_Web = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.preference_treatment$boot[ ,1], 
+             Phenotype = "Female preference", Selection_Type = "Beta", Food_Web = "Simple"))
+
+## Summarise bootstrap estimates ----
+gsg_gradients <- bootstrap_df %>%
+  group_by(Phenotype, Food_Web) %>%
+  summarise(Beta = round(mean(Bootstrap_Estimates),3),
+            lower_2.5 = round(quantile(Bootstrap_Estimates, probs = 0.025),3),
+            upper_97.5 = round(quantile(Bootstrap_Estimates, probs = 0.975),3)) %>%
+  mutate(Model = "gsg_GAMM")
+
+## Compare gsg GAMM and GLMM estimates of directional selection ----
+bind_rows(gsg_gradients, summary_Beta_glmm_control, summary_Beta_glmm_treatment) %>%
+  arrange(Phenotype, Food_Web, Model) %>%
+  mutate(absolute_range = upper_97.5 - lower_2.5) %>%
+  knitr::kable(.)
+```
+
+Both methods give the same qualitative results. However, range of the confidence intervals can be more than twice as large using my GLMM bootstrapping methods. Therefore, our reported intervals provide a conservative estimate.
+
+```{r Compare Selection Gradients across Treatments - GLMM, cache=TRUE}
+
+## Gather bootstrap data from GLMMs
+glmm_boostrap_df <- bind_rows(
+  data.frame(boot_Beta_treatment$t, ID = rep(1:dim(boot_Beta_treatment$t)[1]), Food_Web = "Simple"),
+  data.frame(boot_Beta_control$t, ID = rep(1:dim(boot_Beta_control$t)[1]), Food_Web = "Complex")
+)
+
+## Gall size ----
+select(glmm_boostrap_df, sc.gall_size, ID, Food_Web) %>%
+  spread(Food_Web, sc.gall_size) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient < 0)/dim(glmm_boostrap_df)[1])
+
+## Clutch size ----
+select(glmm_boostrap_df, sc.clutch_size, ID, Food_Web) %>%
+  spread(Food_Web, sc.clutch_size) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient < 0)/dim(glmm_boostrap_df)[1])
+
+## Female preference ----
+select(glmm_boostrap_df, sc.female_preference, ID, Food_Web) %>%
+  spread(Food_Web, sc.female_preference) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient < 0)/dim(glmm_boostrap_df)[1])
+```
+
+We observe the same qualitative results with *gsg* GAMMs, except that the P-values are always lower.
+
+```{r Compare Selection Gradients across Treatments - gsg GAMM, cache=TRUE}
+
+## Gall size ----
+bootstrap_df %>%
+  filter(Phenotype == "Gall size", Selection_Type == "Beta") %>%
+  mutate(ID = rep(1:1000,2)) %>%
+  spread(Food_Web, Bootstrap_Estimates) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient < 0)/1000)
+
+## Clutch size ----
+bootstrap_df %>%
+  filter(Phenotype == "Clutch size", Selection_Type == "Beta") %>%
+  mutate(ID = rep(1:1000,2)) %>%
+  spread(Food_Web, Bootstrap_Estimates) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient < 0)/1000)
+
+## Female preference ----
+bootstrap_df %>%
+  filter(Phenotype == "Female preference", Selection_Type == "Beta") %>%
+  mutate(ID = rep(1:1000,2)) %>%
+  spread(Food_Web, Bootstrap_Estimates) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient < 0)/1000)
+```
+
+
+Illustrating the relationship between phenotype and mean fitness depends critically on the range of parameters shown. Perhaps this is what it is a good idea to show it based on the actual phenotypic distributions, or for 1 +/- SD.
+
+The reason why the intervals look so chunky is because I've used the actual phenotypic distributions rather than sampling evenly at high densities across the distribution. 
+
+One interesting thing is that I don't believe the relative fitness intervals correspond to the absolute fitness intervals. This is likely because there can be a high absolute fitness, but the relative fitness might not change all that much...This means I need to figure out another way to plot these intervals. One easy way to do this would be to just return a list of two data frames, one that corresponds to absolute fitness and the other to relative fitness. This would be the easiest solution that would also remove a lot of redundancy in my code. 
+
+Okay, I solved the interval problem with relative fitness. Now I want to see if I can smooth up the 95% interval plots, by just plotting these 95% bootstrapped reps, shouldn't they be smooth lines? Is it something weird with geom_ribbon?
+
+```{r Univariate Fitness Landscapes, cache=TRUE}
+## Gall size ----
+
+# Control
+RF_control_gall_size <- bootstrap_fitness(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000), 
+     sc.clutch_size = 0,
+     sc.female_preference = 0),
+  bootstraps=100)
+
+# Treatment
+RF_treatment_gall_size <- bootstrap_fitness(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.clutch_size = 0,
+     sc.female_preference = 0),
+  bootstraps=100)
+
+## Clutch size ----
+
+# Control
+RF_control_clutch_size <- bootstrap_fitness(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = seq(-1,1,length.out=1000),
+     sc.female_preference = 0),
+  bootstraps=100)
+
+# Treatment 
+RF_treatment_clutch_size <- bootstrap_fitness(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = seq(-1,1,length.out=1000),
+     sc.female_preference = 0),
+  bootstraps=100)
+
+## Female preference ----
+
+# Control 
+RF_control_female_preference <- bootstrap_fitness(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = 0, 
+     sc.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=100)
+
+# Treatment
+RF_treatment_female_preference <- bootstrap_fitness(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = 0,
+     sc.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=100)
+
+## Relative fitness plots ----
+
+# Get range in relative fitness for accurate scaling across all plots
+RF_gradient_range <- bind_rows(RF_treatment_gall_size$relative_fitness, RF_control_gall_size$relative_fitness,
+          RF_treatment_clutch_size$relative_fitness, RF_control_clutch_size$relative_fitness,
+          RF_treatment_female_preference$relative_fitness, RF_control_female_preference$relative_fitness) %>%
+  select(-sc.clutch_size, -sc.female_preference) %>%
+  gather(ID, relative_fitness, -sc.gall_size) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  summarise(min = min(relative_fitness), max = max(relative_fitness))
+RF_gradient_scale <- c(0,0.5,1,1.5,2,2.5) # adjusted based on range
+
+# Color palette: order -> orange, light blue, green, yellow, dark blue, red, pink
+cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#000000", "#999999")
+complex_color <- cbPalette[6]
+simple_color <- cbPalette[5]
+treatment_colors <- c(complex_color, simple_color)
+   
+# Gall size    
+RF_uni_size <- bind_rows(mutate(RF_treatment_gall_size$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size$relative_fitness, Food_Web = "Complex")) %>%
+  select(-sc.clutch_size, -sc.female_preference) %>%
+  gather(ID, relative_fitness, -sc.gall_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.gall_size, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  geom_hline(yintercept = 1, linetype = "dotted") +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Relative fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = RF_gradient_scale, limits = c(min(RF_gradient_scale), max(RF_gradient_scale))) 
+
+# Clutch size
+RF_uni_clutch <- bind_rows(mutate(RF_treatment_clutch_size$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch_size$relative_fitness, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.female_preference) %>%
+  gather(ID, relative_fitness, -sc.clutch_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.clutch_size, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  geom_hline(yintercept = 1, linetype = "dotted") +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Clutch size (SDs)") +
+  ylab("Relative fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = RF_gradient_scale, limits = c(min(RF_gradient_scale), max(RF_gradient_scale)))
+
+
+# Female preference 
+RF_uni_pref <- bind_rows(mutate(RF_treatment_female_preference$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_female_preference$relative_fitness, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.clutch_size) %>%
+  gather(ID, relative_fitness, -sc.female_preference, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.female_preference, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  geom_hline(yintercept = 1, linetype = "dotted") +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Female preference (SDs)") +
+  ylab("Relative fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = RF_gradient_scale, limits = c(min(RF_gradient_scale), max(RF_gradient_scale)))
+
+# Get legend
+RF_uni_legend <- get_legend(RF_uni_size)
+
+# Make plots
+RF_uni_plots <- plot_grid(RF_uni_size + theme(legend.position = "none"), 
+                       RF_uni_clutch + theme(legend.position = "none", 
+                                          axis.title.y = element_blank(), axis.text.y = element_blank()),
+                       RF_uni_pref + theme(legend.position = "none", 
+                                        axis.title.y = element_blank(), axis.text.y = element_blank()),
+                       labels = "AUTO", ncol = 4, align='hv')
+
+RF_gradients <- ggdraw(RF_uni_plots) + draw_grob(RF_uni_legend, x = 0.8, y=0)
+RF_gradients
+#save_plot("RF_gradients.png", RF_gradients, base_height=6, base_width = 8)
+#save_plot("RF_gradients.pdf", RF_gradients, base_height=6, base_width = 8)
+
+## Absolute fitness plots ----
+
+# Get range in relative fitness for accurate scaling across all plots
+AF_gradient_scale <- c(0,0.25,0.5,0.75,1) # adjusted based on range
+
+# Gall size 
+AF_uni_size <- bind_rows(mutate(RF_treatment_gall_size$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size$absolute_fitness, Food_Web = "Complex")) %>%
+  select(-sc.clutch_size, -sc.female_preference) %>%
+  gather(ID, absolute_fitness, -sc.gall_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.gall_size, y=absolute_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Absolute fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = AF_gradient_scale, limits = c(min(AF_gradient_scale), max(AF_gradient_scale)))
+
+# Clutch size
+AF_uni_clutch <- bind_rows(mutate(RF_treatment_clutch_size$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch_size$absolute_fitness, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.female_preference) %>%
+  gather(ID, absolute_fitness, -sc.clutch_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.clutch_size, y=absolute_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Clutch size (SDs)") +
+  ylab("Absolute fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = AF_gradient_scale, limits = c(min(AF_gradient_scale), max(AF_gradient_scale)))
+
+# Female preference
+AF_uni_pref <- bind_rows(mutate(RF_treatment_female_preference$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_female_preference$absolute_fitness, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.clutch_size) %>%
+  gather(ID, absolute_fitness, -sc.female_preference, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.female_preference, y=absolute_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Female preference (SDs)") +
+  ylab("Absolute fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = AF_gradient_scale, limits = c(min(AF_gradient_scale), max(AF_gradient_scale)))
+
+# Get legend
+AF_uni_legend <- get_legend(AF_uni_size)
+
+# Make plots
+AF_uni_plots <- plot_grid(AF_uni_size + theme(legend.position = "none"), 
+                       AF_uni_clutch + theme(legend.position = "none", 
+                                          axis.title.y = element_blank(), axis.text.y = element_blank()),
+                       AF_uni_pref + theme(legend.position = "none", 
+                                        axis.title.y = element_blank(), axis.text.y = element_blank()),
+                       labels = "AUTO", ncol = 4, align='hv')
+
+AF_gradients <- ggdraw(AF_uni_plots) + draw_grob(AF_uni_legend, x = 0.8, y=0)
+AF_gradients
+#save_plot("AF_gradients.png", AF_gradients, base_height=6, base_width = 8)
+#save_plot("AF_gradients.pdf", AF_gradients, base_height=6, base_width = 8)
+```
+
+
+```{r Multivariate Landscapes, cache=TRUE}
+
+## Clutch size x Female preference ----
+
+# Control
+RF_control_clutch.x.preference <- bootstrap_fitness(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = seq(-1,1,length.out=1000), 
+     sc.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=NULL)
+
+# Treatment
+RF_treatment_clutch.x.preference <- bootstrap_fitness(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = seq(-1,1,length.out=1000),
+     sc.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=NULL)
+
+## Gall size x Clutch size ----
+
+# Control
+RF_control_size.x.clutch <- bootstrap_fitness(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.clutch_size = seq(-1,1,length.out=1000), 
+     sc.female_preference = 0), 
+  bootstraps=NULL)
+
+# Treatment
+RF_treatment_size.x.clutch <- bootstrap_fitness(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.clutch_size = seq(-1,1,length.out=1000),
+     sc.female_preference = 0), 
+  bootstraps=NULL)
+
+## Gall size x Female preference ----
+
+# Control
+RF_control_size.x.preference <- bootstrap_fitness(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.clutch_size = 0, 
+     sc.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=NULL)
+
+# Treatment
+RF_treatment_size.x.preference <- bootstrap_fitness(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.clutch_size = 0,
+     sc.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=NULL)
+
+## Relative fitness plots ----
+
+# Get range in relative fitness for accurate scaling across all plots
+RF_range <- bind_rows(RF_treatment_clutch.x.preference$relative_fitness, RF_control_clutch.x.preference$relative_fitness,
+          RF_treatment_size.x.clutch$relative_fitness, RF_control_size.x.clutch$relative_fitness,
+          RF_treatment_size.x.preference$relative_fitness, RF_control_size.x.preference$relative_fitness) %>%
+  summarise(min = min(average), max = max(average))
+
+# Clutch x Preference
+RF_plot_clutch.x.preference <- bind_rows(mutate(RF_treatment_clutch.x.preference$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch.x.preference$relative_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.female_preference, y=sc.clutch_size, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Female preference (SDs)") +
+  ylab("Clutch size (SDs)") +
+  #scale_fill_gradient2(midpoint=1, limits = c(RF_range$min, RF_range$max))
+  scale_fill_viridis(limits = c(RF_range$min, RF_range$max), name = "Relative fitness")
+
+# Size x Clutch
+RF_plot_size.x.clutch <- bind_rows(mutate(RF_treatment_size.x.clutch$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_size.x.clutch$relative_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=sc.clutch_size, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Clutch size (SDs)") +
+  #scale_fill_gradient2(midpoint=1, limits = c(RF_range$min, RF_range$max))
+  scale_fill_viridis(limits = c(RF_range$min, RF_range$max), name = "Relative fitness")
+
+# Size x Preference
+RF_plot_size.x.preference <- bind_rows(mutate(RF_treatment_size.x.preference$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_size.x.preference$relative_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=sc.female_preference, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Female preference (SDs)") +
+  #scale_fill_gradient2(midpoint=1, limits = c(RF_range$min, RF_range$max))
+  scale_fill_viridis(limits = c(RF_range$min, RF_range$max), name = "Relative fitness")
+
+# Get legend
+RF_landscape_legend <- get_legend(RF_plot_size.x.preference)
+
+# Format plots
+RF_landscape_plots <- plot_grid(
+  RF_plot_size.x.clutch + theme(legend.position = "none", axis.title.x = element_blank()),
+  RF_plot_clutch.x.preference + theme(legend.position = "none", axis.title.y = element_blank()),
+  RF_plot_size.x.preference + theme(legend.position = "none"), 
+  nrow=2, align="hv", labels = "AUTO")
+RF_landscape_2d <- ggdraw(RF_landscape_plots) + draw_grob(RF_landscape_legend, x = 0.7, y=-0.2)
+#RF_landscape_2d
+#save_plot("RF_landscapes_2d.png", RF_landscape_2d, base_height=6, base_width = 8)
+#save_plot("RF_landscapes_2d.pdf", RF_landscape_2d, base_height=6, base_width = 8)
+
+## Absolute fitness landscapes ----
+AF_range <- bind_rows(RF_treatment_clutch.x.preference$absolute_fitness, RF_control_clutch.x.preference$absolute_fitness,
+          RF_treatment_size.x.clutch$absolute_fitness, RF_control_size.x.clutch$absolute_fitness,
+          RF_treatment_size.x.preference$absolute_fitness, RF_control_size.x.preference$absolute_fitness) %>%
+  summarise(min = min(average), max = max(average))
+
+# Size x Preference
+AF_plot_size.x.preference <- bind_rows(mutate(RF_treatment_size.x.preference$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_size.x.preference$absolute_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=sc.female_preference, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Female preference (SDs)") +
+  scale_fill_viridis(limits = c(AF_range$min, AF_range$max), name = "Absolute fitness")
+
+# Size x Clutch
+AF_plot_size.x.clutch <- bind_rows(mutate(RF_treatment_size.x.clutch$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_size.x.clutch$absolute_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=sc.clutch_size, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Clutch size (SDs)") +
+  scale_fill_viridis(limits = c(AF_range$min, AF_range$max), name = "Absolute fitness")
+
+# Clutch x Preference
+AF_plot_clutch.x.preference <- bind_rows(mutate(RF_treatment_clutch.x.preference$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch.x.preference$absolute_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.female_preference, y=sc.clutch_size, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Female preference (SDs)") +
+  ylab("Clutch size (SDs)") +
+  scale_fill_viridis(limits = c(AF_range$min, AF_range$max), name = "Absolute fitness")
+
+# Get legend
+AF_landscape_legend <- get_legend(AF_plot_size.x.preference)
+
+# Format plots
+AF_landscape_plots <- plot_grid(
+  AF_plot_size.x.clutch + theme(legend.position = "none", axis.title.x = element_blank()),
+  AF_plot_clutch.x.preference + theme(legend.position = "none", axis.title.y = element_blank()),
+  AF_plot_size.x.preference + theme(legend.position = "none"), 
+  nrow=2, align="hv", labels = "AUTO")
+AF_landscape_2d <- ggdraw(AF_landscape_plots) + draw_grob(AF_landscape_legend, x = 0.7, y=-0.2)
+#AF_landscape_2d
+#save_plot("AF_landscapes_2d.png", AF_landscape_2d, base_height=6, base_width = 8)
+#save_plot("AF_landscapes_2d.pdf", AF_landscape_2d, base_height=6, base_width = 8)
+```
+
+
+
+```{r GLMM Univariate Landscapes, eval=FALSE, include=FALSE}
+
+## Gall size ----
+HPD_50_treatment_size <- coda::HPDinterval(coda::as.mcmc(treatment_df$sc.gall_size), prob=0.5)
+HPD_50_control_size <- coda::HPDinterval(coda::as.mcmc(control_df$sc.gall_size), prob=0.5)
+
+HPD_95_treatment_size <- coda::HPDinterval(coda::as.mcmc(treatment_df$sc.gall_size), prob=0.95)
+HPD_95_control_size <- coda::HPDinterval(coda::as.mcmc(control_df$sc.gall_size), prob=0.95)
+
+RF_treatment_gall_size <- relative_fitness_intervals(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = sort(treatment_df$sc.gall_size), 
+     sc.clutch_size = 0,
+     sc.female_preference = 0),
+  bootstraps=10)
+
+mean(RF_treatment_gall_size$relative_fitness)
+
+RF_control_gall_size <- relative_fitness_intervals(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = treatment_df$sc.gall_size,
+     sc.clutch_size = 0,
+     sc.female_preference = 0),
+  bootstraps=10)
+       
+mean(RF_control_gall_size$relative_fitness)
+
+bind_rows(mutate(treatment_df, Treatment = "Simple"),
+          mutate(control_df, Treatment = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, color=Treatment, fill=Treatment)) +
+  geom_density(alpha=0.5)
+
+bind_rows(mutate(RF_treatment_gall_size, Treatment = "Simple"),
+          mutate(RF_control_gall_size, Treatment = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=relative_fitness)) +
+  geom_hline(yintercept=1, linetype="dotted") +
+  geom_line(aes(color=Treatment), size=0.25) +
+  geom_ribbon(aes(ymin=lower_2.5, ymax=upper_97.5, fill=Treatment), alpha=0.25) +
+  geom_line(data = filter(mutate(RF_treatment_gall_size, Treatment = "Simple"), 
+                          between(sc.gall_size, HPD_95_treatment_size[1], HPD_95_treatment_size[2])),
+            aes(color=Treatment), size=1) +
+  geom_line(data = filter(mutate(RF_control_gall_size, Treatment = "Complex"), 
+                          between(sc.gall_size, HPD_95_control_size[1], HPD_95_control_size[2])), 
+            aes(color=Treatment), size=1) +
+    geom_line(data = filter(mutate(RF_treatment_gall_size, Treatment = "Simple"), 
+                          between(sc.gall_size, HPD_50_treatment_size[1], HPD_50_treatment_size[2])),
+            aes(color=Treatment), size=2.5) +
+  geom_line(data = filter(mutate(RF_control_gall_size, Treatment = "Complex"), 
+                          between(sc.gall_size, HPD_50_control_size[1], HPD_50_control_size[2])), 
+            aes(color=Treatment), size=2.5) +
+  ylab("Relative fitness") +
+  xlab("Gall size (mm)")
+
+## Clutch size ----
+
+## Get Highest Posterior Density Intervals for clutch size phenotype
+
+# 50%
+HPD_50_treatment_clutch <- coda::HPDinterval(coda::as.mcmc(
+  distinct(treatment_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size), prob=0.5)
+HPD_50_control_clutch <- coda::HPDinterval(coda::as.mcmc(
+  distinct(control_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size), prob=0.5)
+
+# 95%
+HPD_95_treatment_clutch <- coda::HPDinterval(coda::as.mcmc(
+  distinct(treatment_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size), prob=0.95)
+HPD_95_control_clutch <- coda::HPDinterval(coda::as.mcmc(
+  distinct(control_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size), prob=0.95)
+
+
+RF_treatment_clutch_size <- relative_fitness_intervals(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = distinct(treatment_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size,
+     sc.female_preference = 0),
+  bootstraps=1000)
+
+# confirm that mean relative fitness = 1
+mean(RF_treatment_clutch_size$relative_fitness)
+
+RF_control_clutch_size <- relative_fitness_intervals(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = distinct(control_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size,
+     sc.female_preference = 0),
+  bootstraps=1000)
+
+# confirm that mean relative fitness = 1
+mean(RF_control_clutch_size$relative_fitness)
+
+bind_rows(mutate(RF_treatment_clutch_size, Treatment = "Simple"),
+          mutate(RF_control_clutch_size, Treatment = "Complex")) %>%
+  ggplot(., aes(x=sc.clutch_size, y=relative_fitness)) +
+  geom_hline(yintercept=1, linetype="dotted") +
+  geom_line(aes(color=Treatment), size=0.25) +
+  geom_ribbon(aes(ymin=lower_2.5, ymax=upper_97.5, fill=Treatment), alpha=0.25) +
+  geom_line(data = filter(mutate(RF_treatment_clutch_size, Treatment = "Simple"), 
+                          between(sc.clutch_size, HPD_95_treatment_clutch[1], HPD_95_treatment_clutch[2])),
+            aes(color=Treatment), size=1) +
+  geom_line(data = filter(mutate(RF_control_clutch_size, Treatment = "Complex"), 
+                          between(sc.clutch_size, HPD_95_control_clutch[1], HPD_95_control_clutch[2])), 
+            aes(color=Treatment), size=1) +
+    geom_line(data = filter(mutate(RF_treatment_clutch_size, Treatment = "Simple"), 
+                          between(sc.clutch_size, HPD_50_treatment_clutch[1], HPD_50_treatment_clutch[2])),
+            aes(color=Treatment), size=2.5) +
+  geom_line(data = filter(mutate(RF_control_clutch_size, Treatment = "Complex"), 
+                          between(sc.clutch_size, HPD_50_control_clutch[1], HPD_50_control_clutch[2])), 
+            aes(color=Treatment), size=2.5) +
+  ylab("Relative fitness") +
+  xlab("Clutch size")
+
+## Female preference ----
+## Get Highest Posterior Density Intervals for female preference phenotype
+
+# 50%
+HPD_50_treatment_preference <- coda::HPDinterval(coda::as.mcmc(
+  distinct(treatment_df, Plant_Position, Gall_Number, sc.female_preference)$sc.female_preference), prob=0.5)
+HPD_50_control_preference <- coda::HPDinterval(coda::as.mcmc(
+  distinct(control_df, Plant_Position, Gall_Number, sc.female_preference)$sc.female_preference), prob=0.5)
+
+# 95%
+HPD_95_treatment_preference <- coda::HPDinterval(coda::as.mcmc(
+  distinct(treatment_df, Plant_Position, Gall_Number, sc.female_preference)$sc.female_preference), prob=0.95)
+HPD_95_control_preference <- coda::HPDinterval(coda::as.mcmc(
+  distinct(control_df, Plant_Position, Gall_Number, sc.female_preference)$sc.female_preference), prob=0.95)
+
+
+RF_treatment_female_preference <- relative_fitness_intervals(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = 0,
+     sc.female_preference = distinct(treatment_df, Plant_Position, sc.female_preference)$sc.female_preference), 
+  bootstraps=1000)
+
+mean(RF_treatment_female_preference$relative_fitness)
+
+RF_control_female_preference <- relative_fitness_intervals(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = 0,
+     sc.female_preference = distinct(control_df, Plant_Position, sc.female_preference)$sc.female_preference), 
+  bootstraps=1000)
+
+mean(RF_control_female_preference$relative_fitness)
+
+
+       
+bind_rows(mutate(RF_treatment_female_preference, Treatment = "Simple"),
+          mutate(RF_control_female_preference, Treatment = "Complex")) %>%
+  ggplot(., aes(x=sc.female_preference, y=relative_fitness)) +
+    geom_hline(yintercept=1, linetype="dotted") +
+  geom_line(aes(color=Treatment), size=0.25) +
+  geom_ribbon(aes(ymin=lower_2.5, ymax=upper_97.5, fill=Treatment), alpha=0.25) +
+  geom_line(data = filter(mutate(RF_treatment_female_preference, Treatment = "Simple"), 
+                          between(sc.female_preference, HPD_95_treatment_preference[1], HPD_95_treatment_preference[2])),
+            aes(color=Treatment), size=1) +
+  geom_line(data = filter(mutate(RF_control_female_preference, Treatment = "Complex"), 
+                          between(sc.female_preference, HPD_95_control_preference[1], HPD_95_control_preference[2])), 
+            aes(color=Treatment), size=1) +
+    geom_line(data = filter(mutate(RF_treatment_female_preference, Treatment = "Simple"), 
+                          between(sc.female_preference, HPD_50_treatment_preference[1], HPD_50_treatment_preference[2])),
+            aes(color=Treatment), size=2.5) +
+  geom_line(data = filter(mutate(RF_control_female_preference, Treatment = "Complex"), 
+                          between(sc.female_preference, HPD_50_control_preference[1], HPD_50_control_preference[2])), 
+            aes(color=Treatment), size=2.5) +
+  ylab("Relative fitness") +
+  xlab("Female preference")
+```
+
+```{r GLMM Multivariate Landscapes, eval=FALSE, include=FALSE}
+
+## Clutch size x Female Preference ----
+RF_treatment_clutch_preference <- relative_fitness_intervals(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = distinct(treatment_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size,
+     sc.female_preference = distinct(treatment_df, Plant_Position, sc.female_preference)$sc.female_preference), 
+  bootstraps=100)
+
+mean(RF_treatment_clutch_preference$relative_fitness)
+
+RF_control_clutch_preference <- relative_fitness_intervals(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.clutch_size = distinct(control_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size,
+     sc.female_preference = distinct(control_df, Plant_Position, sc.female_preference)$sc.female_preference), 
+  bootstraps=100)
+
+mean(RF_control_clutch_preference$relative_fitness)
+
+bind_rows(mutate(RF_treatment_clutch_preference, Treatment="Simple"),
+          mutate(RF_control_clutch_preference, Treatment="Complex")) %>%
+  ggplot(., aes(x=sc.clutch_size, y=sc.female_preference, fill=relative_fitness)) +
+  geom_raster(size=2) + 
+  facet_wrap(~Treatment) +
+  scale_fill_viridis(name = "Relative fitness") +
+  xlab("Clutch size") +
+  ylab("Female preference")
+
+expand.grid(sc.gall_size = 0,
+     sc.clutch_size = distinct(control_df, Plant_Position, Gall_Number, sc.clutch_size)$sc.clutch_size,
+     sc.female_preference = distinct(control_df, Plant_Position, sc.female_preference)$sc.female_preference) %>%
+  ggplot(., aes(x=sc.clutch_size, y=sc.female_preference)) +
+  geom_point(shape=21)
+```
+
+
+Choosing the level of model complexity. We used AIC to pair down the complexity of the model. For both the control and treatment plants, there is support for maintaing the linear interaction between gall size and the number of individuals per gall. In both cases, AIC suggest that the models lacking linear interaction terms were more parsimonious, so we subsequently analyzed selection gradients with these models.
+
+```{r AIC Model Selection v0.1, eval=FALSE, include=FALSE}
+
+## CONTROL PLANTS ----
+gamm_full.control <- gamm.model(gall_survival ~ 
+                                  s(Gall_Height_mm) + 
+                                  s(gall_individuals, k=9) + 
+                                  s(Density_per_100_shoots) +
+                                  Gall_Height_mm:gall_individuals + 
+                                  Gall_Height_mm:Density_per_100_shoots + 
+                                  gall_individuals:Density_per_100_shoots,
+                                data = control_df)
+summary(gamm_full.control$gam)
+summary(gamm_full.control$mer)
+
+glmm_full.control <- gamm.model(gall_survival ~ 
+                                  Gall_Height_mm + 
+                                  gall_individuals + 
+                                  Density_per_100_shoots +
+                                  I(Gall_Height_mm^2) + I(gall_individuals^2) + I(Density_per_100_shoots^2) +
+                                  Gall_Height_mm:gall_individuals + 
+                                  Gall_Height_mm:Density_per_100_shoots + 
+                                  gall_individuals:Density_per_100_shoots,
+                                data = control_df)
+summary(glmm_full.control$gam); summary(glmm_full.control$mer)
+
+gamm_red.control <- gamm.model(gall_survival ~ s(Gall_Height_mm) + s(gall_individuals, k=9) + s(Density_per_100_shoots),
+                                data = control_df)
+summary(gamm_red.control$gam); summary(gamm_red.control$mer)
+
+glmm_quad.control <- gamm.model(gall_survival ~ Gall_Height_mm + gall_individuals + Density_per_100_shoots +
+                                  I(Gall_Height_mm^2) + I(gall_individuals^2) + I(Density_per_100_shoots^2),
+                                data = control_df)
+summary(glmm_quad.control$gam); summary(glmm_quad.control$mer)
+
+glmm_lin.control <- gamm.model(gall_survival ~ Gall_Height_mm + gall_individuals + Density_per_100_shoots,
+                                data = control_df)
+summary(glmm_lin.control$gam); summary(glmm_lin.control$mer)
+
+lmm_lin.control <- gamm4(gall_survival ~ Gall_Height_mm + gall_individuals + Density_per_100_shoots,
+                          data = control_df,
+                          random = ~(1|Genotype/Plant_Position/Gall_Number), 
+                          family = gaussian(link = identity))
+summary(lmm_lin.control$gam); summary(lmm_lin.control$mer)
+
+glmm_lin.red.control <- gamm.model(gall_survival ~ Gall_Height_mm,
+                                data = control_df)
+summary(glmm_lin.red.control$gam); summary(glmm_lin.red.control$mer)
+
+glmm_null.control <- gamm.model(gall_survival ~ 1,
+                                data = control_df)
+summary(glmm_null.control$gam); summary(glmm_null.control$mer)
+
+glmm_lin.red.noRE.control <- gamm4(gall_survival ~ Gall_Height_mm,
+                          data = control_df,
+                          random = ~(1|Gall_Number), 
+                          family = binomial(link = logit))
+summary(glmm_lin.red.noRE.control$gam); summary(glmm_lin.red.noRE.control$mer)
+
+AIC(gamm_full.control$mer, glmm_full.control$mer, gamm_red.control$mer, glmm_quad.control$mer, glmm_lin.control$mer, lmm_lin.control$mer, glmm_lin.red.control$mer, glmm_null.control$mer, glmm_lin.red.noRE.control$mer)
+
+## TREATMENT PLANTS ----
+gamm_full.treatment <- gamm.model(gall_survival ~ s(Gall_Height_mm) + s(gall_individuals, k=9) + s(Density_per_100_shoots) +
+                                  Gall_Height_mm:gall_individuals + Gall_Height_mm:Density_per_100_shoots + gall_individuals:Density_per_100_shoots,
+                                data = treatment_df)
+summary(gamm_full.treatment$gam); summary(gamm_full.treatment$mer)
+
+glmm_full.treatment <- gamm.model(gall_survival ~ Gall_Height_mm + gall_individuals + Density_per_100_shoots +
+                                  I(Gall_Height_mm^2) + I(gall_individuals^2) + I(Density_per_100_shoots^2) +
+                                  Gall_Height_mm:gall_individuals + Gall_Height_mm:Density_per_100_shoots + gall_individuals:Density_per_100_shoots,
+                                data = treatment_df)
+summary(glmm_full.treatment$gam); summary(glmm_full.treatment$mer)
+
+gamm_red.treatment <- gamm.model(gall_survival ~ s(Gall_Height_mm) + s(gall_individuals, k=9) + s(Density_per_100_shoots),
+                                data = treatment_df)
+summary(gamm_red.treatment$gam); summary(gamm_red.treatment$mer)
+
+glmm_quad.treatment <- gamm.model(gall_survival ~ Gall_Height_mm + gall_individuals + Density_per_100_shoots +
+                                  I(Gall_Height_mm^2) + I(gall_individuals^2) + I(Density_per_100_shoots^2),
+                                data = treatment_df)
+summary(glmm_quad.treatment$gam); summary(glmm_quad.treatment$mer)
+
+glmm_lin.treatment <- gamm.model(gall_survival ~ Gall_Height_mm + gall_individuals + Density_per_100_shoots,
+                                data = treatment_df)
+summary(glmm_lin.treatment$gam); summary(glmm_lin.treatment$mer)
+
+lmm_lin.treatment <- gamm4(gall_survival ~ Gall_Height_mm + gall_individuals + Density_per_100_shoots,
+                          data = treatment_df,
+                          random = ~(1|Genotype/Plant_Position/Gall_Number), 
+                          family = gaussian(link = identity))
+summary(lmm_lin.treatment$gam); summary(lmm_lin.treatment$mer)
+
+glmm_quad.red.treatment <- gamm.model(gall_survival ~ Gall_Height_mm + gall_individuals + Density_per_100_shoots + I(Density_per_100_shoots^2),
+                                data = treatment_df)
+summary(glmm_quad.red.treatment$gam); summary(glmm_quad.red.treatment$mer)
+
+glmm_null.treatment <- gamm.model(gall_survival ~ 1,
+                                data = treatment_df)
+summary(glmm_null.treatment$gam); summary(glmm_null.treatment$mer)
+
+glmm_lin.red.noRE.treatment <- gamm4(gall_survival ~ Gall_Height_mm,
+                          data = treatment_df,
+                          random = ~(1|Gall_Number), 
+                          family = binomial(link = logit))
+summary(glmm_lin.red.noRE.treatment$gam); summary(glmm_lin.red.noRE.treatment$mer)
+
+AIC(gamm_full.treatment$mer, glmm_full.treatment$mer, gamm_red.treatment$mer, glmm_quad.treatment$mer, glmm_lin.treatment$mer, lmm_lin.treatment$mer, glmm_lin.red.treatment$mer, glmm_null.treatment$mer, glmm_lin.red.noRE.treatment$mer, glmm_quad.red.treatment$mer)
+```
+
+
+Parametric bootstrapping: Currently reported results
+
+Case-wise bootstrapping: qualitative results match parametric bootstrapping.
+
+Posterior: qualitative results match parametric bootstrapping, except that non-linear selection on gall size in the complex food-web is no longer significant.
+
+Permutation: qualtiative results are consistent with parametric bootstrapping. Exceptions include: in the simple food-web, there is no evidence of non-linear selection for gall density or gall individuals. In the complex food-web, there is only marginal evidence for non-linear selection acting on gall size, but there is evidence for correlational selection between gall size and the number of individuals per gall.
+```{r SELECTION GRADIENTS, echo=TRUE, warning=FALSE, eval=FALSE, include=FALSE}
+
+## Estimate directional, nonlinear, and correlational selection gradients ----
+sg.size_control <- gradient.calc(mod = gamm_red.control$gam, 
+                                 phenotype = "Gall_Height_mm", 
+                                 covariates = c("gall_individuals","Density_per_100_shoots"))
+sg.size_treatment <- gradient.calc(mod = gamm_red.treatment$gam, 
+                                   phenotype = "Gall_Height_mm", 
+                                   covariates = c("gall_individuals","Density_per_100_shoots"))
+sg.individuals_control <- gradient.calc(mod = gamm_red.control$gam, 
+                                        phenotype = "gall_individuals", 
+                                        covariates = c("Gall_Height_mm","Density_per_100_shoots"))
+sg.individuals_treatment <- gradient.calc(mod = gamm_red.treatment$gam, 
+                                          phenotype = "gall_individuals", 
+                                          covariates = c("Gall_Height_mm","Density_per_100_shoots"))
+sg.density_control <- gradient.calc(mod = gamm_red.control$gam, 
+                                    phenotype = "Density_per_100_shoots", 
+                                    covariates = c("gall_individuals","Gall_Height_mm"))
+sg.density_treatment <- gradient.calc(mod = gamm_red.treatment$gam, 
+                                      phenotype = "Density_per_100_shoots", 
+                                      covariates = c("gall_individuals","Gall_Height_mm"))
+sg.size.x.individuals_control <- gradient.calc(mod = gamm_red.control$gam, 
+                                               phenotype = c("Gall_Height_mm", "gall_individuals"),
+                                               covariates = c("Density_per_100_shoots"))
+sg.size.x.individuals_treatment <- gradient.calc(mod = gamm_red.treatment$gam, 
+                                                 phenotype = c("Gall_Height_mm", "gall_individuals"),
+                                                 covariates = c("Density_per_100_shoots"))
+sg.size.x.density_control <- gradient.calc(mod = gamm_red.control$gam, 
+                                               phenotype = c("Gall_Height_mm", "Density_per_100_shoots"),
+                                               covariates = c("gall_individuals"))
+sg.size.x.density_treatment <- gradient.calc(mod = gamm_red.treatment$gam, 
+                                                 phenotype = c("Gall_Height_mm","Density_per_100_shoots"),
+                                                 covariates = c("gall_individuals"))
+sg.density.x.individuals_control <- gradient.calc(mod = gamm_red.control$gam, 
+                                                  phenotype = c("Density_per_100_shoots", "gall_individuals"),
+                                                  covariates = c("Gall_Height_mm"))
+sg.density.x.individuals_treatment <- gradient.calc(mod = gamm_red.treatment$gam, 
+                                                    phenotype = c("Density_per_100_shoots", "gall_individuals"),
+                                                    covariates = c("Gall_Height_mm"))
+
+## Summarise the results ----
+sg.summary <- bind_rows(
+          data.frame(sg.size_control$ests,  
+                     gradients = rownames(sg.size_control$ests),
+                     treatment = "Complex"),
+          data.frame(sg.size_treatment$ests, 
+                     gradients = rownames(sg.size_treatment$ests),
+                     treatment = "Simple"),
+          data.frame(sg.individuals_control$ests,  
+                     gradients = rownames(sg.individuals_control$ests),
+                     treatment = "Complex"),
+          data.frame(sg.individuals_treatment$ests,  
+                     gradients = rownames(sg.individuals_treatment$ests),
+                     treatment = "Simple"),
+          data.frame(sg.density_control$ests, 
+                     gradients = rownames(sg.density_control$ests),
+                     treatment = "Complex"),
+          data.frame(sg.density_treatment$ests, 
+                     gradients = rownames(sg.density_treatment$ests),
+                     treatment = "Simple"),
+          data.frame(sg.size.x.individuals_control$ests,  
+                     gradients = rownames(sg.size.x.individuals_control$ests),
+                     treatment = "Complex")[5,],
+          data.frame(sg.size.x.individuals_treatment$ests,  
+                     gradients = rownames(sg.size.x.individuals_treatment$ests),
+                     treatment = "Simple")[5,],
+          data.frame(sg.size.x.density_control$ests,  
+                     gradients = rownames(sg.size.x.density_control$ests),
+                     treatment = "Complex")[5,],
+          data.frame(sg.size.x.density_treatment$ests,  
+                     gradients = rownames(sg.size.x.density_treatment$ests),
+                     treatment = "Simple")[5,],
+          data.frame(sg.density.x.individuals_control$ests, 
+                     gradients = rownames(sg.density.x.individuals_control$ests),
+                     treatment = "Complex")[5,],
+          data.frame(sg.density.x.individuals_treatment$ests, 
+                     gradients = rownames(sg.density.x.individuals_treatment$ests),
+                     treatment = "Simple")[5,]) 
+
+## Table of Estimates ----
+sg.table <- sg.summary %>%
+  mutate(plus_minus = "\u00B1", estimates = round(estimates, 4), SE = round(SE, 4)) %>%
+  unite(col = estimate_SE, from = c("estimates", "plus_minus", "SE"), sep="") %>%
+  select(-P.value) %>%
+  spread(treatment, estimate_SE)
+sg.table
+write_csv(sg.table, "sg.table.csv")
+
+## Table of P-values ----
+sg.summary %>%
+  select(-estimates, -SE) %>%
+  spread(treatment, P.value)
+```
+
+```{r Selection Gradients - Bootstrapped Intervals, eval=FALSE, include=FALSE}
+
+## BOOTSTRAPPED INTERVALS ----
+bootstrap_df <- bind_rows(
+  data.frame(Bootstrap_Estimates = sg.size_control$boot[ ,1], Phenotype = "Gall size", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.size_control$boot[ ,2], Phenotype = "Gall size", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.size_treatment$boot[ ,1], Phenotype = "Gall size", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.size_treatment$boot[ ,2], Phenotype = "Gall size", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.individuals_control$boot[ ,1], Phenotype = "Clutch size", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.individuals_control$boot[ ,2], Phenotype = "Clutch size", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.individuals_treatment$boot[ ,1], Phenotype = "Clutch size", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.individuals_treatment$boot[ ,2], Phenotype = "Clutch size", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.density_control$boot[ ,1], Phenotype = "Oviposition preference", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.density_control$boot[ ,2], Phenotype = "Oviposition preference", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.density_treatment$boot[ ,1], Phenotype = "Oviposition preference", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.density_treatment$boot[ ,2], Phenotype = "Oviposition preference", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  # correlational
+  data.frame(Bootstrap_Estimates = sg.size.x.individuals_control$boot[ ,5], Phenotype = "Size,Clutch", Selection_Type = "Correlational", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.size.x.individuals_treatment$boot[ ,5], Phenotype = "Size,Clutch", Selection_Type = "Correlational", Food_Web_Treatment = "Simple"),
+    data.frame(Bootstrap_Estimates = sg.size.x.density_control$boot[ ,5], Phenotype = "Size,Pref.", Selection_Type = "Correlational", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.size.x.density_treatment$boot[ ,5], Phenotype = "Size,Pref.", Selection_Type = "Correlational", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.density.x.individuals_control$boot[ ,5], Phenotype = "Pref.,Clutch", Selection_Type = "Correlational", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.density.x.individuals_treatment$boot[ ,5], Phenotype = "Pref.,Clutch", Selection_Type = "Correlational", Food_Web_Treatment = "Simple")
+)
+
+bootstrap_df %>%
+  #filter(Selection_Type == "Gamma") %>%
+  ggplot(., aes(x=Phenotype, y=Bootstrap_Estimates, fill=Food_Web_Treatment)) +
+  geom_boxplot() +
+  geom_hline(yintercept=0, linetype="dotted") +
+  facet_wrap(~Selection_Type, scales = "free_x") +
+  coord_flip() 
+```
+
+Compare bootstrapped replicates across treatments, rather than comparing to zero.
+```{r Compare bootstrapped replicates across treatments, eval=FALSE, include=FALSE}
+bootstrap_df %>%
+  filter(Phenotype == "Gall size", Selection_Type == "Beta") %>%
+  mutate(ID = rep(1:1000,2)) %>%
+  spread(Food_Web_Treatment, Bootstrap_Estimates) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient < 0)/1000)
+
+bootstrap_df %>%
+  filter(Phenotype == "Gall size", Selection_Type == "Gamma") %>%
+  mutate(ID = rep(1:1000,2)) %>%
+  spread(Food_Web_Treatment, Bootstrap_Estimates) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient < 0)/1000)
+
+bootstrap_df %>%
+  filter(Phenotype == "Clutch size", Selection_Type == "Beta") %>%
+  mutate(ID = rep(1:1000,2)) %>%
+  spread(Food_Web_Treatment, Bootstrap_Estimates) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient < 0)/1000)
+
+bootstrap_df %>%
+  filter(Phenotype == "Clutch size", Selection_Type == "Gamma") %>%
+  mutate(ID = rep(1:1000,2)) %>%
+  spread(Food_Web_Treatment, Bootstrap_Estimates) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient < 0)/1000)
+
+bootstrap_df %>%
+  filter(Phenotype == "Oviposition preference", Selection_Type == "Beta") %>%
+  mutate(ID = rep(1:1000,2)) %>%
+  spread(Food_Web_Treatment, Bootstrap_Estimates) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient < 0)/1000)
+
+bootstrap_df %>%
+  filter(Phenotype == "Oviposition preference", Selection_Type == "Gamma") %>%
+  mutate(ID = rep(1:1000,2)) %>%
+  spread(Food_Web_Treatment, Bootstrap_Estimates) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient < 0)/1000)
+
+bootstrap_df %>%
+  filter(Phenotype == "Size,Clutch", Selection_Type == "Correlational") %>%
+  mutate(ID = rep(1:1000,2)) %>%
+  spread(Food_Web_Treatment, Bootstrap_Estimates) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient > 0)/1000) # flipped sign
+
+bootstrap_df %>%
+  filter(Phenotype == "Size,Pref.", Selection_Type == "Correlational") %>%
+  mutate(ID = rep(1:1000,2)) %>%
+  spread(Food_Web_Treatment, Bootstrap_Estimates) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient > 0)/1000) # flipped sign
+
+bootstrap_df %>%
+  filter(Phenotype == "Pref.,Clutch", Selection_Type == "Correlational") %>%
+  mutate(ID = rep(1:1000,2)) %>%
+  spread(Food_Web_Treatment, Bootstrap_Estimates) %>%
+  mutate(diff_gradient = Complex - Simple) %>%
+  summarise(p_value = sum(diff_gradient < 0)/1000)
+```
+
+
+Another decision we had to make was whether to calculate selection gradients with GAM or GAMMs. The problem with calculating selection gradients with GAMM is that the selection gradients can vary among environmental contexts that are being modelled by random intercepts. Since we did not alter random slopes, this would just cause variation in the selection gradients around the mean value, which is what our model tries to estimate. Therefore, we felt our GAMM model accurately reflects the selection that is happening at the population-level.
+
+
+Now we plot the fitness landscapes associated with different combinations of gall phenotypes. We restrict these plots to 1 SD above and below the mean trait value, as this contains the majority of phenotypes under selection. Therefore, this fitness landscape integrates information from the fitness function with information about distributions of phenotype, and has been suggested to be a more informative way to visualize the magnitude of natural selection.
+```{r Fitness Landscapes, eval=FALSE, include=FALSE}
+
+#### ESTIMATE FITNESS LANDSCAPES ----
+
+## GALL SIZE
+fl.size_control <- insect_FL(mod = gamm_red.control$gam, 
+                                 phenotype = "Gall_Height_mm", 
+                                 covariates = c("gall_individuals","Density_per_100_shoots"))
+fl.size_treatment <- insect_FL(mod = gamm_red.treatment$gam, 
+                                   phenotype = "Gall_Height_mm", 
+                                   covariates = c("gall_individuals","Density_per_100_shoots"))
+
+## GALL INDIVIDUALS
+fl.individuals_control <- insect_FL(mod = gamm_red.control$gam, 
+                                        phenotype = "gall_individuals", 
+                                        covariates = c("Gall_Height_mm","Density_per_100_shoots"))
+fl.individuals_treatment <- insect_FL(mod = gamm_red.treatment$gam, 
+                                          phenotype = "gall_individuals", 
+                                          covariates = c("Gall_Height_mm","Density_per_100_shoots"))
+
+## GALL DENSITY 
+fl.density_control <- insect_FL(mod = gamm_red.control$gam, 
+                                    phenotype = "Density_per_100_shoots", 
+                                    covariates = c("gall_individuals","Gall_Height_mm"))
+fl.density_treatment <- insect_FL(mod = gamm_red.treatment$gam, 
+                                      phenotype = "Density_per_100_shoots", 
+                                      covariates = c("gall_individuals","Gall_Height_mm"))
+
+## GALL INDIVIDUALS X DENSITY
+fl.individuals.x.density_control <- insect_FL(mod = gamm_red.control$gam, 
+                                              phenotype = c("Density_per_100_shoots","gall_individuals"), 
+                                              covariates = c("Gall_Height_mm"))
+fl.individuals.x.density_treatment <- insect_FL(mod = gamm_red.treatment$gam, 
+                                                phenotype = c("Density_per_100_shoots","gall_individuals"), 
+                                                covariates = c("Gall_Height_mm"))
+
+## GALL INDIVIDUALS x SIZE
+fl.individuals.x.size_control <- insect_FL(mod = gamm_red.control$gam, 
+                                            phenotype = c("Gall_Height_mm","gall_individuals"), 
+                                            covariates = c("Density_per_100_shoots"))
+fl.individuals.x.size_treatment <- insect_FL(mod = gamm_red.treatment$gam, 
+                                             phenotype = c("Gall_Height_mm","gall_individuals"), 
+                                             covariates = c("Density_per_100_shoots"))
+
+## GALL DENSITY X SIZE
+fl.size.x.density_control <- insect_FL(mod = gamm_red.control$gam, 
+                                       phenotype = c("Density_per_100_shoots","Gall_Height_mm"), 
+                                       covariates = c("gall_individuals"))
+fl.size.x.density_treatment <- insect_FL(mod = gamm_red.treatment$gam, 
+                                         phenotype = c("Density_per_100_shoots","Gall_Height_mm"), 
+                                         covariates = c("gall_individuals"))
+
+#### PLOT FITNESS LANDSCAPES ----
+
+# Order: orange, light blue, green, yellow, dark blue, red, pink
+cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#000000", "#999999")
+complex_color <- cbPalette[6]
+simple_color <- cbPalette[5]
+treatmeant_colors <- c(complex_color, simple_color)
+
+## 1-DIMENSIONAL
+uni_size <- bind_rows(mutate(get_insect_FL.df(fl.size_control), Treatment = "Complex"),
+          mutate(get_insect_FL.df(fl.size_treatment), Treatment = "Simple")) %>%
+  ggplot(.) +
+  geom_line(aes(x = Var1, y = mean_fitness, color=Treatment)) + 
+  geom_ribbon(aes(x = Var1, ymin = lower_2.5, ymax = upper_97.5, fill=Treatment), alpha = 0.25) +
+  ylab("Population mean fitness") +
+  xlab("Mean gall size\n(mm)") +
+  scale_color_manual(values = treatmeant_colors) +
+  scale_fill_manual(values = treatmeant_colors) +
+  scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1), limits = c(0,1))
+
+control_mean_fitness <- mean(get_insect_FL.df(fl.size_control)$mean_fitness)
+treatment_mean_fitness <- mean(get_insect_FL.df(fl.size_treatment)$mean_fitness)
+
+bind_rows(mutate(get_insect_FL.df(fl.size_control), Treatment = "Complex"),
+          mutate(get_insect_FL.df(fl.size_treatment), Treatment = "Simple")) %>%
+  mutate(relative_fitness = ifelse(Treatment=="Complex", mean_fitness/control_mean_fitness, mean_fitness/treatment_mean_fitness),
+         lower_2.5 = ifelse(Treatment=="Complex", lower_2.5/control_mean_fitness, lower_2.5/treatment_mean_fitness),
+         upper_97.5 = ifelse(Treatment=="Complex", upper_97.5/control_mean_fitness, upper_97.5/treatment_mean_fitness)) %>%
+  ggplot(.) +
+  geom_line(aes(x = Var1, y = relative_fitness, color=Treatment)) + 
+  geom_ribbon(aes(x = Var1, ymin = lower_2.5, ymax = upper_97.5, fill=Treatment), alpha = 0.25) +
+  ylab("Relative fitness") +
+  xlab("Mean gall size\n(mm)") +
+  scale_color_manual(values = treatmeant_colors) +
+  scale_fill_manual(values = treatmeant_colors) 
+
+uni_clutch <- bind_rows(mutate(get_insect_FL.df(fl.individuals_control), Treatment = "Complex"),
+          mutate(get_insect_FL.df(fl.individuals_treatment), Treatment = "Simple")) %>%
+  ggplot(.) +
+  geom_line(aes(x = Var1, y = mean_fitness, color=Treatment)) + 
+  geom_ribbon(aes(x = Var1, ymin = lower_2.5, ymax = upper_97.5, fill=Treatment), alpha = 0.25) +
+  ylab("Population mean fitness") +
+  xlab("Mean clutch size\n(no. of larva)") +
+  scale_color_manual(values = treatmeant_colors) +
+  scale_fill_manual(values = treatmeant_colors) +
+  scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1), limits = c(0,1))
+
+control_mean_fitness <- mean(get_insect_FL.df(fl.individuals_control)$mean_fitness)
+treatment_mean_fitness <- mean(get_insect_FL.df(fl.individuals_treatment)$mean_fitness)
+
+bind_rows(mutate(get_insect_FL.df(fl.individuals_control), Treatment = "Complex"),
+          mutate(get_insect_FL.df(fl.individuals_treatment), Treatment = "Simple")) %>%
+  mutate(relative_fitness = ifelse(Treatment=="Complex", mean_fitness/control_mean_fitness, mean_fitness/treatment_mean_fitness),
+         lower_2.5 = ifelse(Treatment=="Complex", lower_2.5/control_mean_fitness, lower_2.5/treatment_mean_fitness),
+         upper_97.5 = ifelse(Treatment=="Complex", upper_97.5/control_mean_fitness, upper_97.5/treatment_mean_fitness)) %>%
+  ggplot(.) +
+  geom_line(aes(x = Var1, y = relative_fitness, color=Treatment)) + 
+  geom_ribbon(aes(x = Var1, ymin = lower_2.5, ymax = upper_97.5, fill=Treatment), alpha = 0.25) +
+  ylab("Relative fitness") +
+  xlab("Mean gall individuals\n(mm)") +
+  scale_color_manual(values = treatmeant_colors) +
+  scale_fill_manual(values = treatmeant_colors) 
+
+uni_pref <- bind_rows(mutate(get_insect_FL.df(fl.density_control), Treatment = "Complex"),
+          mutate(get_insect_FL.df(fl.density_treatment), Treatment = "Simple")) %>%
+  ggplot(.) +
+  geom_line(aes(x = Var1, y = mean_fitness, color=Treatment)) + 
+  geom_ribbon(aes(x = Var1, ymin = lower_2.5, ymax = upper_97.5, fill=Treatment), alpha = 0.25) +
+  ylab("Population mean fitness") +
+  xlab("Mean oviposition preference\n(larva per 100 shoots)") +
+  scale_color_manual(values = treatmeant_colors) +
+  scale_fill_manual(values = treatmeant_colors) +
+  scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1), limits = c(0,1))
+
+control_mean_fitness <- mean(get_insect_FL.df(fl.density_control)$mean_fitness)
+treatment_mean_fitness <- mean(get_insect_FL.df(fl.density_treatment)$mean_fitness)
+
+bind_rows(mutate(get_insect_FL.df(fl.density_control), Treatment = "Complex"),
+          mutate(get_insect_FL.df(fl.density_treatment), Treatment = "Simple")) %>%
+  mutate(relative_fitness = ifelse(Treatment=="Complex", mean_fitness/control_mean_fitness, mean_fitness/treatment_mean_fitness),
+         lower_2.5 = ifelse(Treatment=="Complex", lower_2.5/control_mean_fitness, lower_2.5/treatment_mean_fitness),
+         upper_97.5 = ifelse(Treatment=="Complex", upper_97.5/control_mean_fitness, upper_97.5/treatment_mean_fitness)) %>%
+  ggplot(.) +
+  geom_line(aes(x = Var1, y = relative_fitness, color=Treatment)) + 
+  geom_ribbon(aes(x = Var1, ymin = lower_2.5, ymax = upper_97.5, fill=Treatment), alpha = 0.25) +
+  ylab("Relative fitness") +
+  xlab("Mean gall density\n(mm)") +
+  scale_color_manual(values = treatmeant_colors) +
+  scale_fill_manual(values = treatmeant_colors) 
+  
+uni_legend <- get_legend(uni_size)
+
+uni_plots <- plot_grid(uni_size + theme(legend.position = "none"), 
+                       uni_clutch + theme(legend.position = "none", 
+                                          axis.title.y = element_blank(), axis.text.y = element_blank()),
+                       uni_pref + theme(legend.position = "none", 
+                                        axis.title.y = element_blank(), axis.text.y = element_blank()),
+                       labels = "AUTO", ncol = 4, align='hv')
+
+fitness_landscapes_1d <- ggdraw(uni_plots) + draw_grob(uni_legend, x = 0.8, y=0) #plot_grid(uni_plots, uni_legend, ncol=2, rel_widths = c(3,0.3))
+fitness_landscapes_1d
+save_plot("fitness_landscapes_1d.png", fitness_landscapes_1d, base_height=6, base_width = 8)
+
+## 2-DIMENSIONAL
+clutch.x.size_2d <- bind_rows(
+  mutate(get_insect_FL.df(fl.individuals.x.size_treatment), Treatment="Simple"),
+  mutate(get_insect_FL.df(fl.individuals.x.size_control), Treatment="Complex")) %>%
+  ggplot(., aes(x=Var1, y=Var2, fill=mean_fitness)) +
+  geom_raster() + 
+  facet_wrap(~Treatment) +
+  scale_fill_viridis(name = "Population\nmean fitness") +
+  xlab("Mean gall size (mm)") +
+  ylab("Mean clutch size (no. larva)")
+
+size.x.pref_2d <- bind_rows(
+  mutate(get_insect_FL.df(fl.size.x.density_treatment), Treatment="Simple"),
+  mutate(get_insect_FL.df(fl.size.x.density_control), Treatment="Complex")) %>%
+  ggplot(., aes(x=Var2, y=Var1, fill=mean_fitness)) +
+  geom_raster() + 
+  facet_wrap(~Treatment) +
+  scale_fill_viridis(name = "Population\nmean fitness") +
+  xlab("Mean gall size (mm)") +
+  ylab("Mean oviposition preference (no. larva per 100 shoots)")
+
+clutch.x.pref_2d <- bind_rows(
+  mutate(get_insect_FL.df(fl.individuals.x.density_treatment), Treatment="Simple"),
+  mutate(get_insect_FL.df(fl.individuals.x.density_control), Treatment="Complex")) %>%
+  ggplot(., aes(x=Var2, y=Var1, fill=mean_fitness)) +
+  geom_raster() + 
+  facet_wrap(~Treatment) +
+  scale_fill_viridis(name = "Population\nmean fitness") +
+  xlab("Mean clutch size (no. larva)") +
+  ylab("Mean oviposition preference (no. larva per 100 shoots)")
+
+legend_2d <- get_legend(clutch.x.size_2d)
+
+landscape_plots <- plot_grid(size.x.pref_2d + theme(legend.position = "none", axis.title.x = element_blank()),
+                             clutch.x.pref_2d + theme(legend.position = "none", axis.title.y = element_blank()),
+                             clutch.x.size_2d + theme(legend.position = "none"), nrow=2, align="hv")
+fitness_landscapes_2d <- ggdraw(landscape_plots) + draw_grob(legend_2d, x = 0.7, y=-0.2)
+save_plot("fitness_landscapes_2d.png", fitness_landscapes_2d, base_height=6, base_width = 8)
+```
+
+<!--stackedit_data:
+eyJoaXN0b3J5IjpbLTEzMzk3NTQwOTNdfQ==
+-->

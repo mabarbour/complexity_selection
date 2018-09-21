@@ -1,0 +1,1874 @@
+---
+title: Food-web complexity alters the fitness landscape of an insect herbivore
+author:
+  - name: Matthew A. Barbour
+    email: matthew.barbour@ieu.uzh.ch
+    affiliation: a,b
+    footnote: Corresponding Author
+  - name: Christopher J. Greyson-Gaito
+    affiliation: a,c
+  - name: Arezoo Sootodeh
+    affiliation: a
+  - name: Brendan Locke
+    affiliation: d
+  - name: Jordi Bascompte
+    affiliation: b
+address:
+  - code: a
+    address: University of British Columbia, Department of Zoology, 6270 University Blvd., Vancouver, BC, V6T 1Z4, Canada
+  - code: b
+    address: University of Zurich, Department of Evolutionary Biology and Environmental Studies, Winterthurerstrasse 190, Zurich, 8057, Switzerland
+  - code: c
+    address: University of Guelph, Department of Integrative Biology, 50 Stone Rd. East, Guelph, ONT, N1G 2W1, Canada
+  - code: d
+    address: Humboldt State University, Department of Biological Sciences, 1 Harpst St., Arcata, CA, 95521, USA
+abstract: "Studies of natural selection and fitness landscapes usually treat the network of interacting species as a “black box”. Given that     the loss of biodiversity is simplifying the structure of ecological networks, there is a pressing need to answer the question: how does network complexity affect natural selection and the fitness landscape of associated species? To answer this question, we conducted a field experiment that manipulated the complexity of a food web associated with a galling insect herbivore. To maintain complex food webs, we allowed the entire community of natural enemies to attack insect galls on 64 plants in a common garden setting. To create simple food webs, we excluded a guild of three larval parasitoids by bagging galls on 64 different plants; therefore, mortality in this treatment was primarily due to a single egg parasitoid that attacks prior to gall formation. We then measured herbivore survival as a function of three key gall traits in each treatment. We found that more traits were under selection in the simple vs. complex food web. This occurred because different parasitoid species impose different selection pressures on gall traits, thereby minimizing relative fitness differences among insect galls with different phenotypes. Our work suggests that more complex food webs allow phenotypic variation to persist, which could facilitate subsequent adaptive evolution to environmental change." 
+
+bibliography: mybibfile.bib
+output: rticles::elsevier_article
+---
+
+<!-- Species-interaction networks provide a mechanistic link between community and population ecology, as they describe who interacts with whom in a community. Similarly, fitness landscapes provide a mechanistic link between population and evolutionary ecology, as they describe the influence of natural selection on phenotypic variation. It remains unclear, however, how the network structure of species interactions shapes the fitness landscape. Understanding this relationship is likely key for developing a predictive ecology across scales of biological organization. To examine the relationship between network structure and the fitness landscape, we conducted a field experiment that manipulated the network of trophic interactions (simple vs. complex) influencing the fitness of an insect herbivore. We then quantified the fitness landscape of herbivores in each treatment by measuring herbivore survival as a function of multiple phenotypic traits. We found that more traits were under selection in the simple vs. complex trophic network. This occurred because different natural enemies impose different selection pressures on herbivore traits, thereby minimizing relative fitness differences among herbivore phenotypes in the complex network. Our work suggests that more complex trophic networks allow phenotypic variation to persist, which could facilitate subsequent adaptive evolution of populations to environmental change.-->
+
+```{r setup, include=FALSE}
+
+## Load required libraries ----
+library(tidyverse)
+library(cowplot) # pretty default ggplots
+#library(broom) # for tidying multiple linear models
+library(mgcv) # generalized additive models
+#library(gamm4) # generalized additive mixed-models
+library(gsg) # calculating selection gradients
+#library(visreg)
+library(viridis) # for color palette
+library(lme4) # for generalized linear mixed models
+
+## Load and manage data ----
+
+gall_selection.df <- read_csv("gall_selection_data.csv") %>%
+  # convert appropriate variables to characters instead of integers
+  mutate(Plant_Position = as.character(Plant_Position),
+         Gall_Number = as.character(Gall_Number)) %>%
+  unite(Gall_ID, Gall_Number, Gall_Letter, remove = FALSE) %>%
+  
+  # subset data for analysis
+  filter(phenology == "early", Location == "tree",
+         platy > 0 | ectos > 0 | pupa > 0) %>%                  # eliminate unknown sources of mortality
+  mutate(gall_survival = as.numeric(ifelse(pupa > 0, 1, 0)),
+         egg_parasitoid = as.numeric(ifelse(platy > 0, 1, 0)),
+         sc.gall_size = as.numeric(scale(Gall_Height_mm)), 
+         sc.clutch_size = as.numeric(scale(gall_individuals)), 
+         sc.log.clutch_size = as.numeric(scale(log(gall_individuals))), 
+         sc.female_preference = as.numeric(scale(Density_per_100_shoots)),
+         sc.log1p.female_preference = as.numeric(scale(log1p(Density_per_100_shoots)))) 
+
+## Create separate datasets for quantifying selection gradients ----
+control_df <- gall_selection.df %>%
+  filter(Treatment.focus == "Control") #%>%
+  #mutate(sc.gall_size = as.numeric(scale(Gall_Height_mm)), 
+  #       sc.clutch_size = as.numeric(scale(gall_individuals)), 
+  #       sc.log.clutch_size = as.numeric(scale(log(gall_individuals))), 
+  #       sc.female_preference = as.numeric(scale(Density_per_100_shoots)),
+  #       sc.log1p.female_preference = as.numeric(scale(log1p(Density_per_100_shoots))))
+
+treatment_df <- gall_selection.df %>%
+  filter(Treatment.focus == "Ectoparasitoid exclusion", ectos < 1) #%>%  # excluding any larva that were parasitized by an ectoparasitoid in the exclusion experiment.
+  #mutate(sc.gall_size = as.numeric(scale(Gall_Height_mm)), 
+  #       sc.clutch_size = as.numeric(scale(gall_individuals)), 
+  #       sc.log.clutch_size = as.numeric(scale(log(gall_individuals))), 
+  #       sc.female_preference = as.numeric(scale(Density_per_100_shoots)),
+  #       sc.log1p.female_preference = as.numeric(scale(log1p(Density_per_100_shoots))))
+
+mean(filter(gall_selection.df, Treatment.focus == "Ectoparasitoid exclusion")$ectos) # less than 3% of larva were parasitized by an ectoparasitoid in the exclusion experiment.
+
+## Custom functions to avoid repetitive code ----
+
+## Test for overdispersion
+overdisp_fun <- function(model) {
+  ## number of variance parameters in 
+  ##   an n-by-n variance-covariance matrix
+  vpars <- function(m) {
+    nrow(m)*(nrow(m)+1)/2
+  }
+  model.df <- sum(sapply(VarCorr(model),vpars))+length(fixef(model))
+  rdf <- nrow(model.frame(model))-model.df
+  rp <- residuals(model,type="pearson")
+  Pearson.chisq <- sum(rp^2)
+  prat <- Pearson.chisq/rdf
+  pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
+  c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
+}
+
+## Transform logit to probability
+inverse_logit <- function(x) exp(x)/(1+exp(x))
+
+## Calculate selection gradients following method of Janzen and Stern 1998, Evolution
+Beta_avg_grad <- function(.) {
+  mean_fitness <- mean(predict(., type = "response")) #inverse_logit(fixef(update(., .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
+  brackets <- predict(., type = "response") * (1 - predict(., type="response"))
+  mean(brackets) * fixef(.)[-1] / mean_fitness 
+}
+
+## Calculate intensity/opportunity for selection
+intensity_of_selection <- function(.) {
+  mean_fitness <- mean(predict(., type = "response")) # inverse_logit(fixef(update(., .~. -sc.gall_size -sc.clutch_size -sc.female_preference)))
+  relative_fitness <- predict(., type = "response") / mean_fitness 
+  var(relative_fitness)
+}
+
+## Bootstrap fitness estimates
+bootstrap_fitness <- function(logistic_model, fixed_effects, newdata, bootstraps, intervals=c(0.025,0.975)){
+  model_matrix <- model.matrix(formula(fixed_effects), newdata)
+  
+  # Absolute fitness
+  get_absolute_fitness <- function(.) inverse_logit(model_matrix %*% fixef(.))
+  
+  if(is.null(bootstraps) == FALSE){
+    get_bootstraps_absolute_fitness <-bootMer(logistic_model, FUN = get_absolute_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
+  
+   get_intervals_absolute_fitness <- apply(get_bootstraps_absolute_fitness$t, 2, function(x) x[order(x)][c(round(bootstraps*intervals[1],0),round(bootstraps*intervals[2],0))])
+   
+  absolute_fitness_df <- data.frame(newdata, 
+                    average = get_absolute_fitness(logistic_model), 
+                    lower = get_intervals_absolute_fitness[1, ],
+                    upper = get_intervals_absolute_fitness[2, ],
+                    t(get_bootstraps_absolute_fitness$t))
+  } else {
+    absolute_fitness_df <- data.frame(newdata, 
+                    average = get_absolute_fitness(logistic_model))
+  }
+  
+  
+  # Relative fitness
+  get_relative_fitness <- function(.) get_absolute_fitness(.)/mean(get_absolute_fitness(.))
+  
+  if(is.null(bootstraps) == FALSE){
+    get_bootstraps_relative_fitness <-bootMer(logistic_model, FUN = get_relative_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
+  
+  get_intervals_relative_fitness <- apply(get_bootstraps_relative_fitness$t, 2, function(x) x[order(x)][c(round(bootstraps*intervals[1],0),round(bootstraps*intervals[2],0))])
+    
+  relative_fitness_df <- data.frame(newdata, 
+                    average = get_relative_fitness(logistic_model), 
+                    lower = get_intervals_relative_fitness[1, ],
+                    upper = get_intervals_relative_fitness[2, ],
+                    t(get_bootstraps_relative_fitness$t))
+  } else {
+      relative_fitness_df <- data.frame(newdata, 
+                    average = get_relative_fitness(logistic_model))
+  }
+  
+  # Organize data
+  return(list(absolute_fitness = absolute_fitness_df, relative_fitness = relative_fitness_df))
+}
+
+## Number of bootstrap replicates
+n_boots_analysis <- 1000
+n_boots_plots <- 100
+
+```
+
+AIC comparison suggests gam is better than quadratic approximation; however, I'm worried that the GAM model is overfitting. I feel like the quadratic approximation, while not providing the best fit, will still preven the model from overfitting.
+
+Now the question is: normal glm vs. mixed-model? Maybe I need to answer, why not the mixed model?
+
+- There is no theory developed for them. 
+- Relative fitness occurs at different hierarchical levels instead of the level of the sampled population.
+- Less straightforward.
+
+Mixed-models are also good for modeling heterogeneity, but if I'm interested in a general population level, then maybe I don't have to worry about that. 
+```{r GAM, include=F}
+control_gam <- gam(gall_survival ~ s(sc.gall_size) + s(sc.log.clutch_size, k=9) + s(sc.log1p.female_preference), control_df, family=binomial(link=logit))
+plot(control_gam, trans = inverse_logit)
+
+treatment_gam <- gam(gall_survival ~ s(sc.gall_size) + s(sc.log.clutch_size, k=9) + s(sc.log1p.female_preference), treatment_df, family=binomial(link=logit))
+plot(treatment_gam, trans = inverse_logit)
+
+control_gam_quad <- gam(gall_survival ~ sc.gall_size + I(sc.gall_size^2) + sc.log.clutch_size + I(sc.log.clutch_size^2) + sc.log1p.female_preference + I(sc.log1p.female_preference^2), control_df, family=binomial(link=logit))
+
+treatment_gam_quad <- gam(gall_survival ~ sc.gall_size + I(sc.gall_size^2) + sc.log.clutch_size + I(sc.log.clutch_size^2) + sc.log1p.female_preference + I(sc.log1p.female_preference^2), treatment_df, family=binomial(link=logit))
+
+AIC(control_gam, control_gam_quad)
+AIC(treatment_gam, treatment_gam_quad)
+
+hist(gall_selection.df$sc.gall_size)
+hist(gall_selection.df$sc.log.clutch_size)
+hist(gall_selection.df$sc.log1p.female_preference)
+
+control_glm <- glm(gall_survival ~ sc.gall_size + I(sc.gall_size^2) + sc.log.clutch_size + I(sc.log.clutch_size^2) + sc.log1p.female_preference + I(sc.log1p.female_preference^2) + sc.gall_size:sc.log.clutch_size + sc.gall_size:sc.log1p.female_preference + sc.log.clutch_size:sc.log1p.female_preference, control_df, family=quasibinomial())#family=binomial(link=logit))
+summary(control_glm)
+visreg::visreg(control_glm, scale = "response")
+
+
+treatment_glm <- glm(gall_survival ~ sc.gall_size + I(sc.gall_size^2) + sc.log.clutch_size + I(sc.log.clutch_size^2) + sc.log1p.female_preference + I(sc.log1p.female_preference^2) + sc.gall_size:sc.log.clutch_size + sc.gall_size:sc.log1p.female_preference + sc.log.clutch_size:sc.log1p.female_preference, treatment_df, family=quasibinomial())#family=binomial(link=logit))
+summary(treatment_glm)
+
+visreg::visreg(control_glm, scale = "response")
+visreg::visreg(treatment_glm, scale = "response")
+
+test_glm <- glm(gall_survival ~ Treatment.focus*(sc.gall_size + I(sc.gall_size^2) + sc.log.clutch_size + I(sc.log.clutch_size^2) + sc.log1p.female_preference + I(sc.log1p.female_preference^2) + sc.gall_size:sc.log.clutch_size + sc.gall_size:sc.log1p.female_preference + sc.log.clutch_size:sc.log1p.female_preference), gall_selection.df, family=quasibinomial())#family=binomial(link=logit))
+summary(test_glm)
+
+visreg::visreg2d(test_glm, xvar="sc.gall_size", yvar="sc.log.clutch_size", scale="response")
+```
+
+
+```{r, Cryptic effects of parasitism on gall morphology, include=F}
+# how does this analysis compare to Heath?
+# does it make sense to look for the interaction?
+
+control_gall_size <- lmer(sc.gall_size ~ gall_survival +
+                           (1|Genotype:Plant_Position:Gall_Number),
+                         data = control_df)
+summary(control_gall_size)
+visreg::visreg(control_gall_size, xvar="gall_survival")
+
+piecewiseSEM::rsquared(control_gall_size)
+
+flip.control_gall_size <- lmer(gall_survival ~ sc.gall_size +
+                           (1|Genotype:Plant_Position:Gall_Number),
+                         data = control_df)
+summary(flip.control_gall_size)
+visreg::visreg(flip.control_gall_size, xvar="sc.gall_size")
+
+lm.control_gall_size <- lm(Gall_Height_mm ~ gall_survival,
+                         data = control_df)
+summary(lm.control_gall_size)
+visreg::visreg(lm.control_gall_size, xvar="gall_survival")
+
+lmer.control_gall_size <- lmer(Gall_Height_mm ~ gall_survival + (1|Genotype:Plant_Position:Gall_Number),
+                         data = control_df)
+summary(lmer.control_gall_size)
+visreg::visreg(lmer.control_gall_size, xvar="gall_survival")
+
+lmer.control_gall_size_2 <- lmer(Gall_Height_mm ~ gall_survival + (1|Genotype/Plant_Position/Gall_Number),
+                         data = control_df)
+summary(lmer.control_gall_size_2)
+visreg::visreg(lmer.control_gall_size_2, xvar="gall_survival")
+
+piecewiseSEM::rsquared(flip.control_gall_size)
+
+
+treatment_gall_size <- lmer(sc.gall_size ~ gall_survival +
+                           (1|Genotype:Plant_Position:Gall_Number),
+                         data = treatment_df)
+summary(treatment_gall_size)
+visreg::visreg(treatment_gall_size, xvar="gall_survival")
+
+lm.treatment_gall_size <- lm(Gall_Height_mm ~ gall_survival,
+                         data = treatment_df)
+summary(lm.treatment_gall_size)
+visreg::visreg(lm.treatment_gall_size, xvar="gall_survival")
+
+lmer.treatment_gall_size <- lmer(Gall_Height_mm ~ gall_survival + (1|Genotype:Plant_Position:Gall_Number),
+                         data = treatment_df)
+summary(lmer.treatment_gall_size)
+visreg::visreg(lmer.treatment_gall_size, xvar="gall_survival")
+
+lmer.treatment_gall_size_2 <- lmer(Gall_Height_mm ~ gall_survival + (1|Genotype/Plant_Position/Gall_Number),
+                         data = treatment_df)
+summary(lmer.treatment_gall_size_2)
+visreg::visreg(lmer.treatment_gall_size_2, xvar="gall_survival")
+
+piecewiseSEM::rsquared(lmer.treatment_gall_size_2)
+
+lmer.treatment_sc.gall_size_2 <- lmer(sc.gall_size ~ gall_survival + sc.clutch_size + sc.female_preference + (1|Genotype/Plant_Position/Gall_Number),
+                         data = treatment_df)
+summary(lmer.treatment_sc.gall_size_2)
+
+lm.treatment_sc.gall_size <- lm(sc.gall_size ~ gall_survival,
+                         data = treatment_df)
+summary(lm.treatment_sc.gall_size)
+
+summary(lm(gall_survival/mean(gall_survival) ~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2), data=treatment_df))
+summary(lmer(gall_survival/mean(gall_survival) ~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2) + (1|Genotype/Plant_Position/Gall_Number), data=treatment_df))
+
+summary(lm(gall_survival/mean(gall_survival) ~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2) , data=control_df))
+summary(lmer(gall_survival/mean(gall_survival) ~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2) + (1|Genotype/Plant_Position/Gall_Number), data=control_df))
+
+pair_control <- control_df %>%
+  #filter(gall_individuals==2) %>%
+  group_by(Gall_Number) %>%
+  mutate(mean_survival = mean(gall_survival)) %>%
+  #filter(mean_survival == 0.5) %>%
+  filter(mean_survival > 0, mean_survival < 1) %>%
+  select(Gall_Number, mean_survival, gall_survival, sc.gall_size) %>%
+  group_by(Gall_Number, gall_survival) %>%
+  summarise(mean_gall_size = mean(sc.gall_size)) %>%
+  spread(gall_survival, mean_gall_size) %>%
+  mutate(diff = `1` - `0`)
+summary(pair_control$diff)
+length(pair_control$diff)
+
+t.test(pair_control$`1`, pair_control$`0`, paired = T)
+
+pair_treatment <- treatment_df %>%
+  #filter(gall_individuals==2) %>%
+  group_by(Gall_Number) %>%
+  mutate(mean_survival = mean(gall_survival)) %>%
+  #filter(mean_survival == 0.5) %>%
+  filter(mean_survival > 0, mean_survival < 1) %>%
+  select(Gall_Number, mean_survival, gall_survival, sc.gall_size) %>%
+  group_by(Gall_Number, gall_survival) %>%
+  summarise(mean_gall_size = mean(sc.gall_size)) %>%
+  spread(gall_survival, mean_gall_size) %>%
+  mutate(diff = `1` - `0`)
+summary(pair_treatment$diff)
+length(pair_treatment$diff)
+pair_treatment
+
+t.test(pair_treatment$`1`, pair_treatment$`0`, paired = T)
+
+pair_control_ectos <- control_df %>%
+  #filter(gall_individuals==2) %>%
+  group_by(Gall_Number) %>%
+  mutate(mean_survival = mean(ectos)) %>%
+  #filter(mean_survival == 0.5) %>%
+  filter(mean_survival > 0, mean_survival < 1) %>%
+  select(Gall_Number, mean_survival, gall_survival, sc.gall_size) %>%
+  group_by(Gall_Number, gall_survival) %>%
+  summarise(mean_gall_size = mean(sc.gall_size)) %>%
+  spread(gall_survival, mean_gall_size) %>%
+  mutate(diff = `1` - `0`)
+summary(pair_control_ectos$diff)
+length(pair_control_ectos$diff)
+
+t.test(pair_control_ectos$`1`, pair_control_ectos$`0`, paired = T)
+
+pair_control_platy <- control_df %>%
+  #filter(gall_individuals==2) %>%
+  group_by(Gall_Number) %>%
+  mutate(mean_survival = mean(egg_parasitoid)) %>%
+  #filter(mean_survival == 0.5) %>%
+  filter(mean_survival > 0, mean_survival < 1) %>%
+  select(Gall_Number, mean_survival, gall_survival, sc.gall_size) %>%
+  group_by(Gall_Number, gall_survival) %>%
+  summarise(mean_gall_size = mean(sc.gall_size)) %>%
+  spread(gall_survival, mean_gall_size) %>%
+  mutate(diff = `1` - `0`)
+summary(pair_control_platy$diff)
+length(pair_control_platy$diff)
+
+t.test(pair_control_platy$`1`, pair_control_platy$`0`, paired = T)
+
+gsg::moments.differentials(z=control_df$sc.gall_size, W = control_df$gall_survival)
+gsg::moments.differentials(z=treatment_df$sc.gall_size, W = treatment_df$gall_survival)
+
+summary(lm(gall_survival/mean(gall_survival) ~ sc.gall_size, control_df))
+summary(lm(gall_survival/mean(gall_survival) ~ sc.gall_size, treatment_df))
+
+test_control_df <- bind_rows(mutate(control_df, type = 0), mutate(filter(control_df, gall_survival == 1), type = 1))
+summary(lm(sc.gall_size ~ type, test_control_df)) # virtually the same as above
+
+test_treatment_df <- bind_rows(mutate(treatment_df, type = 0), mutate(filter(treatment_df, gall_survival == 1), type = 1))
+summary(lm(sc.gall_size ~ type, test_treatment_df)) # virtually the same as above
+
+# can also look at it this way and just look at the mean difference before and after selection
+test_control_df %>%
+  group_by(type) %>%
+  summarise(mean_gall_size = mean(sc.gall_size))
+
+test_treatment_df %>%
+  group_by(type) %>%
+  summarise(mean_gall_size = mean(sc.gall_size))
+
+# does this enable me to estimate the confounding effect of parasitism on gall size? 
+# Note that the intercept is no longer centered on zero...
+summary(lmer(sc.gall_size ~ type + (1|Genotype/Plant_Position/Gall_Number), test_control_df))
+summary(lmer(sc.gall_size ~ type + (1|Genotype/Plant_Position/Gall_Number), test_treatment_df))
+
+moments_control_df <- control_df %>%
+  #filter(gall_individuals==2) %>%
+  group_by(Gall_Number) %>%
+  mutate(mean_survival = mean(gall_survival)) %>%
+  #filter(mean_survival == 0.5) %>%
+  filter(mean_survival > 0, mean_survival < 1) %>%
+  select(Gall_Number, mean_survival, gall_survival, sc.gall_size) %>%
+  group_by(Gall_Number, gall_survival) %>%
+  summarise(mean_gall_size = mean(sc.gall_size))
+
+gsg::moments.differentials(z=moments_control_df$mean_gall_size, W=moments_control_df$gall_survival) # does this mean anything?
+
+moments_treatment_df <- treatment_df %>%
+  #filter(gall_individuals==2) %>%
+  group_by(Gall_Number) %>%
+  mutate(mean_survival = mean(gall_survival)) %>%
+  #filter(mean_survival == 0.5) %>%
+  filter(mean_survival > 0, mean_survival < 1) %>%
+  select(Gall_Number, mean_survival, gall_survival, sc.gall_size) %>%
+  group_by(Gall_Number, gall_survival) %>%
+  summarise(mean_gall_size = mean(sc.gall_size))
+
+gsg::moments.differentials(z=moments_treatment_df$mean_gall_size, W=moments_treatment_df$gall_survival) 
+
+
+### MOST PROMISING ANALYSIS THUS FAR THAT MAY ENABLE ME TO ASSESS THE BIAS OF PARASITISM ON OBSERVED SELECTION GRADIENTS.
+test_again_control <- control_df %>%
+  #filter(gall_individuals==2) %>%
+  group_by(Gall_Number) %>%
+  mutate(mean_survival = mean(gall_survival)) %>%
+  #filter(mean_survival == 0.5) %>%
+  filter(mean_survival > 0, mean_survival < 1) %>%
+  select(Gall_Number, mean_survival, gall_survival, sc.gall_size) %>%
+  mutate(all_mean_gall_size = mean(sc.gall_size)) %>%
+  filter(gall_survival == 1) %>%
+  mutate(survive_mean_gall_size = mean(sc.gall_size)) %>%
+  distinct(Gall_Number, all_mean_gall_size, survive_mean_gall_size) %>%
+  mutate(diff_gall_size = survive_mean_gall_size - all_mean_gall_size)  # all of these represent selection differentials at the gall level
+
+hist(test_again_control$diff_gall_size)
+t.test(test_again_control$survive_mean_gall_size, test_again_control$all_mean_gall_size, paired = T)
+
+test_ectos_control <- control_df %>%
+  filter(pupa > 0 | ectos > 0) %>%
+  group_by(Gall_Number) %>%
+  mutate(mean_survival = mean(gall_survival)) %>%
+  #filter(mean_survival == 0.5) %>%
+  filter(mean_survival > 0, mean_survival < 1) %>%
+  select(Gall_Number, mean_survival, gall_survival, sc.gall_size) %>%
+  mutate(all_mean_gall_size = mean(sc.gall_size)) %>%
+  filter(gall_survival == 1) %>%
+  mutate(survive_mean_gall_size = mean(sc.gall_size)) %>%
+  distinct(Gall_Number, all_mean_gall_size, survive_mean_gall_size) %>%
+  mutate(diff_gall_size = survive_mean_gall_size - all_mean_gall_size)  # all of these represent selection differentials at the gall level
+
+hist(test_ectos_control$diff_gall_size)
+t.test(test_ectos_control$survive_mean_gall_size, test_ectos_control$all_mean_gall_size, paired = T)
+
+test_platy_control <- control_df %>%
+  filter(pupa > 0 | egg_parasitoid > 0) %>%
+  group_by(Gall_Number) %>%
+  mutate(mean_survival = mean(gall_survival)) %>%
+  #filter(mean_survival == 0.5) %>%
+  filter(mean_survival > 0, mean_survival < 1) %>%
+  select(Gall_Number, mean_survival, gall_survival, sc.gall_size) %>%
+  mutate(all_mean_gall_size = mean(sc.gall_size)) %>%
+  filter(gall_survival == 1) %>%
+  mutate(survive_mean_gall_size = mean(sc.gall_size)) %>%
+  distinct(Gall_Number, all_mean_gall_size, survive_mean_gall_size) %>%
+  mutate(diff_gall_size = survive_mean_gall_size - all_mean_gall_size)  # all of these represent selection differentials at the gall level
+
+hist(test_platy_control$diff_gall_size)
+t.test(test_platy_control$survive_mean_gall_size, test_platy_control$all_mean_gall_size, paired = T)
+
+test_again_treatment <- treatment_df %>%
+  #filter(gall_individuals==2) %>%
+  group_by(Gall_Number) %>%
+  mutate(mean_survival = mean(gall_survival)) %>%
+  #filter(mean_survival == 0.5) %>%
+  filter(mean_survival > 0, mean_survival < 1) %>%
+  select(Gall_Number, mean_survival, gall_survival, sc.gall_size) %>%
+  mutate(all_mean_gall_size = mean(sc.gall_size)) %>%
+  filter(gall_survival == 1) %>%
+  mutate(survive_mean_gall_size = mean(sc.gall_size)) %>%
+  distinct(Gall_Number, all_mean_gall_size, survive_mean_gall_size) %>%
+  mutate(diff_gall_size = survive_mean_gall_size - all_mean_gall_size)  # all of these represent selection differentials at the gall level
+
+hist(test_again_treatment$diff_gall_size)
+t.test(test_again_treatment$survive_mean_gall_size, test_again_treatment$all_mean_gall_size, paired = T)
+```
+
+
+```{r Calculate Mean and SD of Gall Traits at Different Scales, include=F, eval=F}
+
+## Calculate mean and SD of gall traits at different scales ----
+summary.individual_level <- gall_selection.df %>%
+  group_by(Treatment.focus) %>%
+  summarise_at(vars(Gall_Height_mm, gall_individuals, Density_per_100_shoots), funs(mean, sd), na.rm = TRUE) %>%
+  mutate(Level = "Individual")
+
+mean.gall_size.control <- filter(summary.individual_level, Treatment.focus == "Control")$Gall_Height_mm_mean
+sd.gall_size.control <- filter(summary.individual_level, Treatment.focus == "Control")$Gall_Height_mm_sd
+mean.gall_size.treatment <- filter(summary.individual_level, Treatment.focus == "Ectoparasitoid exclusion")$Gall_Height_mm_mean
+sd.gall_size.treatment <- filter(summary.individual_level, Treatment.focus == "Ectoparasitoid exclusion")$Gall_Height_mm_sd
+
+summary.gall_level <- gall_selection.df %>%
+  group_by(Treatment.focus, Gall_Number) %>%
+  summarise_at(vars(Gall_Height_mm, gall_individuals, Density_per_100_shoots), funs(mean), na.rm = TRUE) %>%
+  group_by(Treatment.focus) %>%
+  summarise_at(vars(Gall_Height_mm, gall_individuals, Density_per_100_shoots), funs(mean, sd), na.rm = TRUE) %>%
+  mutate(Level = "Gall")
+
+mean.clutch_size.control <- filter(summary.gall_level, Treatment.focus == "Control")$gall_individuals_mean
+sd.clutch_size.control <- filter(summary.gall_level, Treatment.focus == "Control")$gall_individuals_sd
+mean.clutch_size.treatment <- filter(summary.gall_level, Treatment.focus == "Ectoparasitoid exclusion")$gall_individuals_mean
+sd.clutch_size.treatment <- filter(summary.gall_level, Treatment.focus == "Ectoparasitoid exclusion")$gall_individuals_sd
+
+summary.plant_level <- gall_selection.df %>%
+  group_by(Treatment.focus, Plant_Position, Gall_Number) %>%
+  summarise_at(vars(Gall_Height_mm, gall_individuals, Density_per_100_shoots), funs(mean), na.rm = TRUE) %>%
+  group_by(Treatment.focus, Plant_Position) %>%
+  summarise_at(vars(Gall_Height_mm, gall_individuals, Density_per_100_shoots), funs(mean), na.rm = TRUE) %>%
+  group_by(Treatment.focus) %>%
+  summarise_at(vars(Gall_Height_mm, gall_individuals, Density_per_100_shoots), funs(mean, sd), na.rm = TRUE) %>%
+  mutate(Level = "Plant")
+
+mean.female_preference.control <- filter(summary.plant_level, Treatment.focus == "Control")$Density_per_100_shoots_mean
+sd.female_preference.control <- filter(summary.plant_level, Treatment.focus == "Control")$Density_per_100_shoots_sd
+mean.female_preference.treatment <- filter(summary.plant_level, Treatment.focus == "Ectoparasitoid exclusion")$Density_per_100_shoots_mean
+sd.female_preference.treatment <- filter(summary.plant_level, Treatment.focus == "Ectoparasitoid exclusion")$Density_per_100_shoots_sd
+
+summary.gall_traits <- bind_rows(summary.individual_level, summary.gall_level, summary.plant_level)
+```
+
+
+<!-- > *There is a much more insidious kind of extinction: the extinction of ecological interactions.* 
+> *(Janzen, D.H. 1974. The deflowering of Central America. Natural History. 83:48–53).* -->
+
+Introduction
+============
+
+<!-- I. Fitness Landscape as a unifying framework for evolution and ecology at the population-level -->
+
+The fitness landscape provides a unifying framework for linking the ecology and evolution of populations (Lande 2007; McPeek 2017). The average fitness of a population is a common currency in ecology and evolution, but usually goes by different names in each field. Ecologists refer to it as per-capita population growth rate ($dN/Ndt$), whereas evolutionary biologists call it the natural log of population mean fitness ($ln(\bar W_N)$. In addition to having different names, ecologists and evolutionary biologists have typically focused on different processes that shape the fitness landscape. For example, population ecologists have long studied the effect of a population's density on its per-capita growth rate (i.e. density-dependence, CITE Foundational and current work). In contrast, evolutionary biologists have focused on how the mean trait value of a population influences its average fitness, as this describes the direction and magnitude of natural selection (CITE foundational and current work). Therefore, the fitness landscape describes the joint ecological and evolutionary dynamics of a population in a given environment.
+
+Community ecologists have extended the ecological side of the fitness landscape by incorporating network theory. Species-interaction networks, such as a food web describing who eats whom, provide an explicit representation of the biotic environment as they describe the interdependency of populations within an ecological community. This has provided an effective framework for predicting how changes in the biotic environment (e.g. density of directly and indirectly connected species) will impact population dynamics within species-rich communities. At the same time, evolutionary biologists have long recognized that changes in the biotic environment can alter the dynamics of natural selection. However, the biotic environment in which populations are evolving often remains a bit of a "black box" that's labelled by a general ecological process such as competition, predation, or mutualism. Because of this, it remains difficult to predict how changes in the biotic environment will affect the direction and magnitude of natural selection. Such predictions are urgently needed given the rapid changes in the biotic environment that most populations are currently experiencing throughout the world. 
+
+Here, we integrate species-interaction networks and the fitness landscape to empirically test how changes in the biotic environment -- network of species interactions -- affect the dynamics of natural selection. Specifically, we conducted a field experiment that manipulated the diversity of insect parasitoids that were able to impose selection on an abundant insect herbivore (*Iteomyia salicisverruca*)(Fig. 1). The larva of this herbivore species induce tooth-shaped galls when they feed on the developing leaves of willow trees (*Salix* sp., @Russo2006). These galls provide protection from generalist predators (e.g. ants, spiders), thus the network of interacting parasitoids provides a realistic representation of the biotic environment this insect herbivore is experiencing. Therefore, our manipulation of parasitoid diversity alters the diversity of interactions, or food-web complexity, that this insect herbivore experiences.
+
+<!--Prior work with this study system has shown that there is directional selection for larger galls, likely because larger galls provide a refuge from parasitoid attack (@Barbour2016). 
+However, there is also evidence that each parasitoid species imposes differential selection on gall traits (@Barbour2016).-->
+
+Changes in food-web complexity could influence a resource population's fitness landscape in at least two ways. First, if a more diverse community of consumers is more effective at suppressing resource densities (@Ives2005), then this will result in lower mean fitness of the resource population. A reduction in mean fitness, all else equal, will intensify natural selection (@Hunter2018). On the other hand, if consumers impose different selection pressures on resource traits, then more diverse communities could dampen the strength of selection acting on a given trait. This is because a greater diversity in selection pressures is equivalent to greater uncertainty in the selective environment. Thus, a more diverse consumer community may relax the net selection pressures acting on resource traits. Here, we evaluate these hypothesized relationships through an experimental test of how changes in food-web complexity alters the fitness landscape of a resource population.
+
+<!-- I. Evolutionary dynamics in species-rich communities remains unclear, especially in the field -->
+
+<!-- Biological diversity -- from genes, to phenotypes, to species -- has and continues to be shaped by the interplay between ecological and evolutionary processes. <!-- need to improve this instead of just saying its fascinated a small group of people --> 
+<!-- Much of this biological diversity has been molded by natural selection arising from species interactions, such as resource competition (@Schluter2000), mutualisms (@Jordano1987), and predation (@Abrams2000). 
+While there is clear evidence that pairwise interactions can drive evolution, we also know that most species interact with multiple species in an ecological community. <!-- are embedded within species-rich communities.--> <!-- complex networks of interacting species. <!-- need to make the link to multiple traits and the adaptive landscape here --> <!-- Somthing about the this work remaining eminently theoretical --> 
+<!-- Understanding how evolutionary dynamics unfold in a community context<!-- when moving beyond pairwise interactions--><!-- in more species-rich communities--><!--  is challenging and eminently theoretical (@McPeek2017, @De_Mazancourt2008, @Guimaraes2017, @Nuismer2013). 
+<!-- Do I need to give more credit here to work by @TerHorst2018 and others?). I think it would be useful to show that there is some field and lab experiments demonstrating that community context can alter evolutionary trajectories -->
+<!-- Given the rapid loss of species diversity we are experiencing throughout the world (cite), we are in urgent need of work that makes and tests predictions for how the loss of species will affect the evolutionary process in natural communities.
+
+<!-- Theoretical models have begun to examine how the network structure of species interactions drives evolutionary change (Nuismer paper; Guimeras paper; Ecology Letters paper from a spanish guy...; @McPeek2017); however, we are currently lacking experimental tests of how changes in network structure will alter the dynamics of natural selection in the field. -->
+
+<!-- II. Linking species loss to changes in network complexity -->
+
+Predicting the evolutionary consequences of species loss first requires an understanding of the concommitant change in the species-interaction networks.<!-- the relationship between the network structure of a community and the fitness landscape of its constituent species.--> 
+Knowing the interaction network is crucial because the loss of biodiversity, in and of itself, will not alter evolution -- it is the associated loss of ecological interactions that will affect evolutionary change (@Janzen1974). 
+For a network of directly connected species, we would expect that the loss of species to result in a loss of network complexity.<!-- Need to formalize this logic more, because the loss of a specialist species in a highly generalist food web, would actually increase network complexity... Maybe I need to focus on the node/species level property --> 
+Network complexity is a property that describes the diversity of interactions in an ecological community (@Banasek-Richter2009). 
+Thus, all else equal, species loss will decrease the diversity of interactions, resulting in a more simple network. <!-- Explicitly linking network complexity to the fitness landscape, however, is ultimately needed to predict the evolutionary consequences of biodiversity loss. -->
+
+<!-- III. Linking changes in network complexity to the fitness landscape -->
+Predicting how a change in network complexity will alter evolution also requires an understanding of the relationship between network structure and the adaptive landscape. 
+The adaptive landscape (i.e. fitness landscape or selective surface) describes the relationship between the average trait value of a population and its average fitness (cite Arnold). <!-- Need to make the transition between network and trophic complexity --> 
+For a trophic network, such as a food web, changes in network complexity can shape the adaptive landscape of constituent species in at least two ways. 
+First, if a more diverse community of consumers is more efficient at suppressing resource densities (@Ives2005), then this will result in lower mean fitness of the resource population. 
+A reduction in mean fitness, all else equal, will intensify natural selection (@Hunter2018) and thus could speed up the rate of evolutionary change. 
+On the other hand, if consumers are functionally distinct, then more diverse communities can dampen the strength of selection. 
+This is because each consumer has a different functional relationship with resource traits. 
+In addition, there is a reduced probability in interacting with a specific consumer species in a more diverse community.
+Thus, a more diverse consumer community may impose more diffuse selection across the adaptive landscape. <!--and the probability of an interaction.-->
+<!-- Consider linking to a reduced probability of interacting with any one species in the community, which would dampen the selection pressures acting on a given phenotype, also, if predators impose selection on different parts of a prey phenotype, then these selection pressures may even cancel each other out -->
+
+<!-- IV. Summarize our plans to tackle this problem -->
+
+Here, we provide a quantitative test of how the loss of species diversity -- and concomittant loss of network complexity -- shapes the adaptive landscape of a consitutent species in a natural community.
+<!-- Here, we conducted a field experiment to test how changes in network complexity would shape the fitness landscape of a constituent species. -->
+We conducted a field experiment that manipulated the diversity of insect parasitoids that were able to impose selection on the insect herbivore, *Iteomyia salicisverruca*. 
+The larva of this herbivore species induces tooth-shaped galls when they feed on the developing leaves of willow trees (*Salix* sp., @Russo2006). 
+Prior work with this study system has shown that there is directional selection for larger galls, likely because larger galls provide a refuge from parasitoid attack (@Barbour2016). 
+However, there is also evidence that each parasitoid species imposes differential selection on gall traits (@Barbour2016). <!-- Need a sentence to wrap it up--> 
+<!-- Taken together, our study seeks to provide one of the first quantitative tests of how the loss of species diversity -- and concomittant loss of network complexity -- shapes the fitness landscape of associated species. -->
+Taken together, our aim is to provide evidence for how the simplification of natural communities affects the adaptive<!--process--> potential of constituent species.  
+
+<!-- Alternative intro, "the fitness landscape as the unifying concept between ecology and evolutionary biology "-->
+
+<!-- Although often used solely as a metaphor, the fitness landscape explicitly links ecology and evolutionary biology. -->
+<!-- Fitness landscapes provide a quantitative framework for unifying evolutionary biology and ecology. Alternatively described as the 'adaptive landscape' or 'selective surface', evolutionary biologists have traditionally used the fitness landscape to describe how changes in the mean values of a trait or multiple traits can alter population mean fitness. Less appreciated is the fact that ecologists have similarly been studying the fitness landscape of species but through the lense of population dynamics. study how changes in population abundances of interacting species shapes the fitness landscape (@McPeek2017). This is because per capita population growth rate is equivalent to population mean fitness (cite Lande ; @McPeek2017). -->
+
+<!-- Therefore, understanding the feedbacks between ecological and evolutionary dynamics requires an assessment of how the community context shapes the fitness landscape.
+
+We are in the midst of the lost of biological diversity; yet it remains unclear how the loss of biological diversity will alter evolutionary change within species. In order to predict how -->
+
+<!-- II. Ecologists have incorporated community context --> 
+
+<!-- In contrast, ecologists have begun to embrace the complexity of the natural world, and seeking to identify the complex networks of interactions that underlie community structure and ecosystem function. However, these studies have not examined how evolutionary processes feedback to shape the structure and evolution of these interaction networks. -->
+
+<!-- III. Generate expectations for how food-web complexity may alter selection gradients -->
+
+<!-- Food-web complexity can shape the fitness landscape in at least two ways. First, if more diverse predator communities are more efficient at suppressing prey densities (e.g. biodiversity-ecosystem fucntion; Ives 2005 Ecology Letters), then this will result in lower mean fitness. A reduction in mean fitness, all else equal, will intensify natural selection (@Hunter2018) and thus could speed up the rate of evolutionary change. Alternatively, if predators are functionally distinct, more diverse communities can reduce the strength of selection. This is because each predator has a different functional relationship between prey phenotype and the probability of an interaction. -->
+
+
+<!-- IV. Relationship between entropy and fitness landscape 
+In more complex communities, there is greater uncertainty for an individual prey in which predator species will be imposing the trophic interaction. This also means the --> 
+
+
+
+Materials & Methods
+===================
+
+## Study Site
+
+<!-- I. Give details about the study site, but not focusing on the genetic variation since this doesn't play much of a role in this manuscript. -->
+
+We conducted our study within a four-year old common garden of coastal willow (*Salix hookeriana*) located at Humboldt Bay National Wildlife Refuge (HBNWR) (40&deg;40'53"N, 124&deg;12'4"W) near Loleta, California, USA. This common garden consists of 26 different willow genotypes that were collected from a single population of willows growing around Humboldt Bay. <!--While relatedness among these genotypes is unknown, their phenotypes in multivariate trait space are quite distinct from each other (@Barbour2016), suggesting that we can treat them as independent from one another.--> Stem cuttings of each genotype (25 replicates per genotypes) were planted in a completely randomized design in two hectares of a former cattle pasture at HBNWR. Willows in our garden begin flowering in February and reach their peak growth in early August. During this study, willows had reached 5 - 9m in height. Further details on the genotyping and planting of the common garden are available in @Barbour2015. 
+
+## Food-Web Manipulation
+
+<!-- II. Describe the food-web manipulation experiment --> 
+
+We setup our food-web manipulation across 128 plants soon after galls began developing on *S. hookeriana* in early June of 2013. 
+These 128 plants came from eight different plant genotypes, spanning the range of trait variation observed in this willow population (@Barbour2015). 
+On treatment plants (8 replicates per genotype), we enclosed 14 galled leaves with 10x15cm organza bags (ULINE, Pleasant Prairie, WI, USA) to exclude three parasitoid species that attack during larva development (hereafter larval parasitoids). 
+This treatment did not exclude the egg parasitoid *Platygaster* sp. which attacks prior to gall initiation (note that in Cecidomyiid midges, larva initiate gall development CITE). 
+On control plants (8 replicates per genotype), we used flagging tape to mark 14 galled leaves per plant, allowing the full suite of parasitoids to attack *Iteomyia*. 
+Marking galls with flagging tape ensured that we compared control and treatment galls with similar phenology when we collected galls later in the season. 
+Our food-web manipulation altered the average number of trophic interactions that *Iteomyia* was exposed to from BLANK on control plants to BLANK on treatment plants. 
+Thus, we refer to galls on control plants as being exposed to a 'complex' food web, whereas galls on treatment plants were exposed to a 'simple' food web.
+In late August, we collected marked and bagged galls from each plant, placed them into 30 mL vials and <!-- allowed them to complete development--> kept them in the lab for 4 months at room temperature. 
+We then opened galls under a dissecting scope and determined whether larva survived to pupation (our measure of fitness) or were parasitized. 
+
+## Measuring Gall Traits
+
+<!-- % III. Describe how we measured gall phenotypes -->
+
+We collected data on three different traits that we anticipated would experience selection based on our previous work (@Barbour2016) and others work with Cecidomyiid midges (@Weis1983, @Heath2018). 
+First, we measured gall diameter as the size of each gall chamber to the nearest 0.01 mm at its maximum diameter (perpendicular to the direction of plant tissue growth). 
+Our previous work has shown that a larger gall diameter provides a refuge for larva from parasitoid attack (@Barbour2016). <!-- Consider whether it is important to make the distinction that diameter was measured at the multi-chambered gall level in previous work -->
+Second, we measured the clutch size of adult female midges by counting the number of chambers in each gall (@Weis1983). 
+All larva collected from the same multi-chambered gall were scored with the same clutch size. 
+Third, we measured female preference for oviposition (egg-laying) sites as the density of larva observed on a plant.
+The measurement of larval densities on plants in the field is a commonly used index for measuring oviposition preference (@Gripenberg2010), although caution must be taken in inferring 'preference' (@Singer1986). 
+This is because larval densities can be influenced by processes other than preference. 
+For example, if an ovipositing female is not exposed to the full spectrum of plant types (in this case genotypes), then it is difficult to infer whether patterns of larval densities are actually due to <!--dispersal limitation or-->preference. Also, observed larval densities could be influenced by egg predation.    
+While we recognize these limitations, a couple of aspects of our study system likely alleviate these limitations. 
+For example, since our data comes from a randomized placement of willow genotypes in a common garden, there is no consistent bias in which willow genotypes that females are exposed to while searching for oviposition sites. 
+Although we cannot control for egg predation, this source of mortality appears to play comparatively minor role in determining the mortality of galling insects (@Hawkins1997). <!-- and that we can still detect the presence of an individual even if it dies before development (empty chamber lacking an exit hole and without any evidence of larva or parasitoid). -->
+To quantify female preference (gall density), we randomly sampled five branches per tree and summed the number of individual gall chambers observed.
+We converted these counts to a measure of gall density per 100 shoots by counting the number of shoots on the last branch we sampled.
+<!-- To account for potential differences in the number of shoots per branch for each plant genotype (CITE other willow work), we then counted the number of shoots on the fifth branch to estimate the number of larva per 100 shoots for each plant.--> 
+All larva collected from the same plant were scored with the same female preference. 
+
+
+## Statistical Analyses
+
+<!-- % IV. Describe statistical analysis to test the effects of food-web complexity -->
+
+To characterize the shape of the fitness landscape in simple and complex food webs, we fit separate statistical models to quantify individual selection surfaces acting on each trait. 
+We used generalized linear mixed models (GLMMs, @Bolker2009) with larval survival (0 or 1) as our response variable and measure of fitness. 
+In our full model, we specified linear and quadratic terms for each gall trait as well as linear interaction terms between each gall trait as fixed effects in the statistical models. 
+To account for the correlated structure of clutch size (gall level) and female preference (plant level) as well as any other independent effects of willow genotype on larval survival, we specified gall ID nested within plant ID nested within plant genotype as random intercepts in our statistical models. 
+Since we were interested in characterizing the fitness landscape -- the relationship between mean trait values and population mean fitness -- we assumed the mean value of our random effects (i.e. setting them to zero) to estimate selection gradients.
+We then used the method of @Janzen1998 to calculate directional ($\beta_{z_i}$), quadratic ($\gamma_{z_i}$), and correlational ($\gamma_{z_i,z_j}$) selection gradients and used parametric bootstrapping (1000 replicates) to calculate their 95% confidence intervals (@Bolker2009). 
+We estimated directional selection gradients by excluding quadratic terms and statistical interactions in the model.
+To test whether selection gradients differed between treatments, we used our bootstrapped estimates to calculate the probability that selection gradients in the simple food web were larger/smaller than in the complex food web (i.e. the p-value). 
+Together, we had survival estimates for 1,306 larva, 607 galls, 111 plants, and 8 plant genotypes.
+We report estimated selection gradients and the 95% confidence intervals in parentheses.
+All analyses and visualizations were conducted in R (@R2018). 
+
+```{r Selection Gradients - Complex Food Web, cache=TRUE, include=FALSE}
+# note that I've switched to using the lme4 package to analyzing the GLMM
+
+# Directional selection ----
+beta_control <- glmer(gall_survival ~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference +
+                           (1|Genotype/Plant_Position/Gall_Number),
+                         data = control_df,
+                         family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
+summary(beta_control)
+overdisp_fun(beta_control)
+
+intensity_of_selection(beta_control)
+
+# Quadratic selection ----
+quad_control <- update(beta_control, .~. + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2))
+
+summary(quad_control)
+overdisp_fun(quad_control)
+
+# Correlational selection ----
+corr_control <- update(quad_control, .~. + sc.gall_size:sc.log.clutch_size + sc.gall_size:sc.log1p.female_preference + sc.log.clutch_size:sc.log1p.female_preference)
+
+summary(corr_control)
+overdisp_fun(corr_control)
+
+# Mean fitness ----
+Wbar_control <- inverse_logit(fixef(update(beta_control, .~. -sc.gall_size -sc.log.clutch_size -sc.log1p.female_preference)))
+
+# Confidence intervals ----
+boot_beta_control <- bootMer(beta_control, FUN = Beta_avg_grad, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+boot_quad_control <- bootMer(quad_control, FUN = Beta_avg_grad, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+boot_corr_control <- bootMer(corr_control, FUN = Beta_avg_grad, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+```
+
+
+```{r Selection Gradients - Simple Food Web, cache=TRUE, include=FALSE}
+
+# Directional selection ----
+beta_treatment <- glmer(gall_survival ~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference +
+                           (1|Genotype/Plant_Position/Gall_Number),
+                         data = treatment_df,
+                         family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
+
+summary(beta_treatment)
+overdisp_fun(beta_treatment)
+
+intensity_of_selection(beta_treatment)
+
+# Quadratic selection ----
+quad_treatment <- update(beta_treatment, .~. + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2))
+
+summary(quad_treatment)
+overdisp_fun(quad_treatment)
+
+# Correlational selection ----
+corr_treatment <- update(quad_treatment, .~. + sc.gall_size:sc.log.clutch_size + sc.gall_size:sc.log1p.female_preference + sc.log.clutch_size:sc.log1p.female_preference)
+
+summary(corr_treatment)
+overdisp_fun(corr_treatment)
+
+# Mean fitness ----
+Wbar_treatment <- inverse_logit(fixef(update(beta_treatment, .~. -sc.gall_size -sc.log.clutch_size -sc.log1p.female_preference)))
+
+# Confidence intervals ----
+boot_beta_treatment <- bootMer(beta_treatment, FUN = Beta_avg_grad, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+boot_quad_treatment <- bootMer(quad_treatment, FUN = Beta_avg_grad, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+boot_corr_treatment <- bootMer(corr_treatment, FUN = Beta_avg_grad, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+```
+
+```{r Larval Parasitoids Selection Gradients - Complex Food Web, cache=TRUE, include=FALSE}
+# note that I've switched to using the lme4 package to analyzing the GLMM
+
+ectoptoid_control_df <- filter(control_df,  ectos > 0 | pupa > 0) %>%
+  mutate(sc.gall_size = as.numeric(scale(Gall_Height_mm)),
+         sc.log.clutch_size = as.numeric(scale(log(gall_individuals))),
+         sc.log1p.female_preference = as.numeric(scale(log1p(Density_per_100_shoots))))
+
+# Directional selection ----
+beta_ectoptoid_control <- glmer(gall_survival ~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference +
+                           (1|Genotype/Plant_Position/Gall_Number),
+                         data = ectoptoid_control_df,
+                         family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
+
+summary(beta_ectoptoid_control)
+overdisp_fun(beta_ectoptoid_control)
+
+intensity_of_selection(beta_ectoptoid_control)
+
+#vcov.merMod(beta_ectoptoid_control)
+
+# Quadratic selection ----
+quad_ectoptoid_control <- update(beta_ectoptoid_control, .~. + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2))
+
+summary(quad_ectoptoid_control)
+overdisp_fun(quad_ectoptoid_control)
+
+# Correlational selection ----
+corr_ectoptoid_control <- update(quad_ectoptoid_control, .~. + sc.gall_size:sc.log.clutch_size + sc.gall_size:sc.log1p.female_preference + sc.log.clutch_size:sc.log1p.female_preference)
+
+summary(corr_ectoptoid_control)
+overdisp_fun(corr_ectoptoid_control)
+
+# Mean fitness ----
+Wbar_ectoptoid_control <- inverse_logit(fixef(update(beta_ectoptoid_control, .~. -sc.gall_size -sc.log.clutch_size -sc.log1p.female_preference)))
+
+# Confidence intervals ----
+boot_beta_ectoptoid_control <- bootMer(beta_ectoptoid_control, FUN = Beta_avg_grad, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+boot_quad_ectoptoid_control <- bootMer(quad_ectoptoid_control, FUN = Beta_avg_grad, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+boot_corr_ectoptoid_control <- bootMer(corr_ectoptoid_control, FUN = Beta_avg_grad, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+```
+
+```{r Egg Parasitoids Selection Gradients - Complex Food Web, cache=TRUE, include=FALSE}
+# note that I've switched to using the lme4 package to analyzing the GLMM
+
+eggptoid_control_df <- filter(control_df,  platy > 0 | pupa > 0) %>%
+  mutate(sc.gall_size = as.numeric(scale(Gall_Height_mm)),
+         sc.log.clutch_size = as.numeric(scale(log(gall_individuals))),
+         sc.log1p.female_preference = as.numeric(scale(log1p(Density_per_100_shoots))))
+
+# Directional selection ----
+beta_eggptoid_control <- glmer(gall_survival ~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference +
+                           (1|Genotype/Plant_Position/Gall_Number),
+                         data = eggptoid_control_df,
+                         family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
+
+summary(beta_eggptoid_control)
+overdisp_fun(beta_eggptoid_control)
+
+intensity_of_selection(beta_eggptoid_control)
+
+#vcov.merMod(beta_eggptoid_control)
+
+# Quadratic selection ----
+quad_eggptoid_control <- update(beta_eggptoid_control, .~. + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2))
+
+summary(quad_eggptoid_control)
+overdisp_fun(quad_eggptoid_control)
+
+# Correlational selection ----
+corr_eggptoid_control <- update(quad_eggptoid_control, .~. + sc.gall_size:sc.log.clutch_size + sc.gall_size:sc.log1p.female_preference + sc.log.clutch_size:sc.log1p.female_preference)
+
+summary(corr_eggptoid_control)
+overdisp_fun(corr_eggptoid_control)
+
+# Mean fitness ----
+Wbar_eggptoid_control <- inverse_logit(fixef(update(beta_eggptoid_control, .~. -sc.gall_size -sc.log.clutch_size -sc.log1p.female_preference)))
+
+# Confidence intervals ----
+boot_beta_eggptoid_control <- bootMer(beta_eggptoid_control, FUN = Beta_avg_grad, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+boot_quad_eggptoid_control <- bootMer(quad_eggptoid_control, FUN = Beta_avg_grad, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+boot_corr_eggptoid_control <- bootMer(corr_eggptoid_control, FUN = Beta_avg_grad, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+```
+
+```{r Mortality, include=F}
+# 8-10% mortality induced by intraguild predators
+mean(control_df$platy)
+mean(treatment_df$platy)
+mean(eggptoid_control_df$platy)
+
+# Gall mortality to Platy
+1 - mean(treatment_df$pupa)
+
+# Gall mortality to Ectos
+
+# Platy mortality to intraguild predation
+mean(treatment_df$platy) - mean(control_df$platy) 
+
+mean(control_df$ectos)
+mean(treatment_df$ectos)
+mean(ectoptoid_control_df$ectos)
+
+mean(control_df$pupa)
+mean(treatment_df$pupa)
+mean(eggptoid_control_df$pupa)
+mean(ectoptoid_control_df$pupa)
+```
+
+
+
+```{r Partition Selection Gradients in Complex Food Web, include=F}
+summary_beta_treatment <- data.frame(
+  Ptoids = "All",
+  Phenotype = c("Gall diameter", "Clutch size", "Female preference"),
+  Food_Web = "Simple",
+  Model = "GLMM",
+  Type = "Beta",
+  Estimate = round(Beta_avg_grad(beta_treatment),3),
+  lower_2.5 = round(apply(boot_beta_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3),
+  upper_97.5 = round(apply(boot_beta_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3)) 
+
+summary_beta_control <- data.frame(
+  Ptoids = "All",
+  Phenotype = c("Gall diameter", "Clutch size", "Female preference"),
+  Food_Web = "Complex",
+  Model = "GLMM",
+  Type = "Beta",
+  Estimate = round(Beta_avg_grad(beta_control),3),
+  lower_2.5 = round(apply(boot_beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3),
+  upper_97.5 = round(apply(boot_beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3))
+
+summary_beta_ectoptoid_control <- data.frame(
+  Ptoids = "Ectos",
+  Phenotype = c("Gall diameter", "Clutch size", "Female preference"),
+  Food_Web = "Complex",
+  Model = "GLMM",
+  Type = "Beta",
+  Estimate = round(Beta_avg_grad(beta_ectoptoid_control),3),
+  lower_2.5 = round(apply(boot_beta_ectoptoid_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3),
+  upper_97.5 = round(apply(boot_beta_ectoptoid_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3))
+
+summary_beta_eggtpoid_control <- data.frame(
+  Ptoids = "Egg",
+  Phenotype = c("Gall diameter", "Clutch size", "Female preference"),
+  Food_Web = "Complex",
+  Model = "GLMM",
+  Type = "Beta",
+  Estimate = round(Beta_avg_grad(beta_eggptoid_control),3),
+  lower_2.5 = round(apply(boot_beta_eggptoid_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3),
+  upper_97.5 = round(apply(boot_beta_eggptoid_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3))
+
+bind_rows(summary_beta_treatment, summary_beta_control, summary_beta_ectoptoid_control, summary_beta_eggtpoid_control) %>%
+  arrange(Phenotype)
+```
+
+```{r include=FALSE}
+mean_log1p <- function(x) mean(log1p(x), na.rm=T)
+sd_na.rm <- function(x) sd(log1p(x), na.rm=T)
+
+## Platygaster
+platy_trait_control <- filter(control_df, platy > 0) %>%
+  summarise_at(vars("Gall_Height_mm","gall_individuals","Density_per_100_shoots"), funs(mean_log1p, sd_na.rm)) 
+
+platy_trait_treatmeant <- filter(treatment_df, platy > 0) %>%
+  summarise_at(vars("Gall_Height_mm","gall_individuals","Density_per_100_shoots"), funs(mean_log1p, sd_na.rm))
+
+bind_rows(platy_trait_control, platy_trait_treatmeant)
+
+(platy_trait_treatmeant$Gall_Height_mm_mean_log1p - platy_trait_control$Gall_Height_mm_mean_log1p)/platy_trait_control$Gall_Height_mm_sd_na.rm
+
+(platy_trait_treatmeant$gall_individuals_mean_log1p - platy_trait_control$gall_individuals_mean_log1p)/platy_trait_control$gall_individuals_sd_na.rm
+
+(platy_trait_treatmeant$Density_per_100_shoots_mean_log1p - platy_trait_control$Density_per_100_shoots_mean_log1p)/platy_trait_control$Density_per_100_shoots_sd_na.rm
+
+## Pupa
+pupa_trait_control <- filter(control_df, pupa > 0) %>%
+  summarise_at(vars("Gall_Height_mm","gall_individuals","Density_per_100_shoots"), funs(mean_log1p, sd_na.rm)) 
+
+pupa_trait_treatmeant <- filter(treatment_df, pupa > 0) %>%
+  summarise_at(vars("Gall_Height_mm","gall_individuals","Density_per_100_shoots"), funs(mean_log1p, sd_na.rm))
+
+bind_rows(pupa_trait_control, pupa_trait_treatmeant)
+
+(pupa_trait_treatmeant$Gall_Height_mm_mean_log1p - pupa_trait_control$Gall_Height_mm_mean_log1p)/pupa_trait_control$Gall_Height_mm_sd_na.rm
+
+(pupa_trait_treatmeant$gall_individuals_mean_log1p - pupa_trait_control$gall_individuals_mean_log1p)/pupa_trait_control$gall_individuals_sd_na.rm
+
+(pupa_trait_treatmeant$Density_per_100_shoots_mean_log1p - pupa_trait_control$Density_per_100_shoots_mean_log1p)/pupa_trait_control$Density_per_100_shoots_sd_na.rm
+```
+
+
+```{r Table of Selection Gradients}
+
+## Summarize Control Selection Gradients ----
+summary_beta_control <- data.frame(
+  Phenotype = c("Gall diameter", "Clutch size", "Female preference"),
+  Food_Web = "Complex",
+  Model = "GLMM",
+  Type = "Beta",
+  Estimate = round(Beta_avg_grad(beta_control),3),
+  lower_2.5 = round(apply(boot_beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3),
+  upper_97.5 = round(apply(boot_beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3)) 
+
+# doubled quadratic estimates to make comparable to directional selection gradients (Stinchcombe et al. 2008, Evolution)
+summary_quad_control <- data.frame(
+  Phenotype = c("Gall diameter", "Clutch size", "Female preference"),
+  Food_Web = "Complex",
+  Model = "GLMM",
+  Type = "Quadratic",
+  Estimate = 2*round(Beta_avg_grad(quad_control),3)[-c(1:3)],
+  lower_2.5 = 2*round(apply(boot_quad_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3)[-c(1:3)],
+  upper_97.5 = 2*round(apply(boot_quad_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3)[-c(1:3)]) 
+
+summary_corr_control <- data.frame(
+  Phenotype = c("Diam,Clutch", "Diam,Pref", "Clutch,Pref"),
+  Food_Web = "Complex",
+  Model = "GLMM",
+  Type = "Correlational",
+  Estimate = round(Beta_avg_grad(corr_control),3)[-c(1:6)],
+  lower_2.5 = round(apply(boot_corr_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3)[-c(1:6)],
+  upper_97.5 = round(apply(boot_corr_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3)[-c(1:6)]) 
+
+
+## Summarize Treatment Selection Gradients ----
+summary_beta_treatment <- data.frame(
+  Phenotype = c("Gall diameter", "Clutch size", "Female preference"),
+  Food_Web = "Simple",
+  Model = "GLMM",
+  Type = "Beta",
+  Estimate = round(Beta_avg_grad(beta_treatment),3),
+  lower_2.5 = round(apply(boot_beta_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3),
+  upper_97.5 = round(apply(boot_beta_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3)) 
+
+# doubled quadratic estimates to make comparable to directional selection gradients (Stinchcombe et al. 2008, Evolution)
+summary_quad_treatment <- data.frame(
+  Phenotype = c("Gall diameter", "Clutch size", "Female preference"),
+  Food_Web = "Simple",
+  Model = "GLMM",
+  Type = "Quadratic",
+  Estimate = 2*round(Beta_avg_grad(quad_treatment),3)[-c(1:3)],
+  lower_2.5 = 2*round(apply(boot_quad_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3)[-c(1:3)],
+  upper_97.5 = 2*round(apply(boot_quad_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3)[-c(1:3)]) 
+
+summary_corr_treatment <- data.frame(
+  Phenotype = c("Diam,Clutch", "Diam,Pref", "Clutch,Pref"),
+  Food_Web = "Simple",
+  Model = "GLMM",
+  Type = "Correlational",
+  Estimate = round(Beta_avg_grad(corr_treatment),3)[-c(1:6)],
+  lower_2.5 = round(apply(boot_corr_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3)[-c(1:6)],
+  upper_97.5 = round(apply(boot_corr_treatment$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3)[-c(1:6)]) 
+
+bind_rows(summary_beta_control, summary_beta_treatment) %>% arrange(Phenotype)
+bind_rows(summary_quad_control, summary_quad_treatment) %>% arrange(Phenotype)
+bind_rows(summary_corr_control, summary_corr_treatment) %>% arrange(Phenotype)
+```
+
+
+<!--$$logit(E(W))=\mu+\beta_{diameter}+\beta_{clutch}+\beta_{preference}+$$
+$$logit(E(W))=\mu+treatment+s(diam):treat+s(clutch)+s(pref)+diam:cluch+diam:pref+clutch:pref+(1|Genotype/Plant/Gall)$$-->
+
+<!-- We used generalized linear mixed models (GLMMs, @Bolker2009) to test the effects of food-web complexity on the shape of the fitness landscape. 
+Larva survival (0 or 1) was our response variable and measure of fitness. 
+<!-- Need to clean up the language part of this section without it being too complicated and confusing. I should also include tests of non-linear selection gradients. -->
+<!-- We specified our food-web treatment, each gall trait, two-way interactions between gall traits, as well interactions between gall trait and food-web treatment, as fixed effects to fully explore the effects of food-web complexity on the fitness landscape. 
+This analysis implicitly assumes that selection is linear, which we felt was a necessary trade-off for exploring the shape of the fitness landscape. 
+To account for the correlated structure of clutch size (gall level) and female preference (plant level) as well as any other independent effects of willow genotype on parasitism rates, we specified gall ID nested within plant ID nested within plant genotype as random intercepts in our statistical models. 
+<!-- To identify the appropriate level of model complexity for testing the effects of food-web complexity on the fitness landscapes, we compared models using Aikaike Information Criteria. 
+The maximal complexity we explored was a generalized additive mixed model that fit cubic splines to each trait as well as linear interactions between a maximum of two traits as well as an interaction with food-web treatment. -->
+
+<!-- We used a spline-based semiparametric regression (Schluter 1988, Morrissey and Sakedra 2014). These analyses are desirable because they lead to inferences of the form of selection that make few \textit{a priori} assumptions (Schluter 1988), and can now be used to quantify standardized selection gradients (Morrissey and Sakrera 2014).
+
+We then calculated selection gradients as the partial derivatives in absolute fitness (larva survival) with response to multivariate phenotype using the \textit{gsg} package in R (cite Morrissey and R project). We standardized phenotypes (mean=0, SD=1), so that first-order derivatives correspond to the intensity of directional selection ($\beta$\textsubscript{trait}), while second-order derivatives correspond to intensity of nonlinear ($\gamma$\textsubscript{trait}) and correlational selection ($\gamma$\textsubscript{trait$_i$,}\textsubscript{trait$_j$}) and are thus comparable within this study as well as to others. -->
+
+<!-- Our GLMMs are useful for testing the effects of food-web complexity on the fitness landscape within the context of our experimental design; however, coefficients from GLMMs cannot be easily converted into quantitative estimates of selection gradients (cite Morrissey's work). Therefore, for each treatment, we fit separate generalized additive models (GAMs) for gall traits that we identified as being under selection from our GLMMs. Estimating selection gradients from GAMs can give insight to both linear and non-linear selection gradients, which we assumed were all linear for our GLMMs, given the complexity of already fitting up to 4-way interactions in these models. For the number of larva per gall and gall density, we aggregated larva survival at the gall or plant level, respectively, to avoid pseudoreplication in our GAMs. -->
+
+```{r Figure 1, echo=FALSE, fig.cap="Illustrations of complex (A) and simple (B) food webs associated with the insect herbivore, *Iteomyia salicisverruca*. Black arrows denote 'who-eats-whom' in this network of trophic interactions."}
+knitr::include_graphics("complex_simple_foodwebs_compressed.pdf")
+```
+
+
+Results
+=======
+
+<!-- Consider exploring whether there is a linear or non-linear relationship between food-web complexity and the strength of selection. I think I could do this simply by calculating the index of food-web complexity measured on each plant. Perhaps it would also be good to measure to calculate the selection gradient observed on each plant -->
+Two key patterns emerged from our analyses. First, fewer phenotypic traits were under selection in the complex vs. simple food web. 
+In both complex and simple food webs, gall diameter was under strong directional selection, with larger galls resulting in higher larval survival (complex $\beta_{diam}=$ 
+`r paste0(filter(summary_beta_control, Phenotype=="Gall diameter")$Estimate," [",filter(summary_beta_control, Phenotype=="Gall diameter")$lower_2.5,",",filter(summary_beta_control, Phenotype=="Gall diameter")$upper_97.5,"]")`
+; simple $\beta_{diam}=$
+`r paste0(filter(summary_beta_treatment, Phenotype=="Gall diameter")$Estimate," [",filter(summary_beta_treatment, Phenotype=="Gall diameter")$lower_2.5,",",filter(summary_beta_treatment, Phenotype=="Gall diameter")$upper_97.5,"]")`
+)(Fig. \ref{fig:Univariate_Landscapes}A). 
+In simple food webs, both clutch size and female preference experience directional selection, with smaller clutch sizes ($\beta_{clutch}=$
+`r paste0(filter(summary_beta_treatment, Phenotype=="Clutch size")$Estimate," [",filter(summary_beta_treatment, Phenotype=="Clutch size")$lower_2.5,",",filter(summary_beta_treatment, Phenotype=="Clutch size")$upper_97.5,"]")`
+and weaker preferences ($\beta_{pref}=$
+`r paste0(filter(summary_beta_treatment, Phenotype=="Female preference")$Estimate," [",filter(summary_beta_treatment, Phenotype=="Female preference")$lower_2.5,",",filter(summary_beta_treatment, Phenotype=="Female preference")$upper_97.5,"]")`
+) resulting in higher larval survival (blue lines in Fig. \ref{fig:Univariate_Landscapes}B,C).
+In contrast, there was no evidence of selection on clutch size ($\beta_{clutch}=$
+`r paste0(filter(summary_beta_control, Phenotype=="Clutch size")$Estimate," [",filter(summary_beta_control, Phenotype=="Clutch size")$lower_2.5,",",filter(summary_beta_control, Phenotype=="Clutch size")$upper_97.5,"]")`
+) or female preference ($\beta_{pref}=$
+`r paste0(filter(summary_beta_control, Phenotype=="Female preference")$Estimate," [",filter(summary_beta_control, Phenotype=="Female preference")$lower_2.5,",",filter(summary_beta_control, Phenotype=="Female preference")$upper_97.5,"]")`
+) in complex food webs (orange lines in Fig. \ref{fig:Univariate_Landscapes}B,C). The absence of selection on clutch size and female preference was likely a result of conflicting selection pressures imposed by each guild of parasitoids due to their different functional relationships with gall traits. Together, these different patterns of selection resulted in an ideal combination of traits having higher fitness in the simple food web (large diameter, smaller clutches, weaker preference), whereas there was a larger combination of trait values that had equal fitness in the complex food web (Fig. \ref{fig:Multivariate_Landscapes}).
+We did not find any strong evidence for nonlinear or correlational selection gradients acting on gall traits in either food-web treatment.
+The second major pattern was that the overall intensity of selection was stronger in the complex vs. simple food web. This result appeared to be driven by selection on gall diameter in the complex food web, which was more than 
+`r round(filter(summary_beta_control, Phenotype=="Gall diameter")$Estimate/filter(summary_beta_treatment, Phenotype=="Gall diameter")$Estimate,1)`
+$\times$ larger than any other selection gradient in our analyses. 
+
+```{r Get Gall Diameter Relative Fitness Landscape, include=FALSE, cache=TRUE}
+
+# Control ----
+RF_control_gall_size <- bootstrap_fitness(
+  logistic_model = quad_control, 
+  fixed_effects = "~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2)",
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000), 
+     sc.log.clutch_size = 0,
+     sc.log1p.female_preference = 0),
+  bootstraps=n_boots_plots)
+
+
+# Treatment ----
+RF_treatment_gall_size <- bootstrap_fitness(
+  logistic_model = quad_treatment, 
+  fixed_effects = "~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2)",
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.log.clutch_size = 0,
+     sc.log1p.female_preference = 0),
+  bootstraps=n_boots_plots)
+```
+
+```{r Get Clutch Size Fitness Landscape, include=FALSE, cache=TRUE}
+
+# Control ----
+RF_control_clutch_size <- bootstrap_fitness(
+  logistic_model = quad_control, 
+  fixed_effects = "~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2)",
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.log.clutch_size = seq(-1,1,length.out=1000),
+     sc.log1p.female_preference = 0),
+  bootstraps=n_boots_plots)
+
+# Treatment ----
+RF_treatment_clutch_size <- bootstrap_fitness(
+  logistic_model = quad_treatment, 
+  fixed_effects = "~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2)",
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.log.clutch_size = seq(-1,1,length.out=1000),
+     sc.log1p.female_preference = 0),
+  bootstraps=n_boots_plots)
+```
+
+```{r Get Female Preference Fitness Landscape, include=FALSE, cache=TRUE}
+
+# Control ----
+RF_control_female_preference <- bootstrap_fitness(
+  logistic_model = quad_control, 
+  fixed_effects = "~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2)",
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.log.clutch_size = 0, 
+     sc.log1p.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=n_boots_plots)
+
+# Treatment ----
+RF_treatment_female_preference <- bootstrap_fitness(
+  logistic_model = quad_treatment, 
+  fixed_effects = "~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2)",
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.log.clutch_size = 0,
+     sc.log1p.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=n_boots_plots)
+
+```
+
+
+```{r Get Clutch Size x Female Preference Landscape, include=FALSE, cache=TRUE}
+
+# Control ----
+RF_control_clutch.x.preference <- bootstrap_fitness(
+  logistic_model = corr_control, 
+  fixed_effects = "~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2) + sc.gall_size:sc.log.clutch_size + sc.gall_size:sc.log1p.female_preference + sc.log.clutch_size:sc.log1p.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.log.clutch_size = seq(-1,1,length.out=1000), 
+     sc.log1p.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=NULL)
+
+# Treatment ----
+RF_treatment_clutch.x.preference <- bootstrap_fitness(
+  logistic_model = corr_treatment, 
+  fixed_effects = "~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2) + sc.gall_size:sc.log.clutch_size + sc.gall_size:sc.log1p.female_preference + sc.log.clutch_size:sc.log1p.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = 0,
+     sc.log.clutch_size = seq(-1,1,length.out=1000),
+     sc.log1p.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=NULL)
+```
+
+
+```{r Get Gall Diameter x Clutch Size Landscape, include=FALSE, cache=TRUE}
+
+# Control ----
+RF_control_size.x.clutch <- bootstrap_fitness(
+  logistic_model = corr_control, 
+  fixed_effects = "~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2) + sc.gall_size:sc.log.clutch_size + sc.gall_size:sc.log1p.female_preference + sc.log.clutch_size:sc.log1p.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.log.clutch_size = seq(-1,1,length.out=1000), 
+     sc.log1p.female_preference = 0), 
+  bootstraps=NULL)
+
+# Treatment ----
+RF_treatment_size.x.clutch <- bootstrap_fitness(
+  logistic_model = corr_treatment, 
+  fixed_effects = "~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2) + sc.gall_size:sc.log.clutch_size + sc.gall_size:sc.log1p.female_preference + sc.log.clutch_size:sc.log1p.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.log.clutch_size = seq(-1,1,length.out=1000),
+     sc.log1p.female_preference = 0), 
+  bootstraps=NULL)
+```
+
+```{r Get Gall Diameter x Female Preference Landscape, include=FALSE, cache=TRUE}
+
+# Control ----
+RF_control_size.x.preference <- bootstrap_fitness(
+  logistic_model = corr_control, 
+  fixed_effects = "~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2) + sc.gall_size:sc.log.clutch_size + sc.gall_size:sc.log1p.female_preference + sc.log.clutch_size:sc.log1p.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.log.clutch_size = 0, 
+     sc.log1p.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=NULL)
+
+# Treatment ----
+RF_treatment_size.x.preference <- bootstrap_fitness(
+  logistic_model = corr_treatment, 
+  fixed_effects = "~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference + I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2) + sc.gall_size:sc.log.clutch_size + sc.gall_size:sc.log1p.female_preference + sc.log.clutch_size:sc.log1p.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=1000),
+     sc.log.clutch_size = 0,
+     sc.log1p.female_preference = seq(-1,1,length.out=1000)), 
+  bootstraps=NULL)
+```
+
+
+```{r Fitness Landscape Plot Helpers, include=FALSE, cache=TRUE}
+
+## Color palette ----
+
+# order -> orange, light blue, green, yellow, dark blue, red, pink
+cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#000000", "#999999")
+complex_color <- cbPalette[6] # 1
+simple_color <- cbPalette[5] # 2
+treatment_colors <- c(complex_color, simple_color)
+
+## Scale relative fitness across plots ----
+
+# 1D
+RF_gradient_range <- bind_rows(RF_treatment_gall_size$relative_fitness, RF_control_gall_size$relative_fitness,
+          RF_treatment_clutch_size$relative_fitness, RF_control_clutch_size$relative_fitness,
+          RF_treatment_female_preference$relative_fitness, RF_control_female_preference$relative_fitness) %>%
+  select(-sc.log.clutch_size, -sc.log1p.female_preference) %>%
+  gather(ID, relative_fitness, -sc.gall_size) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  summarise(min = min(relative_fitness), max = max(relative_fitness))
+RF_gradient_scale <- c(0,0.5,1,1.5,2) #,2.5) # adjusted based on range
+
+# 2D
+RF_range <- bind_rows(RF_treatment_clutch.x.preference$relative_fitness, RF_control_clutch.x.preference$relative_fitness,
+          RF_treatment_size.x.clutch$relative_fitness, RF_control_size.x.clutch$relative_fitness,
+          RF_treatment_size.x.preference$relative_fitness, RF_control_size.x.preference$relative_fitness) %>%
+  summarise(min = min(average), max = max(average))
+
+## Scale absolute fitness across plots ----
+
+# 1D
+AF_gradient_scale <- c(0,0.25,0.5,0.75,1) # adjusted based on range
+
+# 2D
+AF_range <- bind_rows(RF_treatment_clutch.x.preference$absolute_fitness, RF_control_clutch.x.preference$absolute_fitness,
+          RF_treatment_size.x.clutch$absolute_fitness, RF_control_size.x.clutch$absolute_fitness,
+          RF_treatment_size.x.preference$absolute_fitness, RF_control_size.x.preference$absolute_fitness) %>%
+  summarise(min = min(average), max = max(average))
+```
+
+```{r Plot Univariate Landscapes, include=FALSE, cache=TRUE}
+uni_breaks <- c(0.1,0.5,1)
+
+# Gall size 
+AF_uni_size <- bind_rows(mutate(RF_treatment_gall_size$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size$absolute_fitness, Food_Web = "Complex")) %>%
+  select(-sc.log.clutch_size, -sc.log1p.female_preference) %>%
+  gather(ID, absolute_fitness, -sc.gall_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.gall_size, y=absolute_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Population mean fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
+  scale_y_log10(breaks=uni_breaks, labels=uni_breaks) + annotation_logticks(sides = "l") +
+  coord_cartesian(ylim=c(0.07,1))
+#AF_uni_size
+  #scale_y_continuous(breaks = AF_gradient_scale, limits = c(min(AF_gradient_scale), max(AF_gradient_scale)), trans = "log")
+
+# Clutch size
+AF_uni_clutch <- bind_rows(mutate(RF_treatment_clutch_size$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch_size$absolute_fitness, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.log1p.female_preference) %>%
+  gather(ID, absolute_fitness, -sc.log.clutch_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.log.clutch_size, y=absolute_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Clutch size (SDs)") +
+  ylab("Population mean fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
+  scale_y_log10(breaks=uni_breaks, labels=uni_breaks) + annotation_logticks(sides = "l") +
+  coord_cartesian(ylim=c(0.07,1))
+  #scale_y_continuous(breaks = AF_gradient_scale, limits = c(min(AF_gradient_scale), max(AF_gradient_scale)), trans = "log")
+
+# Female preference
+AF_uni_pref <- bind_rows(mutate(RF_treatment_female_preference$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_female_preference$absolute_fitness, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.log.clutch_size) %>%
+  gather(ID, absolute_fitness, -sc.log1p.female_preference, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.log1p.female_preference, y=absolute_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Female preference (SDs)") +
+  ylab("Population mean fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
+  scale_y_log10(breaks=uni_breaks, labels=uni_breaks) + annotation_logticks(sides = "l") +
+  coord_cartesian(ylim=c(0.07,1))
+  #scale_y_continuous(breaks = AF_gradient_scale, limits = c(min(AF_gradient_scale), max(AF_gradient_scale)), trans = "log")
+```
+
+```{r Univariate_Landscapes, echo=FALSE, fig.cap="\\label{fig:Univariate_Landscapes}Selection gradients acting on gall traits in complex vs. simple food webs. Each panel corresponds to a different gall trait: gall diameter (A); clutch size (B); and female preference (C). Solid lines represent the estimated gradients in complex (orange) and simple (blue) food webs. Transparent lines represent bootstrapped replicates (n=100) to show the uncertainty in estimated gradients. Note that only 100 bootstraps are displayed here, but that inferences are based on 1,000 bootstrapped samples."}
+
+# Get legend
+AF_uni_legend <- get_legend(AF_uni_size)
+
+# Make plots
+AF_uni_plots <- plot_grid(AF_uni_size + theme(legend.position = "none", 
+                                              axis.text.x = element_text(size=10),
+                                              axis.title.x = element_text(size=11)), 
+                       AF_uni_clutch + theme(legend.position = "none",
+                                             axis.title.y = element_blank(), 
+                                             axis.text.y = element_blank(),
+                                             axis.text.x = element_text(size=10),
+                                             axis.title.x = element_text(size=11)),
+                       AF_uni_pref + theme(legend.position = "none", 
+                                           axis.title.y = element_blank(), 
+                                           axis.text.y = element_blank(), 
+                                           axis.text.x = element_text(size=10),
+                                           axis.title.x = element_text(size=11)),
+                       labels = "AUTO", ncol = 3, align='hv')
+
+AF_gradients <- ggdraw(AF_uni_plots) + draw_grob(AF_uni_legend, x = 0.7, y=-0.2) # draw_grob(AF_uni_legend, x = 0.8, y=0)
+AF_gradients
+#AF_uni_plots
+# save_plot("FL_1D.pdf", AF_uni_plots, base_height = 6.5, base_width = 8)
+```
+
+```{r Plot Multivariate Fitness Landscape, include=FALSE, cache=TRUE}
+
+my_breaks <- c(0.2,0.4,0.6,0.8)
+
+# Size x Preference
+AF_plot_size.x.preference <- bind_rows(mutate(RF_treatment_size.x.preference$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_size.x.preference$absolute_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=sc.log1p.female_preference, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Female preference (SDs)") +
+  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_y_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_fill_viridis(name = "Population\nmean fitness", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(0.1,1)) # limits = c(AF_range$min, AF_range$max), 
+
+# Size x Clutch
+AF_plot_size.x.clutch <- bind_rows(mutate(RF_treatment_size.x.clutch$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_size.x.clutch$absolute_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=sc.log.clutch_size, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Clutch size (SDs)") +
+  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_y_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_fill_viridis(name = "Population\nmean fitness", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(0.1,1)) # limits = c(AF_range$min, AF_range$max), 
+
+# Clutch x Preference
+AF_plot_clutch.x.preference <- bind_rows(mutate(RF_treatment_clutch.x.preference$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch.x.preference$absolute_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.log1p.female_preference, y=sc.log.clutch_size, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Female preference (SDs)") +
+  ylab("Clutch size (SDs)") +
+  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_y_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_fill_viridis(name = "Population\nmean fitness", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(0.1,1)) # limits = c(AF_range$min, AF_range$max), 
+```
+
+```{r Multivariate_Landscapes, echo=FALSE, fig.cap="\\label{fig:Multivariate_Landscapes}Fitness landscapes of gall traits in complex vs. simple food webs. Each panel corresponds to a different combination of traits: clutch size and gall diameter (A); clutch size and female preference (B); female preference and gall diameter (C). Note that traits for all plots range 1 SD below and above the mean (=0)."}
+# Get legend
+AF_landscape_legend <- get_legend(AF_plot_size.x.preference)
+
+# Format plots
+AF_landscape_plots <- plot_grid(
+  AF_plot_size.x.clutch + theme(legend.position = "none", axis.title.x = element_blank()),
+  AF_plot_clutch.x.preference + theme(legend.position = "none", axis.title.y = element_blank()),
+  AF_plot_size.x.preference + theme(legend.position = "none"), 
+  nrow=2, align="hv", labels = "AUTO")
+AF_landscape_2d <- ggdraw(AF_landscape_plots) + draw_grob(AF_landscape_legend, x = 0.7, y=-0.2)
+AF_landscape_2d
+#save_plot("AF_landscapes_2d.png", AF_landscape_2d, base_height=6, base_width = 8)
+#save_plot("FL_2D.pdf", AF_landscape_2d, base_height=6, base_width = 8)
+```
+
+
+
+```{r AIC Model Comparison, include=FALSE, cache=TRUE}
+
+# Control ----
+AIC(beta_control, quad_control, corr_control)
+
+glm.beta_control <- glm(gall_survival ~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference, data=control_df, family=binomial(link=logit))
+
+beta_control.REonlyGallID <- glmer(gall_survival ~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference +
+                                   (1|Gall_Number),
+                                 data = control_df,
+                                 family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
+
+AIC(beta_control, glm.beta_control)
+AIC(beta_control, beta_control.REonlyGallID)
+overdisp_fun(beta_control)
+
+# Treatment ----
+AIC(beta_treatment, quad_treatment, corr_treatment)
+
+glm.beta_treatment <- glm(gall_survival ~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference, data=treatment_df, family=binomial(link=logit))
+
+beta_treatment.REonlyGallID <- glmer(gall_survival ~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference +
+                                   (1|Genotype/Plant_Position),
+                                 data = treatment_df,
+                                 family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
+
+overdisp_fun(beta_treatment)
+
+AIC(beta_treatment, glm.beta_treatment)
+AIC(beta_treatment, beta_treatment.REonlyGallID)
+anova(beta_treatment, beta_treatment.REonlyGallID)
+anova(beta_treatment, glm.beta_treatment)
+```
+
+
+Discussion
+==========
+
+<!-- Summary -->
+
+Our key finding was that the adaptive landscape was less constrained in the complex vs. simple food web. These fewer constraints arise from conflicting selection pressures imposed by different parasitoid guilds, resulting in fewer traits under selection in the complex food web. At the same time, we observed an overall greater intensity of selection in the complex food web, suggesting that trait evolution can be faster in complex vs. simple food webs. Our observation that natural selection was more constrained and less intense in simple vs. complex food webs suggests that the loss of biodiversity could constrain the adaptive potential of interacting species by reducing genetic and phenotypic variation in multiple traits.
+
+<!-- Selective constraints result -->
+
+Current theory suggests that when the number of selective constrains is less than the number of genetic constraints (i.e. some genetically variable traits are selective neutral), there are multiple positions on the landscape that confer equal fitness (Lande 1981; Lande and Arnold 1985). In this scenario, trait differences between populations may simply be due to neutral processes (e.g. genetic drift and mutation) moving trait values of the population. For our system, we currently lack quantitative estimates of genetic variation in our traits, although work with other species of galling insects has shown that gall diameter (Abramhson, Heath's work), clutch size (look to Weiss' work), and oviposition preference (Abrahmson's work?) are genetically variable. We encourage others to examine how changes in community context will alter selection on multiple traits.
+
+<!-- Intensity of selection result -->
+
+One interesting result of our work was that the overall intensity of selection appeared to be larger in complex food webs. This result was driven by the large selection gradient acting on gall diameter in complex vs. simple food webs. This difference in selection intensity is likely not driven by a difference in the ecological relationship between gall diameter and parasitoid attack (i.e. slope), but actually a result of the lower mean fitness of *Iteomyia* in the complex food web. This lower mean fitness is not surprising ---we excluded an entire guild of parasitoids from attacking the insect. But this more intense selection pressure may simply represent a transient dynamic. This is because we would expect the egg-parasitoid *Platygaster* to increase in abundance over time once its intraguild predator has been removed. While our results suggest that this wouldn't affect the slope of the relationship, the higher abundance of the egg parasitoid would likely reduce the mean fitness of *Iteomyia*, thus increasing the selection gradient acting on gall diameter closer to what we observed in the complex food web. We don't expect it to fully compensate, given that the larval parasitoids exhibit a different functional relationship with gall traits, and thus we expect a more diverse community of primary parasitoids to generally impose greater parasitism pressure, a factor that appears to be a general trend in parasitoid community (Hawkins citation) and likely for other consumers (Ives and Cardinale Ecology Letters).
+
+<!-- Quantifying indirect effects of food-web complexity -->
+
+Our study focused on quantifying the direct effects of changes in network complexity on the fitness landscape; however, changes in network complexity may have pervasive indirect effects via coevolution or by initiating evolutionary cascades. In our system, we observed that excluding the guild of larval parasitoids altered selection on both the basal resource (*Iteomyia*) and the intraguild prey (*Platygaster*). GIVE DETAILS AND SUGGEST A POTENTIAL EVOLUTIONARY CASCADE.
+
+<!-- Generality of effects of food-web complexity -->
+
+Our study manipulated food-web complexity and examined changes in the fitness landscape of species embedded within this network. However, other studies have also examined, at least theoretically, how changes in the diversity of competitive communities affects evolution. These studies have generally suggested that the diversity of competitors may actually constrain the adaptive landscape, a finding that stands in contrast to our results. NEED TO REVIEW THESE PAPERS TO SEE HOW ITS DIFFERENT.
+
+<!-- Conclusion -->
+
+We suggest that by explicitly focusing on network structure, we can predict how changes in biodiversity will affect the adaptive potential of constituent species. A network allows a powerful representation of the 'community context', lending predictive power to how changes in network structure (either due to loss of species or links), will alter natural selection and consequently evolutionary change. Our results also suggest that losing biodiversity may not just have consequences at the community level, but also population-level consequences that may actually constrain adaptation to changing environments. This argues that changes in network complexity may not only affect the robustness of communities, but also that of constituent populations to future environmental change.
+
+<!-- 
+From Arnold Am Nat 1992 Constrains on phenotypic evolution
+ Evolutionary models with constant adaptive landscapes and G-matrices pro-
+ vide some generalizations about the effects of selective constraints. First, the
+ phenotypic mean of the population tends to evolve in an uphill direction on the
+ adaptive landscape (Lande 1979). When selection is frequency-independent and
+ the landscape is Gaussian, the population mean equilibrates on an adaptive peak.
+ Burger (1986), however, modeled evolution on a landscape that was an ascending
+ ridge with increasingly steep flanks. He found that the population would equili-
+ brate on the ridge crest when stabilizing selection reached a critical level. Second,
+ frequency-dependent selection generally causes the population to equilibrate
+ some distance downslope from an adaptive peak (Lande 1976b, 1980b). Finally,
+ when the number of selective constraints is less than the number of genetic con-
+ straints so that some genetically variable traits are selectively neutral, there is a
+ collection of possible equilibrium points (a line, plane, or hyperplane) rather than
+ a single equilibrium point (Lande 1981; Lande and Arnold 1985). In the case of
+ mating preferences and sexually selected traits, for example, the evolutionary
+ outcome is changed dramatically depending on whether selection acts on mating
+ preferences (Arnold 1987; Pomiankowski et al. 1991).
+
+I. Feedbacks between biological diversity and evolutionary change 
+
+More recently, researchers have begun to explore how the community context drives evolutionary change (@McPeek2017; @TerHorst2018). 
+
+NEED to recognize that evolutionary biologists have begun to explore how community context affects evolutionary change (work by Sharon Strauss, Casey terHorst, Lutz Becks, etc.). These results have begun to show interesting patterns whereby the composition of species in a community can alter the direction and strength of natural selection imposed on species embedded within these communities (cite). 
+
+In other words, these results have begun to illustrate show how biological diversity, in terms of differences between species, can shape evolution. Nevertheless, predicting the how the composition of species in a community requires moving beyond a description of community composition. simply knowing the composition of species in a community will 
+
+
+
+There are various bibliography styles available. You can select the
+style of your choice in the preamble of this document. These styles are
+Elsevier styles based on standard styles like Harvard and Vancouver.
+Please use BibTeX to generate your bibliography and include DOIs
+whenever available.
+
+Here are two sample references: @Feynman1963118 [@Dirac1953888].
+-->
+
+References {#references .unnumbered}
+==========
+
+```{r Univariate Absolute Fitness Landscapes, include=FALSE}
+## Absolute fitness plots ----
+
+# Gall size 
+AF_uni_size <- bind_rows(mutate(RF_treatment_gall_size$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size$absolute_fitness, Food_Web = "Complex")) %>%
+  select(-sc.log.clutch_size, -sc.log1p.female_preference) %>%
+  gather(ID, absolute_fitness, -sc.gall_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.gall_size, y=absolute_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Absolute fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = AF_gradient_scale, limits = c(min(AF_gradient_scale), max(AF_gradient_scale)))
+
+# Clutch size
+AF_uni_clutch <- bind_rows(mutate(RF_treatment_clutch_size$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch_size$absolute_fitness, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.log1p.female_preference) %>%
+  gather(ID, absolute_fitness, -sc.log.clutch_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.log.clutch_size, y=absolute_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Clutch size (SDs)") +
+  ylab("Absolute fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = AF_gradient_scale, limits = c(min(AF_gradient_scale), max(AF_gradient_scale)))
+
+# Female preference
+AF_uni_pref <- bind_rows(mutate(RF_treatment_female_preference$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_female_preference$absolute_fitness, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.log.clutch_size) %>%
+  gather(ID, absolute_fitness, -sc.log1p.female_preference, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.log1p.female_preference, y=absolute_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Female preference (SDs)") +
+  ylab("Absolute fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = AF_gradient_scale, limits = c(min(AF_gradient_scale), max(AF_gradient_scale)))
+```
+
+```{r Figure S1 Univariate Absolute Fitness Landscapes, include=FALSE}
+
+# Get legend
+AF_uni_legend <- get_legend(AF_uni_size)
+
+# Make plots
+AF_uni_plots <- plot_grid(AF_uni_size + theme(legend.position = "none"), 
+                       AF_uni_clutch + theme(legend.position = "none", 
+                                          axis.title.y = element_blank(), axis.text.y = element_blank()),
+                       AF_uni_pref + theme(legend.position = "none", 
+                                        axis.title.y = element_blank(), axis.text.y = element_blank()),
+                       labels = "AUTO", ncol = 4, align='hv')
+
+AF_gradients <- ggdraw(AF_uni_plots) + draw_grob(AF_uni_legend, x = 0.8, y=0)
+AF_gradients
+#save_plot("AF_gradients.png", AF_gradients, base_height=6, base_width = 8)
+#save_plot("AF_gradients.pdf", AF_gradients, base_height=6, base_width = 8)
+```
+
+
+```{r Multivariate Absolute Fitness Landscapes, include=FALSE}
+
+# Size x Preference
+AF_plot_size.x.preference <- bind_rows(mutate(RF_treatment_size.x.preference$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_size.x.preference$absolute_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=sc.log1p.female_preference, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Female preference (SDs)") +
+  scale_fill_viridis(limits = c(AF_range$min, AF_range$max), name = "Absolute fitness")
+
+# Size x Clutch
+AF_plot_size.x.clutch <- bind_rows(mutate(RF_treatment_size.x.clutch$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_size.x.clutch$absolute_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=sc.log.clutch_size, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Clutch size (SDs)") +
+  scale_fill_viridis(limits = c(AF_range$min, AF_range$max), name = "Absolute fitness")
+
+# Clutch x Preference
+AF_plot_clutch.x.preference <- bind_rows(mutate(RF_treatment_clutch.x.preference$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch.x.preference$absolute_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.log1p.female_preference, y=sc.log.clutch_size, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Female preference (SDs)") +
+  ylab("Clutch size (SDs)") +
+  scale_fill_viridis(limits = c(AF_range$min, AF_range$max), name = "Absolute fitness")
+```
+
+
+```{r Figure S2 Multivariate Absolute Fitness Landscapes, include=FALSE}
+# Get legend
+AF_landscape_legend <- get_legend(AF_plot_size.x.preference)
+
+# Format plots
+AF_landscape_plots <- plot_grid(
+  AF_plot_size.x.clutch + theme(legend.position = "none", axis.title.x = element_blank()),
+  AF_plot_clutch.x.preference + theme(legend.position = "none", axis.title.y = element_blank()),
+  AF_plot_size.x.preference + theme(legend.position = "none"), 
+  nrow=2, align="hv", labels = "AUTO")
+AF_landscape_2d <- ggdraw(AF_landscape_plots) + draw_grob(AF_landscape_legend, x = 0.7, y=-0.2)
+AF_landscape_2d
+#save_plot("AF_landscapes_2d.png", AF_landscape_2d, base_height=6, base_width = 8)
+#save_plot("AF_landscapes_2d.pdf", AF_landscape_2d, base_height=6, base_width = 8)
+```
+
+
+```{r OLD GAMM comparison, eval=FALSE, include=FALSE}
+gamm_control <- gamm.model(gall_survival ~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference +
+                         I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2) +
+                         sc.gall_size:sc.log.clutch_size + sc.gall_size:sc.log1p.female_preference + sc.log.clutch_size:sc.log1p.female_preference, 
+                         data = control_df)
+summary(gamm_control$gam)
+
+gam.gradients(gamm_control$gam, phenotype=c("sc.gall_size","sc.log.clutch_size"), covariates = c("sc.log1p.female_preference"), se.method="none")
+gam.gradients(gamm_control$gam, phenotype=c("sc.gall_size","sc.log1p.female_preference"), covariates = c("sc.log.clutch_size"), se.method="none")
+gam.gradients(gamm_control$gam, phenotype=c("sc.log.clutch_size","sc.log1p.female_preference"), covariates = c("sc.gall_size"), se.method="none")
+
+AIC(corr_control, gamm_control$mer)
+```
+
+```{r OLD Selection Gradients - Complex Food Web, eval=FALSE, include=FALSE}
+# note that I've switched to using the lme4 package to analyzing the GLMM
+
+# GLMM ----
+glmer_control <- glmer(gall_survival ~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference +
+                         I(sc.gall_size^2) + I(sc.log.clutch_size^2) + I(sc.log1p.female_preference^2) +
+                         sc.gall_size:sc.log.clutch_size + sc.gall_size:sc.log1p.female_preference + sc.log.clutch_size:sc.log1p.female_preference +
+                           (1|Genotype/Plant_Position/Gall_Number),
+                         data = control_df,
+                         family = binomial(link = logit), optimizer = "bobyqa")
+summary(glmer_control)
+
+# Mean fitness ----
+Wbar_control <- inverse_logit(fixef(update(glmer_control, .~. -sc.gall_size -sc.log.clutch_size -sc.log1p.female_preference)))
+
+# Confidence intervals for selection gradients ----
+boot_Beta_control <- bootMer(glmer_control, FUN = Beta_avg_grad, nsim=100, parallel="multicore", ncpus=32)
+
+## Summary ----
+summary_Beta_glmm_control <- data.frame(
+  Phenotype = c("Gall size", "Clutch size", "Female preference"),
+  Food_Web = "Complex",
+  Model = "GLMM",
+  Beta = round(Beta_avg_grad(glmer_control),3),
+  lower_2.5 = round(apply(boot_Beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.025)),3),
+  upper_97.5 = round(apply(boot_Beta_control$t, 2, FUN = function(bootstraps) quantile(bootstraps, 0.975)),3)) 
+
+summary_Beta_glmm_control
+```
+
+```{r Get 3D, include=FALSE, eval=FALSE}
+# note that length.out=10 now
+library(FD)
+
+# Control ----
+RF_control_3D <- bootstrap_fitness(
+  logistic_model = beta_control, 
+  fixed_effects = "~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=10),
+     sc.log.clutch_size = seq(-1,1,length.out=10),
+     sc.log1p.female_preference = seq(-1,1,length.out=10)), 
+  bootstraps=NULL)
+mean(RF_control_3D$relative_fitness$average)
+
+control_traits <- RF_control_3D$relative_fitness %>%
+  filter(average < 1) %>%
+  select(-average) %>%
+  mutate(Treatment = "Control")
+
+FD_control <- dbFD(control_traits)
+
+FD_control
+
+# Treatment ----
+RF_treatment_3D <- bootstrap_fitness(
+  logistic_model = beta_treatment, 
+  fixed_effects = "~ sc.gall_size + sc.log.clutch_size + sc.log1p.female_preference",
+  newdata = expand.grid(
+     sc.gall_size = seq(-1,1,length.out=10),
+     sc.log.clutch_size = seq(-1,1,length.out=10),
+     sc.log1p.female_preference = seq(-1,1,length.out=10)), 
+  bootstraps=NULL)
+mean(RF_treatment_3D$relative_fitness$average)
+
+treatment_traits <- RF_treatment_3D$relative_fitness %>%
+  filter(average < 1) %>%
+  select(-average) %>%
+  mutate(Treatment = "Treatment")
+
+FD_treatment <- dbFD(treatment_traits)
+
+bind_rows(
+  data.frame(FD_control),
+  data.frame(FD_treatment)
+)
+
+library(vegan)
+all_traits <- bind_rows(control_traits, treatment_traits)
+
+dim(control_traits)
+dim(treatment_traits)
+
+traits_betadisper <- betadisper(d = vegdist(select(all_traits, -Treatment), method = "euclidean"), group = all_traits$Treatment)
+boxplot(traits_betadisper)
+
+ggplot(all_traits, aes(x=sc.gall_size, y=sc.log1p.female_preference, color=Treatment)) +
+  geom_jitter(width=0.05, size = 2)
+
+ggplot(all_traits, aes(x=sc.gall_size, y=sc.log.clutch_size, color=Treatment)) +
+  geom_jitter(width=0.05, size=2)
+
+ggplot(all_traits, aes(x=sc.log1p.female_preference, y=sc.log.clutch_size, color=Treatment)) +
+  geom_jitter(width=0.05, size=2)
+
+##
+
+control_traits <- RF_control_3D$relative_fitness %>%
+  mutate(Treatment = "Control", average_cut = cut(average, breaks = c(0,0.9,1.1,2)))
+control_traits$average_cut
+
+treatment_traits <-RF_treatment_3D$relative_fitness %>%
+  mutate(Treatment = "Treatment", average_cut = cut(average, breaks = c(0,0.9,1.1,2)))
+
+all_traits <- bind_rows(control_traits, treatment_traits)
+table(all_traits$Treatment, all_traits$average_cut)
+
+ggplot(all_traits, aes(x=average, fill=Treatment)) +
+  geom_density(alpha=0.2) +
+  xlab("Relative fitness")
+
+data.frame(control = var(control_traits$average), treatment = var(treatment_traits$average))
+#all_traits %>%
+#  filter(average > 1) %>%
+#  ggplot(., aes(x=average, color=Treatment)) + geom_density()
+
+##
+
+#control_traits <- RF_control_3D$relative_fitness %>%
+#  mutate(Treatment = "Control", abund = average*100)
+
+#treatment_traits <-RF_treatment_3D$relative_fitness %>%
+#  mutate(Treatment = "Treatment", abund = average*100)
+
+#all_traits <- bind_rows(control_traits, treatment_traits)
+
+#library(MASS)
+#all_traits %>%
+#  ggplot(., aes(x=sc.log.clutch_size, y=sc.log1p.female_preference)) +
+#  geom_point() +
+#  stat_density_2d(aes(fill = stat(level)), geom = "polygon")
+```
+
+```{r Plot Univariate Landscapes OLD, include=FALSE, cache=TRUE, eval=FALSE}
+
+# Gall Diameter ----   
+RF_uni_size <- bind_rows(mutate(RF_treatment_gall_size$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size$relative_fitness, Food_Web = "Complex")) %>%
+  select(-sc.log.clutch_size, -sc.log1p.female_preference) %>%
+  gather(ID, relative_fitness, -sc.gall_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.gall_size, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  geom_hline(yintercept = 1, linetype = "dotted") +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Gall diameter (SD)") +
+  ylab("Relative fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = RF_gradient_scale, labels = RF_gradient_scale) +
+  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  coord_cartesian(ylim = c(min(RF_gradient_scale), max(RF_gradient_scale)))
+
+# Clutch size ----
+RF_uni_clutch <- bind_rows(mutate(RF_treatment_clutch_size$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch_size$relative_fitness, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.log1p.female_preference) %>%
+  gather(ID, relative_fitness, -sc.log.clutch_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.log.clutch_size, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  geom_hline(yintercept = 1, linetype = "dotted") +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Clutch size (SD)") +
+  ylab("Relative fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = RF_gradient_scale, labels = RF_gradient_scale) +
+  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  coord_cartesian(ylim = c(min(RF_gradient_scale), max(RF_gradient_scale)))
+
+# Female preference ----
+RF_uni_pref <- bind_rows(mutate(RF_treatment_female_preference$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_female_preference$relative_fitness, Food_Web = "Complex")) %>%
+  select(-sc.gall_size, -sc.log.clutch_size) %>%
+  gather(ID, relative_fitness, -sc.log1p.female_preference, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.log1p.female_preference, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  geom_hline(yintercept = 1, linetype = "dotted") +
+  scale_alpha_manual(values=c(1,0.1), guide=FALSE) +
+  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
+  xlab("Female preference (SD)") +
+  ylab("Relative fitness") +
+  scale_color_manual(values = treatment_colors, name = "Food web") +
+  scale_y_continuous(breaks = RF_gradient_scale, labels = RF_gradient_scale) +
+  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  coord_cartesian(ylim = c(min(RF_gradient_scale), max(RF_gradient_scale)))
+```
+
+```{r Figure 2 Univariate Landscapes OLD, echo=FALSE, eval=FALSE}
+
+# Get legend
+RF_uni_legend <- get_legend(RF_uni_size)
+
+# Make plots
+RF_uni_plots <- plot_grid(RF_uni_size + theme(legend.position = "none",
+                                              axis.text.x = element_text(size=10),
+                                              axis.title.x = element_text(size=11)), 
+                       RF_uni_clutch + theme(legend.position = "none", 
+                                          axis.title.y = element_blank(), axis.text.y = element_blank(),
+                                          axis.text.x = element_text(size=10),
+                                          axis.title.x = element_text(size=11)),
+                       RF_uni_pref + theme(legend.position = "none", 
+                                        axis.title.y = element_blank(), axis.text.y = element_blank(),
+                                        axis.text.x = element_text(size=10),
+                                        axis.title.x = element_text(size=11)),
+                       labels = "AUTO", ncol = 3, align='hv') 
+
+RF_gradients <- ggdraw(RF_uni_plots) + draw_grob(RF_uni_legend, x = 0.8, y=0)
+#RF_gradients
+RF_uni_plots
+#save_plot("RF_gradients.png", RF_gradients, base_height=6, base_width = 8)
+#save_plot("RF_gradients.pdf", RF_gradients, base_height=6, base_width = 8)
+```
+
+```{r Plot Multivariate Fitness Landscape OLD, include=FALSE, cache=TRUE, eval=FALSE}
+
+# Clutch x Preference ----
+RF_plot_clutch.x.preference <- bind_rows(mutate(RF_treatment_clutch.x.preference$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch.x.preference$relative_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.log1p.female_preference, y=sc.log.clutch_size, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Female preference (SD)") +
+  ylab("Clutch size (SD)") +
+  #scale_fill_gradient2(midpoint=1, limits = c(RF_range$min, RF_range$max))
+  scale_fill_viridis(limits = c(RF_range$min, RF_range$max), name = "Relative fitness") + 
+  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_y_continuous(labels = c(-1,-0.5,0,0.5,1))
+
+# Size x Clutch ----
+RF_plot_size.x.clutch <- bind_rows(mutate(RF_treatment_size.x.clutch$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_size.x.clutch$relative_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=sc.log.clutch_size, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Gall diameter (SD)") +
+  ylab("Clutch size (SD)") +
+  #scale_fill_gradient2(midpoint=1, limits = c(RF_range$min, RF_range$max))
+  scale_fill_viridis(limits = c(RF_range$min, RF_range$max), name = "Relative fitness") + 
+  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_y_continuous(labels = c(-1,-0.5,0,0.5,1))
+
+# Size x Preference ----
+RF_plot_size.x.preference <- bind_rows(mutate(RF_treatment_size.x.preference$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_size.x.preference$relative_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=sc.log1p.female_preference, fill=average)) +
+  geom_raster() +
+  facet_wrap(~Food_Web) +
+  xlab("Gall diameter (SD)") +
+  ylab("Female preference (SD)") +
+  #scale_fill_gradient2(midpoint=1, limits = c(RF_range$min, RF_range$max))
+  scale_fill_viridis(limits = c(RF_range$min, RF_range$max), name = "Relative fitness") + 
+  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_y_continuous(labels = c(-1,-0.5,0,0.5,1))
+```
+
+```{r Figure 3 Multivariate Landscapes OLD, echo=FALSE, eval=FALSE}
+
+# Get legend
+RF_landscape_legend <- get_legend((RF_plot_size.x.preference + theme(legend.title = element_text(size=12), legend.text=element_text(size=10))))
+
+# Format plots
+RF_landscape_plots <- plot_grid(
+  RF_plot_size.x.clutch + theme(legend.position = "none", axis.title.x = element_blank(), axis.text.x = element_blank(), axis.text = element_text(size=9), axis.title = element_text(size=11), strip.text = element_text(size=11)),
+  RF_plot_clutch.x.preference + theme(legend.position = "none", axis.title.y = element_blank(), axis.text = element_text(size=9), axis.text.y = element_blank(), axis.title = element_text(size=11), strip.text = element_text(size=11)),
+  RF_plot_size.x.preference + theme(legend.position = "none", axis.text = element_text(size=9), axis.title = element_text(size=11), strip.text = element_text(size=11)), 
+  nrow=2, align="hv", labels = "AUTO")
+RF_landscape_2d <- ggdraw(RF_landscape_plots) + draw_grob(RF_landscape_legend, x = 0.7, y=-0.2)
+RF_landscape_2d
+#save_plot("RF_landscapes_2d.png", RF_landscape_2d, base_height=6, base_width = 8)
+#save_plot("RF_landscapes_2d.pdf", RF_landscape_2d, base_height=6, base_width = 8)
+```

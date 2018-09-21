@@ -1,0 +1,24 @@
+---
+title: "testing table code"
+author: "Matt Barbour"
+date: "9/14/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(kableExtra)
+test <- 2.348
+```
+
+\begin{table}[]
+\begin{tabular}{lc}
+                                                                              \\ \hline
+\textbf{Trait}                                   & \textbf{Mean $\pm$ SD}     \\ \hline
+\textbf{Chamber diameter}                        & `r `$\pm$`r `  \\
+Clutch size                                      & `r `$\pm$`r `  \\
+\boldmath$\ln(\textbf{Clutch size})$             & `r `$\pm$`r `  \\
+Female preference                                & `r `$\pm$`r `  \\ 
+\boldmath$\ln(1 + \textbf{Female preference})$   & `r `$\pm$`r `            \\ \hline
+\end{tabular}
+\end{table}

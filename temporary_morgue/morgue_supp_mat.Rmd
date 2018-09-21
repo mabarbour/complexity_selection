@@ -1,0 +1,714 @@
+---
+title: "Morgue: Supplementary material"
+output: html_notebook
+---
+
+```{r Interval plots of univariate landscapes}
+## Interval Plot: Relative Fitness ----   
+bind_rows(mutate(RF_treatment_gall_size$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size$relative_fitness, Food_Web = "Complex")) %>%
+  #group_by(Food_Web) %>%
+  #mutate(relative_fitness = average/mean(average), lower_RF = lower/mean(lower), upper_RF = upper/mean(upper)) %>%
+  ggplot(., aes(x=sc.gall_size, y=average)) +
+  geom_line(aes(color=Food_Web)) +
+  geom_ribbon(aes(ymin=lower, ymax=upper, fill=Food_Web), alpha=0.25)
+
+## Interval Plot: Absolute Fitness ----   
+bind_rows(mutate(RF_treatment_gall_size$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size$absolute_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=average)) +
+  geom_line(aes(color=Food_Web)) +
+  geom_ribbon(aes(ymin=lower, ymax=upper, fill=Food_Web), alpha=0.25)
+
+## Interval Plot: Relative Fitness ----  
+
+bind_rows(mutate(RF_treatment_clutch_size$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch_size$relative_fitness, Food_Web = "Complex")) %>%
+  group_by(Food_Web) %>%
+  #mutate(relative_fitness = average/mean(average), lower_RF = lower/mean(lower), upper_RF = upper/mean(upper)) %>%
+  ggplot(., aes(x=sc.clutch_size, y=average)) +
+  geom_line(aes(color=Food_Web)) +
+  geom_ribbon(aes(ymin=lower, ymax=upper, fill=Food_Web), alpha=0.25)
+
+## Interval Plot: Absolute Fitness ----   
+bind_rows(mutate(RF_treatment_clutch_size$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_clutch_size$absolute_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.clutch_size, y=average)) +
+  geom_line(aes(color=Food_Web)) +
+  geom_ribbon(aes(ymin=lower, ymax=upper, fill=Food_Web), alpha=0.25)
+
+## Interval Plot: Relative Fitness ----  
+
+# unclear to me why the complex intervals are weird...
+bind_rows(mutate(RF_treatment_female_preference$relative_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_female_preference$relative_fitness, Food_Web = "Complex")) %>%
+  #group_by(Food_Web) %>%
+  #mutate(relative_fitness = average/mean(average), lower_RF = lower/mean(lower), upper_RF = upper/mean(upper)) %>%
+  ggplot(., aes(x=sc.female_preference, y=average)) +
+  geom_line(aes(color=Food_Web)) +
+  geom_ribbon(aes(ymin=lower, ymax=upper, fill=Food_Web), alpha=0.25)
+
+## Interval Plot: Absolute Fitness ----   
+bind_rows(mutate(RF_treatment_female_preference$absolute_fitness, Food_Web = "Simple"), 
+          mutate(RF_control_female_preference$absolute_fitness, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.female_preference, y=average)) +
+  geom_line(aes(color=Food_Web)) +
+  geom_ribbon(aes(ymin=lower, ymax=upper, fill=Food_Web), alpha=0.25)
+```
+
+```{r OLD Gall Size Fitness Landscape, eval=FALSE}
+
+## Control ----
+RF_control_gall_size <- bootstrap_fitness(
+  logistic_model = glmer_control, 
+  newdata = expand.grid(
+     sc.gall_size = seq(-2,2,length.out=1000), #sort(control_df$sc.gall_size),
+     sc.clutch_size = 0,
+     sc.female_preference = 0),
+  bootstraps=100)
+
+## Treatment ----
+RF_treatment_gall_size <- bootstrap_fitness(
+  logistic_model = glmer_treatment, 
+  newdata = expand.grid(
+     sc.gall_size = seq(-2,2,length.out=1000), #sort(treatment_df$sc.gall_size), 
+     sc.clutch_size = 0,
+     sc.female_preference = 0),
+  bootstraps=100)
+   
+## Spaghetti Plot: Relative Fitness ----   
+bind_rows(mutate(RF_treatment_gall_size, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size, Food_Web = "Complex")) %>%
+  select(-sc.clutch_size, -sc.female_preference) %>%
+  gather(ID, fitness, -sc.gall_size, -Food_Web) %>%
+  group_by(ID, Food_Web) %>%
+  mutate(relative_fitness = fitness/mean(fitness)) %>%
+  ungroup() %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.gall_size, y=relative_fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.1)) +
+  scale_size_manual(values=c(1.5,0.25))
+
+## Interval Plot: Relative Fitness ----   
+bind_rows(mutate(RF_treatment_gall_size, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size, Food_Web = "Complex")) %>%
+  group_by(Food_Web) %>%
+  mutate(relative_fitness = average/mean(average), lower_RF = lower/mean(lower), upper_RF = upper/mean(upper)) %>%
+  ggplot(., aes(x=sc.gall_size, y=relative_fitness)) +
+  geom_line(aes(color=Food_Web)) +
+  geom_ribbon(aes(ymin=lower_RF, ymax=upper_RF, fill=Food_Web), alpha=0.25)
+
+## Spaghetti Plot: Absolute Fitness ----   
+bind_rows(mutate(RF_treatment_gall_size, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size, Food_Web = "Complex")) %>%
+  select(-sc.clutch_size, -sc.female_preference) %>%
+  gather(ID, fitness, -sc.gall_size, -Food_Web) %>%
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  ggplot(., aes(x=sc.gall_size, y=fitness, group=interaction(ID,Food_Web), color=Food_Web, alpha=ID_group, size=ID_group)) +
+  geom_line() +
+  scale_alpha_manual(values=c(1,0.1)) +
+  scale_size_manual(values=c(1.5,0.25))
+
+## Interval Plot: Absolute Fitness ----   
+bind_rows(mutate(RF_treatment_gall_size, Food_Web = "Simple"), 
+          mutate(RF_control_gall_size, Food_Web = "Complex")) %>%
+  ggplot(., aes(x=sc.gall_size, y=average)) +
+  geom_line(aes(color=Food_Web)) +
+  geom_ribbon(aes(ymin=lower, ymax=upper, fill=Food_Web), alpha=0.25)
+```
+
+
+
+```{r gsg Comparison}
+
+## Fit generalized additive mixed models ----
+gamm_control_2 <- gamm.model(gall_survival ~ s(sc.gall_size) + s(sc.clutch_size,k=9) + s(sc.female_preference),
+                             data = control_df)
+
+gamm_treatment_2 <- gamm.model(gall_survival ~ s(sc.gall_size) + s(sc.clutch_size,k=9) + s(sc.female_preference),
+                             data = treatment_df)
+
+## Estimate directional, nonlinear, and correlational selection gradients ----
+sg.size_control <- gradient.calc(mod = gamm_control_2$gam, 
+                                 phenotype = "sc.gall_size", 
+                                 covariates = c("sc.clutch_size","sc.female_preference"))
+sg.size_treatment <- gradient.calc(mod = gamm_treatment_2$gam, 
+                                   phenotype = "sc.gall_size", 
+                                   covariates = c("sc.clutch_size","sc.female_preference"))
+sg.clutch_control <- gradient.calc(mod = gamm_control_2$gam, 
+                                        phenotype = "sc.clutch_size", 
+                                        covariates = c("sc.gall_size","sc.female_preference"))
+sg.clutch_treatment <- gradient.calc(mod = gamm_treatment_2$gam, 
+                                          phenotype = "sc.clutch_size", 
+                                          covariates = c("sc.gall_size","sc.female_preference"))
+sg.preference_control <- gradient.calc(mod = gamm_control_2$gam, 
+                                    phenotype = "sc.female_preference", 
+                                    covariates = c("sc.clutch_size","sc.gall_size"))
+sg.preference_treatment <- gradient.calc(mod = gamm_treatment_2$gam, 
+                                      phenotype = "sc.female_preference", 
+                                      covariates = c("sc.clutch_size","sc.gall_size"))
+#sg.size.x.clutch_control <- gradient.calc(mod = gamm_control_2$gam, 
+#                                               phenotype = c("sc.gall_size", "sc.clutch_size"),
+#                                               covariates = c("sc.female_preference"))
+#sg.size.x.clutch_treatment <- gradient.calc(mod = gamm_treatment_2$gam, 
+#                                                 phenotype = c("sc.gall_size", "sc.clutch_size"),
+#                                                 covariates = c("sc.female_preference"))
+#sg.size.x.preference_control <- gradient.calc(mod = gamm_control_2$gam, 
+#                                               phenotype = c("sc.gall_size", "sc.female_preference"),
+#                                               covariates = c("sc.clutch_size"))
+#sg.size.x.preference_treatment <- gradient.calc(mod = gamm_treatment_2$gam, 
+#                                                 phenotype = c("sc.gall_size","sc.female_preference"),
+#                                                 covariates = c("sc.clutch_size"))
+#sg.preference.x.clutch_control <- gradient.calc(mod = gamm_control_2$gam, 
+#                                                  phenotype = c("sc.female_preference", "sc.clutch_size"),
+#                                                  covariates = c("sc.gall_size"))
+#sg.preference.x.clutch_treatment <- gradient.calc(mod = gamm_treatment_2$gam, 
+#                                                    phenotype = c("sc.female_preference", "sc.clutch_size"),
+#                                                    covariates = c("sc.gall_size"))
+
+## Summarise the results ----
+#sg.summary <- bind_rows(
+#          data.frame(sg.size_control$ests,  
+#                     gradients = rownames(sg.size_control$ests),
+#                     treatment = "Complex"),
+#          data.frame(sg.size_treatment$ests, 
+#                     gradients = rownames(sg.size_treatment$ests),
+#                     treatment = "Simple"),
+#          data.frame(sg.clutch_control$ests,  
+#                     gradients = rownames(sg.clutch_control$ests),
+#                     treatment = "Complex"),
+#          data.frame(sg.clutch_treatment$ests,  
+#                     gradients = rownames(sg.clutch_treatment$ests),
+#                     treatment = "Simple"),
+#          data.frame(sg.preference_control$ests, 
+#                     gradients = rownames(sg.preference_control$ests),
+#                     treatment = "Complex"),
+#          data.frame(sg.preference_treatment$ests, 
+#                     gradients = rownames(sg.preference_treatment$ests),
+#                     treatment = "Simple"))#,
+          #data.frame(sg.size.x.clutch_control$ests,  
+          #           gradients = rownames(sg.size.x.clutch_control$ests),
+          #           treatment = "Complex")[5,],
+          #data.frame(sg.size.x.clutch_treatment$ests,  
+          #           gradients = rownames(sg.size.x.clutch_treatment$ests),
+          #           treatment = "Simple")[5,],
+          #data.frame(sg.size.x.preference_control$ests,  
+          #           gradients = rownames(sg.size.x.preference_control$ests),
+          #           treatment = "Complex")[5,],
+          #data.frame(sg.size.x.preference_treatment$ests,  
+          #           gradients = rownames(sg.size.x.preference_treatment$ests),
+          #           treatment = "Simple")[5,],
+          #data.frame(sg.preference.x.clutch_control$ests, 
+          #           gradients = rownames(sg.preference.x.clutch_control$ests),
+          #           treatment = "Complex")[5,],
+          #data.frame(sg.preference.x.clutch_treatment$ests, 
+          #           gradients = rownames(sg.preference.x.clutch_treatment$ests),
+          #           treatment = "Simple")[5,]) 
+
+## Table of Estimates ----
+#sg.table <- sg.summary %>%
+#  mutate(plus_minus = "\u00B1", estimates = round(estimates, 4), SE = round(SE, 4)) %>%
+#  unite(col = estimate_SE, from = c("estimates", "plus_minus", "SE"), sep="") %>%
+#  select(-P.value) %>%
+#  spread(treatment, estimate_SE)
+#sg.table
+#write_csv(sg.table, "sg.table.csv")
+
+## Table of P-values ----
+#sg.summary %>%
+#  select(-estimates, -SE) %>%
+#  spread(treatment, P.value)
+
+## BOOTSTRAPPED INTERVALS ----
+bootstrap_df <- bind_rows(
+  data.frame(Bootstrap_Estimates = sg.size_control$boot[ ,1], Phenotype = "Gall size", Selection_Type = "Beta", Food_Web = "Complex"),
+#  data.frame(Bootstrap_Estimates = sg.size_control$boot[ ,2], Phenotype = "Gall size", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.size_treatment$boot[ ,1], Phenotype = "Gall size", Selection_Type = "Beta", Food_Web = "Simple"),
+#  data.frame(Bootstrap_Estimates = sg.size_treatment$boot[ ,2], Phenotype = "Gall size", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.clutch_control$boot[ ,1], Phenotype = "Clutch size", Selection_Type = "Beta", Food_Web = "Complex"),
+#  data.frame(Bootstrap_Estimates = sg.clutch_control$boot[ ,2], Phenotype = "Clutch size", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.clutch_treatment$boot[ ,1], Phenotype = "Clutch size", Selection_Type = "Beta", Food_Web = "Simple"),
+#  data.frame(Bootstrap_Estimates = sg.clutch_treatment$boot[ ,2], Phenotype = "Clutch size", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.preference_control$boot[ ,1], Phenotype = "Female preference", Selection_Type = "Beta", Food_Web = "Complex"),
+#  data.frame(Bootstrap_Estimates = sg.preference_control$boot[ ,2], Phenotype = "Oviposition preference", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.preference_treatment$boot[ ,1], Phenotype = "Female preference", Selection_Type = "Beta", Food_Web = "Simple"))#,
+#  data.frame(Bootstrap_Estimates = sg.preference_treatment$boot[ ,2], Phenotype = "Oviposition preference", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  # correlational
+#  data.frame(Bootstrap_Estimates = sg.size.x.clutch_control$boot[ ,5], Phenotype = "Size,Clutch", Selection_Type = "Correlational", Food_Web_Treatment = "Complex"),
+#  data.frame(Bootstrap_Estimates = sg.size.x.clutch_treatment$boot[ ,5], Phenotype = "Size,Clutch", Selection_Type = "Correlational", Food_Web_Treatment = "Simple"),
+#    data.frame(Bootstrap_Estimates = sg.size.x.preference_control$boot[ ,5], Phenotype = "Size,Pref.", Selection_Type = "Correlational", Food_Web_Treatment = "Complex"),
+#  data.frame(Bootstrap_Estimates = sg.size.x.preference_treatment$boot[ ,5], Phenotype = "Size,Pref.", Selection_Type = "Correlational", Food_Web_Treatment = "Simple"),
+#  data.frame(Bootstrap_Estimates = sg.preference.x.clutch_control$boot[ ,5], Phenotype = "Pref.,Clutch", Selection_Type = "Correlational", Food_Web_Treatment = "Complex"),
+#  data.frame(Bootstrap_Estimates = sg.preference.x.clutch_treatment$boot[ ,5], Phenotype = "Pref.,Clutch", Selection_Type = "Correlational", Food_Web_Treatment = "Simple")
+#)
+
+bootstrap_df %>%
+  #filter(Selection_Type == "Gamma") %>%
+  ggplot(., aes(x=Phenotype, y=Bootstrap_Estimates, fill=Food_Web)) +
+  geom_boxplot() +
+  geom_hline(yintercept=0, linetype="dotted") +
+  facet_wrap(~Selection_Type, scales = "free_x") +
+  coord_flip() 
+
+gsg_gradients <- bootstrap_df %>%
+  group_by(Phenotype, Food_Web) %>%
+  summarise(Beta = round(mean(Bootstrap_Estimates),3),
+            lower_2.5 = round(quantile(Bootstrap_Estimates, probs = 0.025),3),
+            upper_97.5 = round(quantile(Bootstrap_Estimates, probs = 0.975),3)) %>%
+  mutate(Model = "gsg_GAMM")
+
+bind_rows(gsg_gradients, summary_Beta_glmm_control, summary_Beta_glmm_treatment) %>%
+  arrange(Phenotype, Food_Web, Model) %>%
+  mutate(absolute_range = upper_97.5 - lower_2.5) %>%
+  knitr::kable(.)
+```
+
+```{r} 
+ggplot_uniFL <- function(FL.df) {
+  ggplot(FL.df, aes(x = Var1, y = mean_fitness)) +
+    geom_line() + 
+    geom_ribbon(aes(ymin = lower_2.5, ymax = upper_97.5), alpha = 0.5)
+}
+```
+
+```{r Selection Gradients - Bootstrapped Intervals, eval=FALSE}
+
+## BOOTSTRAPPED INTERVALS ----
+bootstrap_df <- bind_rows(
+  data.frame(Bootstrap_Estimates = sg.size_control$boot[ ,1], Phenotype = "Gall size", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+#  data.frame(Bootstrap_Estimates = sg.size_control$boot[ ,2], Phenotype = "Gall size", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.size_treatment$boot[ ,1], Phenotype = "Gall size", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+#  data.frame(Bootstrap_Estimates = sg.size_treatment$boot[ ,2], Phenotype = "Gall size", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.clutch_control$boot[ ,1], Phenotype = "Clutch size", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+#  data.frame(Bootstrap_Estimates = sg.clutch_control$boot[ ,2], Phenotype = "Clutch size", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.clutch_treatment$boot[ ,1], Phenotype = "Clutch size", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+#  data.frame(Bootstrap_Estimates = sg.clutch_treatment$boot[ ,2], Phenotype = "Clutch size", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.preference_control$boot[ ,1], Phenotype = "Female preference", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+#  data.frame(Bootstrap_Estimates = sg.preference_control$boot[ ,2], Phenotype = "Oviposition preference", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.preference_treatment$boot[ ,1], Phenotype = "Female preference", Selection_Type = "Beta", Food_Web_Treatment = "Simple"))#,
+#  data.frame(Bootstrap_Estimates = sg.preference_treatment$boot[ ,2], Phenotype = "Oviposition preference", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  # correlational
+#  data.frame(Bootstrap_Estimates = sg.size.x.clutch_control$boot[ ,5], Phenotype = "Size,Clutch", Selection_Type = "Correlational", Food_Web_Treatment = "Complex"),
+#  data.frame(Bootstrap_Estimates = sg.size.x.clutch_treatment$boot[ ,5], Phenotype = "Size,Clutch", Selection_Type = "Correlational", Food_Web_Treatment = "Simple"),
+#    data.frame(Bootstrap_Estimates = sg.size.x.preference_control$boot[ ,5], Phenotype = "Size,Pref.", Selection_Type = "Correlational", Food_Web_Treatment = "Complex"),
+#  data.frame(Bootstrap_Estimates = sg.size.x.preference_treatment$boot[ ,5], Phenotype = "Size,Pref.", Selection_Type = "Correlational", Food_Web_Treatment = "Simple"),
+#  data.frame(Bootstrap_Estimates = sg.preference.x.clutch_control$boot[ ,5], Phenotype = "Pref.,Clutch", Selection_Type = "Correlational", Food_Web_Treatment = "Complex"),
+#  data.frame(Bootstrap_Estimates = sg.preference.x.clutch_treatment$boot[ ,5], Phenotype = "Pref.,Clutch", Selection_Type = "Correlational", Food_Web_Treatment = "Simple")
+#)
+
+bootstrap_df %>%
+  #filter(Selection_Type == "Gamma") %>%
+  ggplot(., aes(x=Phenotype, y=Bootstrap_Estimates, fill=Food_Web_Treatment)) +
+  geom_boxplot() +
+  geom_hline(yintercept=0, linetype="dotted") +
+  facet_wrap(~Selection_Type, scales = "free_x") +
+  coord_flip() 
+
+gsg_gradients <- bootstrap_df %>%
+  group_by(Phenotype, Food_Web_Treatment) %>%
+  summarise(Beta = round(mean(Bootstrap_Estimates),3),
+            lower_2.5 = round(quantile(Bootstrap_Estimates, probs = 0.025),3),
+            upper_97.5 = round(quantile(Bootstrap_Estimates, probs = 0.975),3))
+
+knitr::kable(gsg_gradients)
+```
+
+
+```{r}
+library(schoenberg)
+pointwise <- confint(gamm_red.control$gam, parm = "Gall_Height_mm", trans = function(x) {exp(x)/(1+exp(x))})
+simultaneous <- confint(gamm_red.control$gam, parm = "Gall_Height_mm", trans = function(x) {exp(x)/(1+exp(x))}, type = "simultaneous", seWithMean=TRUE)
+
+compare.confint <- bind_rows(mutate(pointwise, confint = "pointwise"), mutate(simultaneous, confint = "simultaneous")) 
+compare.confint$confint <- relevel(factor(compare.confint$confint), ref = "simultaneous")
+
+ggplot(compare.confint, aes(x=Gall_Height_mm)) +
+  geom_ribbon(aes(ymin=lower, ymax=upper), alpha=0.25) +
+  geom_line(aes(y=est), color="black") +
+  facet_wrap(~confint)
+
+schluter <- gam.plot(gamm_red.control$gam)
+schluter
+
+gam.plot(glmm_lin.red.control$gam, all.terms=TRUE)
+test <- plot(glmm_lin.red.control$gam, all.terms=TRUE)
+gam.gradients(mod = glmm_lin.red.control$gam, phenotype = "Gall_Height_mm", se.method = "n")
+coef(glmm_lin.red.control$gam)
+
+# test derivative calculations
+control_df$Genotype <- factor(control_df$Genotype)
+control_df$Plant_Position <- factor(control_df$Plant_Position)
+control_df$Gall_Number <- factor(control_df$Gall_Number)
+A <- gam(gall_survival ~ s(Gall_Height_mm) + s(Plant_Position, bs="re") + s(Gall_Number, bs="re"), data = control_df, family=binomial(link=logit)) # random=~(1|Genotype/Plant_Position/Gall_Number),
+summary(A)
+
+head(control_df)
+A_withMean <- plot(A, se = TRUE, seWithMean = T, shift = mean(predict(A)), trans = function(x) {exp(x)/(1+exp(x))}); A_withMean
+A_only <- plot(A, se = TRUE, shift = mean(predict(A)), trans = function(x) {exp(x)/(1+exp(x))}); A_only
+draw(A)
+
+
+# new data for prediction
+newDF <- with(control_df, data.frame(Gall_Height_mm = seq(min(Gall_Height_mm),max(Gall_Height_mm),length.out = 100)))
+# prediction of smoothed estimates at each unique year value
+# with standard error    
+B <- predict(A$gam,  newDF, type="response", se.fit=TRUE)
+B
+
+# finite difference approach to derivatives following
+# example from ?predict.gam
+
+eps <- 1e-7
+X0 <- predict(A, newDF, type = 'lpmatrix')
+X0 <- exp(X0)/(1+exp(X0))
+
+newDFeps_p <- newDF + eps
+
+X1 <- predict(A, newDFeps_p, type = 'lpmatrix')
+X1 <- exp(X1)/(1+exp(X1))
+# finite difference approximation of first derivative
+# the design matrix
+Xp <- (X0 - X1) / eps
+Xp
+# first derivative
+fd_d1 <- Xp %*% coef(A)
+fd_d1/mean_fit
+# second derivative
+newDFeps_m <- newDF - eps
+
+X_1 <- predict(A$gam, newDFeps_m, type = 'lpmatrix')
+# design matrix for second derivative
+Xpp <- (X1 + X_1 - 2*X0)  / eps^2
+# second derivative
+fd_d2 <- Xpp %*% coef(A$gam)
+
+exp(fd_d1) / ( 1+exp(fd_d1))  # type = "response"
+exp(fd_d2) / ( 1+exp(fd_d2))  # type = "response"
+
+mean(fd_d1)/mean_fit
+mean(fd_d2)/mean_fit
+
+gam.gradients(A, phenotype = "Gall_Height_mm", se.method="n", standardized = FALSE)
+
+coef(A)
+mean_fit <- mean(control_df$gall_survival)
+fderiv_size <- fderiv(A, newdata = data.frame(Gall_Height_mm = mean(control_df$Gall_Height_mm)), offset = mean_fit)
+test <- fderiv_size$derivatives$`s(Gall_Height_mm)`$deriv
+exp(test)/(1+exp(test))
+
+plot(A, se = TRUE, seWithMean = T, shift = mean(predict(A)), trans = function(x) {exp(x)/(1+exp(x))})
+diff <- .Machine$double.eps^(1/3)
+predicts <- predict(A, newdata = data.frame(Gall_Height_mm = c(mean(control_df$Gall_Height_mm)-diff,mean(control_df$Gall_Height_mm)+diff)), type="lpmatrix")
+tests <- predicts %*% coef(A)
+exp(tests)/(1+exp(tests))
+t1 <- exp(predicts[2])/(1+exp(predicts[2]));t1
+t2 <- exp(predicts[1])/(1+exp(predicts[1]));t2
+((t1-t2)/(diff*2))/mean(control_df$gall_survival)
+gam.gradients(A, phenotype = "Gall_Height_mm", se.method="n", standardized = FALSE)
+
+	Wbar <- function(x, mod, phenotype,covariates) {
+    		new.d <- as.data.frame(mod$model[,c(phenotype,covariates)])
+    		names(new.d)<-c(phenotype,covariates)
+    		new.d2<-new.d
+    		for (i in 1:length(x)) {
+    		    new.d[,as.character(phenotype[i])] <-
+    		    new.d[,as.character(phenotype[i])]+x[i]
+    		}
+    
+    		p <- predict.gam(
+			   object=mod,
+    	 	   newdata=new.d,
+    	 	   newdata.guaranteed=TRUE,
+    	 	   type="response"
+    		)
+    	return(mean(p))
+	}
+	as.data.frame(A$model[ ,"Gall_Height_mm"])
+	#mean(control_df$gall_survival)
+	Wbar(x=0, mod=A, phenotype="Gall_Height_mm", covariates=NULL)
+first.derivatives <- grad(f=Wbar, x=rep(0, 1), mod=A, phenotype="Gall_Height_mm", covariates=NULL); first.derivatives
+denom <- Wbar(x=rep(0,1), mod=A, phenotype="Gall_Height_mm", covariates=NULL); denom
+first.derivatives/denom
+pracma:::grad
+A$Vp
+A$coefficients
+A_withMean
+```
+
+
+```{r SELECTION GRADIENTS}
+
+## GALL SIZE ----
+sg.size_control <- gradient.calc(mod = gamm_red.control$gam, 
+                                 phenotype = "c.Gall_Height_mm", 
+                                 covariates = c("c.gall_individuals","c.Density_per_100_shoots"))
+sg.size_treatment <- gradient.calc(mod = gamm_red.treatment$gam, 
+                                   phenotype = "c.Gall_Height_mm", 
+                                   covariates = c("c.gall_individuals","c.Density_per_100_shoots"))
+
+## GALL INDIVIDUALS ----
+sg.individuals_control <- gradient.calc(mod = gamm_red.control$gam, 
+                                        phenotype = "c.gall_individuals", 
+                                        covariates = c("c.Gall_Height_mm","c.Density_per_100_shoots"))
+sg.individuals_treatment <- gradient.calc(mod = gamm_red.treatment$gam, 
+                                          phenotype = "c.gall_individuals", 
+                                          covariates = c("c.Gall_Height_mm","c.Density_per_100_shoots"))
+
+## GALL DENSITY ----
+sg.density_control <- gradient.calc(mod = gamm_red.control$gam, 
+                                    phenotype = "c.Density_per_100_shoots", 
+                                    covariates = c("c.gall_individuals","c.Gall_Height_mm"))
+sg.density_treatment <- gradient.calc(mod = gamm_red.treatment$gam, 
+                                      phenotype = "c.Density_per_100_shoots", 
+                                      covariates = c("c.gall_individuals","c.Gall_Height_mm"))
+
+## PRINT TABLE ----
+rbind(
+  mutate(sg.size_control$ests, Food_Web_Treatment = "Complex"),
+  mutate(sg.size_treatment$ests, Food_Web_Treatment = "Simple"),
+  mutate(sg.individuals_control$ests, Food_Web_Treatment = "Complex"),
+  mutate(sg.individuals_treatment$ests, Food_Web_Treatment = "Simple"),
+  mutate(sg.density_control$ests, Food_Web_Treatment = "Complex"),
+  mutate(sg.density_treatment$ests, Food_Web_Treatment = "Simple")
+)
+
+round(rbind(
+  sg.size_control$ests,
+  sg.size_treatment$ests,
+  sg.individuals_control$ests,
+  sg.individuals_treatment$ests,
+  sg.density_control$ests,
+  sg.density_treatment$ests
+),3)
+
+## BOOTSTRAPPED INTERVALS ----
+bootstrap_df <- bind_rows(
+  data.frame(Bootstrap_Estimates = sg.size_control$boot[ ,1], Phenotype = "c.Gall_Height_mm", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.size_control$boot[ ,2], Phenotype = "c.Gall_Height_mm", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.size_treatment$boot[ ,1], Phenotype = "c.Gall_Height_mm", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.size_treatment$boot[ ,2], Phenotype = "c.Gall_Height_mm", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.individuals_control$boot[ ,1], Phenotype = "c.gall_individuals", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.individuals_control$boot[ ,2], Phenotype = "c.gall_individuals", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.individuals_treatment$boot[ ,1], Phenotype = "c.gall_individuals", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.individuals_treatment$boot[ ,2], Phenotype = "c.gall_individuals", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.density_control$boot[ ,1], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.density_control$boot[ ,2], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.density_treatment$boot[ ,1], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.density_treatment$boot[ ,2], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Gamma", Food_Web_Treatment = "Simple")
+)
+
+bootstrap_df %>%
+  ggplot(., aes(x=Phenotype, y=Bootstrap_Estimates, fill=Food_Web_Treatment)) +
+  geom_boxplot() +
+  geom_hline(yintercept=0, linetype="dotted") +
+  facet_wrap(~Selection_Type) +
+  coord_flip() 
+```
+
+GAM estimates of selection gradients differ from GAMM
+
+```{r COMPARE GAM WITH GAMM}
+
+## CONTROL PLANTS ----
+
+## Gall Height
+gam_red.control_size <- gam(gall_survival ~
+                             s(c.Gall_Height_mm) + 
+                             s(c.gall_individuals, k=9) +
+                             s(c.Density_per_100_shoots),
+                           data = control_df, family = binomial(link = "logit"))
+summary(gam_red.control_size)
+
+gam.plot(gam_red.control_size, pages=1)
+gam.plot(gamm_red.control$gam, pages=1)
+
+## Gall individuals
+control_df_gall.level <- control_df %>%
+  group_by(Treatment.focus, Plant_Position, Gall_Number) %>%
+  summarise(gall_survival_mean = mean(gall_survival),
+            gall_individuals = mean(gall_individuals),                 # note that there is no variance, it is the actual value
+            Gall_Height_mm_mean = mean(Gall_Height_mm),
+            Density_per_100_shoots = mean(Density_per_100_shoots)) %>% # remember that this is pseudo-replicated at the gall-level
+  ungroup() %>%
+  mutate(c.Gall_Height_mm_mean = Gall_Height_mm_mean - mean(Gall_Height_mm_mean),
+         c.gall_individuals = gall_individuals - mean(gall_individuals),
+         c.Density_per_100_shoots = Density_per_100_shoots - mean(Density_per_100_shoots)) # why is this giving zero values?
+
+gam_red.control_indiv <- gam(gall_survival_mean ~
+                              s(c.Gall_Height_mm_mean) + 
+                              s(c.gall_individuals, k=9) +
+                              s(c.Density_per_100_shoots),
+                             data = control_df_gall.level, family = binomial(link = "logit")) # we didn't include weights because this would be correlated with the number of individuals per gall
+summary(gam_red.control_indiv)
+
+gam.plot(gam_red.control_indiv, pages=1)
+gam.plot(gamm_red.control$gam, pages=1)
+
+## Gall density
+control_df_plant.level <- control_df_gall.level %>%
+  group_by(Treatment.focus, Plant_Position) %>%
+  summarise(gall_survival_mean = mean(gall_survival_mean),
+            gall_sample_size = n(),
+            gall_individuals_mean = mean(gall_individuals),                 
+            Gall_Height_mm_mean = mean(Gall_Height_mm_mean),
+            Density_per_100_shoots = mean(Density_per_100_shoots)) %>%    # note that there is no variance, it is the actual value
+  ungroup() %>%
+  mutate(c.Gall_Height_mm_mean = Gall_Height_mm_mean - mean(Gall_Height_mm_mean),
+         c.gall_individuals_mean = gall_individuals_mean - mean(gall_individuals_mean),
+         c.Density_per_100_shoots = Density_per_100_shoots - mean(Density_per_100_shoots)) 
+
+#test.control_df_plant.level <- control_df %>%
+#  group_by(Treatment.focus, Plant_Position) %>%
+#  summarise(gall_survival_mean = mean(gall_survival),
+#            gall_sample_size = n(),
+#            gall_individuals_mean = mean(gall_individuals),                 
+#            Gall_Height_mm_mean = mean(Gall_Height_mm),
+#            Density_per_100_shoots = mean(Density_per_100_shoots)) %>%                # note that there is no variance, it is the actual value
+#  ungroup() %>%
+#  mutate(c.Gall_Height_mm_mean = Gall_Height_mm_mean - mean(Gall_Height_mm_mean),
+#         c.gall_individuals_mean = gall_individuals_mean - mean(gall_individuals_mean),
+#         c.Density_per_100_shoots = Density_per_100_shoots - mean(Density_per_100_shoots))
+
+gam_red.control_density <- gam(gall_survival_mean ~
+                                s(c.Gall_Height_mm_mean) + 
+                                s(c.gall_individuals_mean, k=9) +
+                                s(c.Density_per_100_shoots, k=3),  # adjusting k value to avoid overfitting of Density   
+                             data = control_df_plant.level,
+                             family = binomial(link = "logit"), 
+                             weights = gall_sample_size) 
+summary(gam_red.control_density)
+
+gam.plot(gam_red.control_density, pages=1)
+gam.plot(gamm_red.control$gam, pages=1)
+
+
+## TREATMENT PLANTS ----
+
+## Gall Height
+gam_red.treatment_size <- gam(gall_survival ~
+                         s(c.Gall_Height_mm) + 
+                         s(c.gall_individuals, k=9) +
+                         s(c.Density_per_100_shoots),
+                       data = treatment_df, family = binomial(link = "logit"))
+summary(gam_red.treatment_size)
+
+gam.plot(gam_red.treatment_size, pages=1)
+gam.plot(gamm_red.treatment$gam, pages=1)
+
+## Gall individuals
+treatment_df_gall.level <- treatment_df %>%
+  group_by(Treatment.focus, Plant_Position, Gall_Number) %>%
+  summarise(gall_survival_mean = mean(gall_survival),
+            gall_individuals = mean(gall_individuals),              # note that there is no variance, it is the actual value
+            Gall_Height_mm_mean = mean(Gall_Height_mm),
+            Density_per_100_shoots = mean(Density_per_100_shoots)) %>% # remember this is pseudo-replicated at the gall-level
+  ungroup() %>%
+  mutate(c.Gall_Height_mm_mean = Gall_Height_mm_mean - mean(Gall_Height_mm_mean),
+         c.gall_individuals = gall_individuals - mean(gall_individuals),
+         c.Density_per_100_shoots = Density_per_100_shoots - mean(Density_per_100_shoots)) # why is this giving zero values?
+
+gam_red.treatment_indiv <- gam(gall_survival_mean ~
+                              s(c.Gall_Height_mm_mean) + 
+                              s(c.gall_individuals, k=9) +
+                              s(c.Density_per_100_shoots),
+                             data = treatment_df_gall.level, family = binomial(link = "logit"))
+summary(gam_red.treatment_indiv)
+
+gam.plot(gam_red.treatment_indiv, pages=1)
+gam.plot(gamm_red.treatment$gam, pages=1)
+
+## Gall density
+treatment_df_plant.level <- treatment_df_gall.level %>%
+  group_by(Treatment.focus, Plant_Position) %>%
+  summarise(gall_survival_mean = mean(gall_survival_mean),
+            gall_sample_size = n(),
+            gall_individuals_mean = mean(gall_individuals),                 
+            Gall_Height_mm_mean = mean(Gall_Height_mm_mean),
+            Density_per_100_shoots = mean(Density_per_100_shoots)) %>%  # note that there is no variance, it is the actual value
+  ungroup() %>%
+  mutate(c.Gall_Height_mm_mean = Gall_Height_mm_mean - mean(Gall_Height_mm_mean),
+         c.gall_individuals_mean = gall_individuals_mean - mean(gall_individuals_mean),
+         c.Density_per_100_shoots = Density_per_100_shoots - mean(Density_per_100_shoots)) 
+
+
+gam_red.treatment_density <- gam(gall_survival_mean ~
+                                s(c.Gall_Height_mm_mean) + 
+                                s(c.gall_individuals_mean, k=9) +
+                                s(c.Density_per_100_shoots),
+                             data = treatment_df_plant.level, family = binomial(link = "logit"), 
+                             weights = gall_sample_size) 
+summary(gam_red.treatment_density)
+
+gam.plot(gam_red.treatment_density, pages=1)
+gam.plot(gamm_red.treatment$gam, pages=1)
+
+#### CALCULATE SELECTION GRADIENTS FROM GAM ----
+
+## GALL SIZE ----
+sg.gam.size_control <- gradient.calc(mod = gam_red.control_size, 
+                                 phenotype = "c.Gall_Height_mm", 
+                                 covariates = c("c.gall_individuals","c.Density_per_100_shoots"))
+sg.gam.size_treatment <- gradient.calc(mod = gam_red.treatment_size, 
+                                   phenotype = "c.Gall_Height_mm", 
+                                   covariates = c("c.gall_individuals","c.Density_per_100_shoots"))
+
+## GALL INDIVIDUALS ----
+sg.gam.individuals_control <- gradient.calc(mod = gam_red.control_indiv, 
+                                        phenotype = "c.gall_individuals", 
+                                        covariates = c("c.Gall_Height_mm_mean","c.Density_per_100_shoots"))
+sg.gam.individuals_treatment <- gradient.calc(mod = gam_red.treatment_indiv, 
+                                          phenotype = "c.gall_individuals", 
+                                          covariates = c("c.Gall_Height_mm_mean","c.Density_per_100_shoots"))
+
+## GALL DENSITY ----
+sg.gam.density_control <- gradient.calc(mod = gam_red.control_density, 
+                                    phenotype = "c.Density_per_100_shoots", 
+                                    covariates = c("c.gall_individuals_mean","c.Gall_Height_mm_mean"))
+sg.gam.density_treatment <- gradient.calc(mod = gam_red.treatment_density, 
+                                      phenotype = "c.Density_per_100_shoots", 
+                                      covariates = c("c.gall_individuals_mean","c.Gall_Height_mm_mean"))
+
+## PRINT TABLE ----
+rbind(
+  mutate(sg.gam.size_control$ests, Food_Web_Treatment = "Complex"),
+  mutate(sg.gam.size_treatment$ests, Food_Web_Treatment = "Simple"),
+  mutate(sg.gam.individuals_control$ests, Food_Web_Treatment = "Complex"),
+  mutate(sg.gam.individuals_treatment$ests, Food_Web_Treatment = "Simple"),
+  mutate(sg.gam.density_control$ests, Food_Web_Treatment = "Complex"),
+  mutate(sg.gam.density_treatment$ests, Food_Web_Treatment = "Simple")
+)
+
+round(rbind(
+  sg.gam.size_control$ests,
+  sg.gam.size_treatment$ests,
+  sg.gam.individuals_control$ests,
+  sg.gam.individuals_treatment$ests,
+  sg.gam.density_control$ests,
+  sg.gam.density_treatment$ests
+),3)
+
+## BOOTSTRAPPED INTERVALS ----
+gam.bootstrap_df <- bind_rows(
+  data.frame(Bootstrap_Estimates = sg.gam.size_control$boot[ ,1], Phenotype = "c.Gall_Height_mm", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.gam.size_control$boot[ ,2], Phenotype = "c.Gall_Height_mm", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.gam.size_treatment$boot[ ,1], Phenotype = "c.Gall_Height_mm", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.gam.size_treatment$boot[ ,2], Phenotype = "c.Gall_Height_mm", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.gam.individuals_control$boot[ ,1], Phenotype = "c.gall_individuals", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.gam.individuals_control$boot[ ,2], Phenotype = "c.gall_individuals", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.gam.individuals_treatment$boot[ ,1], Phenotype = "c.gall_individuals", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.gam.individuals_treatment$boot[ ,2], Phenotype = "c.gall_individuals", Selection_Type = "Gamma", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.gam.density_control$boot[ ,1], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Beta", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.gam.density_control$boot[ ,2], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Gamma", Food_Web_Treatment = "Complex"),
+  data.frame(Bootstrap_Estimates = sg.gam.density_treatment$boot[ ,1], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Beta", Food_Web_Treatment = "Simple"),
+  data.frame(Bootstrap_Estimates = sg.gam.density_treatment$boot[ ,2], Phenotype = "c.Density_per_100_shoots", Selection_Type = "Gamma", Food_Web_Treatment = "Simple")
+)
+
+gam.bootstrap_df %>%
+  ggplot(., aes(x=Phenotype, y=Bootstrap_Estimates, fill=Food_Web_Treatment)) +
+  geom_boxplot() +
+  geom_hline(yintercept=0, linetype="dotted") +
+  facet_wrap(~Selection_Type) +
+  coord_flip()
+
+```

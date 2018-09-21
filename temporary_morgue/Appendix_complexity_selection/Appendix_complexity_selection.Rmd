@@ -1,0 +1,121 @@
+---
+title: Short Paper
+author:
+  - name: Alice Anonymous
+    email: alice@example.com
+    affiliation: Some Institute of Technology
+    footnote: Corresponding Author
+  - name: Bob Security
+    email: bob@example.com
+    affiliation: Another University
+address:
+  - code: Some Institute of Technology
+    address: Department, Street, City, State, Zip
+  - code: Another University
+    address: Department, Street, City, State, Zip
+abstract: |
+  This is the abstract.
+
+  It consists of two paragraphs.
+
+journal: "An awesome journal"
+date: "`r Sys.Date()`"
+bibliography: mybibfile.bib
+output: rticles::elsevier_article
+---
+
+_Text based on elsarticle sample manuscript, see [http://www.elsevier.com/author-schemas/latex-instructions#elsarticle](http://www.elsevier.com/author-schemas/latex-instructions#elsarticle)_
+
+## Exploring Multicollinearity
+
+```{r Exploring Multicollinearity}
+
+predictor_df <- gall_selection.df %>%
+  mutate(sc.Diam_2 = sc.Diam^2, sc.log.Clutch_2 = sc.log.Clutch^2, sc.log1p.Pref_2 = sc.log1p.Pref^2,
+         sc.Diam_sc.log.Clutch = sc.Diam*sc.log.Clutch, sc.Diam_sc.log1p.Pref = sc.Diam*sc.log1p.Pref, sc.log.Clutch_sc.log1p.Pref = sc.log.Clutch*sc.log1p.Pref) %>%
+  select(Foodweb, sc.Diam, sc.log.Clutch, sc.log1p.Pref, sc.Diam_2:sc.log.Clutch_sc.log1p.Pref)
+
+predictor_df_2 <- gall_selection.df %>%
+  mutate(sc.Diam = poly(sc.Diam,2)[,1], sc.log.Clutch = poly(sc.log.Clutch,2)[,1], sc.log1p.Pref = poly(sc.log1p.Pref,2)[,1],
+         sc.Diam_2 = poly(sc.Diam,2)[,2], sc.log.Clutch_2 = poly(sc.log.Clutch,2)[,2], sc.log1p.Pref_2 = poly(sc.log1p.Pref,2)[,2],
+         sc.Diam_sc.log.Clutch = sc.Diam*sc.log.Clutch, sc.Diam_sc.log1p.Pref = sc.Diam*sc.log1p.Pref, sc.log.Clutch_sc.log1p.Pref = sc.log.Clutch*sc.log1p.Pref) %>%
+  select(Foodweb, sc.Diam, sc.log.Clutch, sc.log1p.Pref, sc.Diam_2:sc.log.Clutch_sc.log1p.Pref)
+
+GGally::ggpairs(predictor_df, mapping = aes(color = Foodweb), 
+                columns = c("sc.Diam","sc.log.Clutch","sc.log1p.Pref","sc.Diam_2","sc.log.Clutch_2","sc.log1p.Pref_2"),
+                columnLabels = c("Diam","Clutch","Pref","Diam^2","Clutch^2","Pref^2"),
+                lower = list(continuous = "smooth"),
+                diag = NULL)
+
+GGally::ggpairs(predictor_df_2, mapping = aes(color = Foodweb), 
+                columns = c("sc.Diam","sc.log.Clutch","sc.log1p.Pref","sc.Diam_2","sc.log.Clutch_2","sc.log1p.Pref_2"),
+                columnLabels = c("Diam","Clutch","Pref","Diam^2","Clutch^2","Pref^2"),
+                lower = list(continuous = "smooth"),
+                diag = NULL)
+
+## Inspect correlations among predictors for nonlinear selection coefficients
+GGally::ggpairs(predictor_df, mapping = aes(color = Foodweb), 
+                columns = c("sc.Diam_2","sc.log.Clutch_2","sc.log1p.Pref_2","sc.Diam_sc.log.Clutch","sc.Diam_sc.log1p.Pref","sc.log.Clutch_sc.log1p.Pref"),
+                columnLabels = c("Diam^2","Clutch^2","Pref^2","Diam,Clutch","Diam,Pref","Clutch,Pref"),
+                lower = list(continuous = "smooth"),
+                diag = NULL)
+GGally::ggpairs(predictor_df_2, mapping = aes(color = Foodweb), 
+                columns = c("sc.Diam_2","sc.log.Clutch_2","sc.log1p.Pref_2","sc.Diam_sc.log.Clutch","sc.Diam_sc.log1p.Pref","sc.log.Clutch_sc.log1p.Pref"),
+                columnLabels = c("Diam^2","Clutch^2","Pref^2","Diam,Clutch","Diam,Pref","Clutch,Pref"),
+                lower = list(continuous = "smooth"),
+                diag = NULL)
+
+GGally::ggpairs(predictor_df, mapping = aes(color = Foodweb), 
+                columns = c("sc.Diam","sc.log.Clutch","sc.log1p.Pref_2","sc.Diam_sc.log.Clutch","sc.Diam_sc.log1p.Pref","sc.log.Clutch_sc.log1p.Pref"),
+                columnLabels = c("Diam","Clutch","Pref","Diam,Clutch","Diam,Pref","Clutch,Pref"),
+                lower = list(continuous = "smooth"),
+                diag = NULL)
+GGally::ggpairs(predictor_df_2, mapping = aes(color = Foodweb), 
+                columns = c("sc.Diam","sc.log.Clutch","sc.log1p.Pref_2","sc.Diam_sc.log.Clutch","sc.Diam_sc.log1p.Pref","sc.log.Clutch_sc.log1p.Pref"),
+                columnLabels = c("Diam","Clutch","Pref","Diam,Clutch","Diam,Pref","Clutch,Pref"),
+                lower = list(continuous = "smooth"),
+                diag = NULL)
+
+ggplot(gall_selection.df, aes(x=Gall_Height_mm, y=Gall_Height_mm^2)) + geom_point() + geom_smooth(method="lm")
+ggplot(gall_selection.df, aes(x=sc.Diam, y=sc.Diam^2, color=Foodweb)) + geom_point() + geom_smooth(method="lm")
+ggplot(gall_selection.df, aes(x=sc.Diam, y=poly(sc.Diam,2)[,2], color=Foodweb)) + geom_point() + geom_smooth(method="lm")
+ggplot(gall_selection.df, aes(x=sc.log.Clutch, y=sc.log.Clutch^2, color=Foodweb)) + geom_point() + geom_smooth(method="lm")
+ggplot(gall_selection.df, aes(x=sc.log1p.Pref, y=sc.log1p.Pref^2, color=Foodweb)) + geom_point() + geom_smooth(method="lm")
+ggplot(gall_selection.df, aes(x=sc.log1p.Pref, y=poly(sc.log1p.Pref,2)[,2], color=Foodweb)) + geom_point() + geom_smooth(method="lm") + scale_x_continuous(limits = c(-2.5,1))
+ggplot(filter(gall_selection.df, Density_per_100_shoots > 0), aes(x=sc.log1p.Pref, y=sc.log1p.Pref^2, color=Foodweb)) + geom_point() + geom_smooth(method="lm")
+
+hist(gall_selection.df$sc.log1p.Pref)
+
+poly(gall_selection.df$sc.Diam,2)
+```
+
+
+## Table of means and sd of traits used in these analyses
+
+```{r Table of Means and SD of Phenotypic Traits}
+trait_table <- gall_selection.df %>%
+  transmute(Diam = Gall_Height_mm, Clutch = gall_individuals, ln.Clutch = log(Clutch),
+            Pref = Density_per_100_shoots, ln1p.Pref = log1p(Pref)) %>%
+  summarise_all(funs(mean, sd)) %>%
+  t(.) %>%
+  data.frame(Value = .[,1], Trait = rownames(.)) %>%
+  separate(Trait, into = c("Trait","Statistic"), sep="_") %>%
+  select(Trait, Statistic, Value) %>%
+  spread(key = Statistic, value = Value)
+
+traits <- data.frame(trait_table, row.names = trait_table$Trait) %>% .[,-1] %>% round(.,2)
+traits
+```
+
+
+\begin{table}[]
+\begin{tabular}{lc}
+                                                                              \\ \hline
+\textbf{Trait}                                   & \textbf{Mean $\pm$ SD}     \\ \hline
+\textbf{Chamber diameter}                        & `r traits["Diam","mean"]`$\pm$`r traits["Diam","sd"]`  \\
+Clutch size                                      & `r traits["Clutch","mean"]`$\pm$`r traits["Clutch","sd"]`  \\
+\boldmath$\ln(\textbf{Clutch size})$             & `r traits["ln.Clutch","mean"]`$\pm$`r traits["ln.Clutch","sd"]`  \\
+Female preference                                & `r traits["Pref","mean"]`$\pm$`r traits["Pref","sd"]`  \\ 
+\boldmath$\ln(1 + \textbf{Female preference})$   & `r traits["ln1p.Pref","mean"]`$\pm$`r traits["ln1p.Pref","sd"]`            \\ \hline
+\end{tabular}
+\end{table}
