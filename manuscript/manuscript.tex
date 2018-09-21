@@ -89,51 +89,81 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendi
 % section~\ref{section:CountingOwlEggs}), and refer to sections by name
 % (e.g. section ``Counting Owl Eggs'').
 
-The quick red fox jumps over the lazy brown dog. Furthermore, the quick brown fox jumps over the lazy red dog. In addition, the quick R\"{u}ppell's fox (\textit{Vulpes rueppellii}) jumps over the lazy golden retriever.
+The fitness landscape provides a unifying framework for linking the ecology and evolution of populations (Lande 2007; McPeek 2017). The average fitness of a population is a common currency in ecology and evolution, but usually goes by different names in each field. Ecologists refer to it as per-capita population growth rate ($dN/Ndt$), whereas evolutionary biologists call it the natural log of population mean fitness ($ln(\bar W_N)$). In addition to having different names, ecologists and evolutionary biologists have typically focused on different processes that shape the fitness landscape. For example, population ecologists have long studied the effect of a population's density on its per-capita growth rate (i.e. density-dependence, CITE Foundational and current work). In contrast, evolutionary biologists have focused on how the mean trait value of a population influences its average fitness, as this describes the direction and magnitude of natural selection (CITE foundational and current work). Therefore, the fitness landscape describes the joint ecological and evolutionary dynamics of a population in a given environment.
+
+Community ecologists have extended the ecological side of the fitness landscape by incorporating network theory. Species-interaction networks, such as a food web describing who eats whom, provide an explicit representation of the biotic environment as they describe the interdependency of populations within an ecological community. This has provided an effective framework for predicting how changes in the biotic environment (e.g. density of directly and indirectly connected species) will impact population dynamics within species-rich communities. At the same time, evolutionary biologists have long recognized that changes in the biotic environment can alter the dynamics of natural selection. However, the biotic environment in which populations are evolving often remains a bit of a "black box" that's labelled by a general ecological process such as competition, predation, or mutualism. Because of this, it remains difficult to predict how changes in the biotic environment will affect the direction and magnitude of natural selection. Such predictions are urgently needed given the rapid changes in the biotic environment that most populations are currently experiencing throughout the world. 
+
+Here, we integrate species-interaction networks and the fitness landscape to empirically test how changes in the biotic environment -- network of species interactions -- affect the dynamics of natural selection. Specifically, we conducted a field experiment that manipulated the diversity of insect parasitoids that were able to impose selection on an abundant insect herbivore (*Iteomyia salicisverruca*)(Fig. 1). The larva of this herbivore species induce tooth-shaped galls when they feed on the developing leaves of willow trees (*Salix* sp., @Russo2006). These galls provide protection from generalist predators (e.g. ants, spiders), thus the network of interacting parasitoids provides a realistic representation of the biotic environment this insect herbivore is experiencing. Therefore, our manipulation of parasitoid diversity alters the diversity of interactions, or food-web complexity, that this insect herbivore experiences.
+
+Changes in food-web complexity could influence a resource population's fitness landscape in at least two ways. First, if a more diverse community of consumers is more effective at suppressing resource densities (@Ives2005), then this will result in lower mean fitness of the resource population. A reduction in mean fitness, all else equal, will intensify natural selection (@Hunter2018). On the other hand, if consumers impose different selection pressures on resource traits, then more diverse communities could dampen the strength of selection acting on a given trait. This is because a greater diversity in selection pressures is equivalent to greater uncertainty in the selective environment. Thus, a more diverse consumer community may relax the net selection pressures acting on resource traits. Here, we evaluate these hypothesized relationships through an experimental test of how changes in food-web complexity alters the fitness landscape of a resource population.
 
 \section*{Methods}
 
-Lorem ipsum (\citealt{Xiao2015}) ut velit mauris, egestas sed, gravida nec, ornare ut, mi. Aenean ut orci vel massa suscipit pulvinar. Nulla sollicitudin. Fusce varius, ligula non tempus aliquam, nunc turpis ullamcorper nibh, in tempus sapien eros vitae ligula. 
+\subsection*{Study Site}
 
-\subsection*{The quickness of the fox}
+We conducted our study within a four-year old common garden of coastal willow (*Salix hookeriana*) located at Humboldt Bay National Wildlife Refuge (HBNWR) (40&deg;40'53"N, 124&deg;12'4"W) near Loleta, California, USA. This common garden consists of 26 different willow genotypes that were collected from a single population of willows growing around Humboldt Bay. Stem cuttings of each genotype (25 replicates per genotypes) were planted in a completely randomized design in two hectares of a former cattle pasture at HBNWR. Willows in our garden begin flowering in February and reach their peak growth in early August. During this study, willows had reached 5 - 9m in height. Further details on the genotyping and planting of the common garden are available in @Barbour2015.  
 
-Lorem ipsum nulla facilisi, despite the findings of \citet{LemKapEx07}. Etiam semper, orci sit amet facilisis interdum, tellus nunc consequat erat, quis viverra nisi diam ut metus. Pellentesque cursus, sapien malesuada euismod iaculis, mauris purus interdum diam, vel vestibulum justo enim vitae tellus. Nunc interdum lorem sit amet diam volutpat tristique. Quisque pulvinar ac metus commodo lacinia (\citealt{Ing11,Xiao2015}).  
+\subsection*{Food-web Manipulation}
 
-\subsubsection*{Third-order heading}
+We setup our food-web manipulation across 128 plants soon after galls began developing on *S. hookeriana* in early June of 2013. 
+These 128 plants came from eight different plant genotypes, spanning the range of trait variation observed in this willow population (@Barbour2015). 
+On treatment plants (8 replicates per genotype), we enclosed 14 galled leaves with 10x15cm organza bags (ULINE, Pleasant Prairie, WI, USA) to exclude three parasitoid species that attack during larva development (hereafter larval parasitoids). 
+This treatment did not exclude the egg parasitoid *Platygaster* sp. which attacks prior to gall initiation (note that in Cecidomyiid midges, larva initiate gall development CITE). 
+On control plants (8 replicates per genotype), we used flagging tape to mark 14 galled leaves per plant (~30 larva), allowing the full suite of parasitoids to attack *Iteomyia*. 
+Marking galls with flagging tape ensured that we compared control and treatment galls with similar phenology when we collected galls later in the season. 
+Our food-web manipulation altered the average number of trophic interactions that *Iteomyia* was exposed to from BLANK on control plants to BLANK on treatment plants. 
+Thus, we refer to galls on control plants as being exposed to a 'complex' food web, whereas galls on treatment plants were exposed to a 'simple' food web.
+In late August, we collected marked and bagged galls from each plant, placed them into 30 mL vials and <!-- allowed them to complete development--> kept them in the lab for 4 months at room temperature. 
+We then opened galls under a dissecting scope and determined whether larva survived to pupation (our measure of fitness) or were parasitized. Since we were interested in selection imposed by interactions with parasitoids, we restricted our data to larva that either survived to pupation, was parasitized by an egg parasitoid (*Platygaster* sp.), or was parasitized by a larval parasitoid. For the food-web treatment that excluded parasitoids, we further restricted our data by removing any instances of parasitism by a larval parasitoid. This represented less than 3\% of the observations in this food-web treatment and allowed us to focus our inferences of selection on those imposed by the egg parasitoid.  
+Together, we had survival estimates for 1,306 larva from 607 galls, 111 plants, and 8 plant genotypes.
 
-Usually two or three levels of heading will be all you need. Journal style even permits a fourth level in case you need it.
+\subsection*{Measuring Gall Traits}
 
-\paragraph*{Fourth-order heading}
-The quick red fox jumps over the lazy brown dog in this paragraph as well.
+We collected data on three different traits that we anticipated would experience selection based on our previous work (@Barbour2016) and others work with Cecidomyiid midges (@Weis1983, @Heath2018). 
+First, we measured gall diameter as the size of each gall chamber to the nearest 0.01 mm at its maximum diameter (perpendicular to the direction of plant tissue growth). 
+Our previous work has shown that a larger gall diameter provides a refuge for larva from parasitoid attack (@Barbour2016). <!-- Consider whether it is important to make the distinction that diameter was measured at the multi-chambered gall level in previous work -->
+Second, we measured the clutch size of adult female midges by counting the number of chambers in each gall (@Weis1983). 
+All larva collected from the same multi-chambered gall were scored with the same clutch size. 
+Third, we measured female preference for oviposition (egg-laying) sites as the density of larva observed on a plant in an independent survey. Specifically, we randomly sampled five branches per tree and summed the number of individual gall chambers observed. We then converted these counts to a measure of gall density per 100 shoots by counting the number of shoots on the last branch we sampled. All larva collected from the same plant were scored with the same female preference.
+The measurement of larval densities on plants in the field is a commonly used index for measuring oviposition preference (@Gripenberg2010); however, caution must be taken in inferring 'preference' as larval densities can be influenced by processes other than preference (@Singer1986). Fortunately, a couple of features of our study system suggest that larval density on a plant may be a good proxy for female preference. For example, since our data comes from a randomized placement of willow genotypes in a common garden, there is no consistent bias in which willow genotypes that females are exposed to while searching for oviposition sites. Also, egg predation is a minor source of mortality for galling insects in general (@Hawkins1997), thus we do not expect any prior egg predation to bias our estimates of observed larval densities. 
 
+\subsection*{Quantifying the Fitness Landscape}
 
-\subsection*{The redness of the fox}
+To characterize the shape of the fitness landscape in simple and complex food webs, we first used a generalized linear mixed model to quantify selection surfaces on individual traits. We used a binomial error distribution (logit link function) since larval survival (0 or 1) was our response variable and measure of fitness. We specified linear and quadratic terms for each gall trait as well as linear interaction terms between each gall trait as fixed effects in the statistical models. To account for the correlated structure of clutch size (gall level) and female preference (plant level) as well as any independent effects of willow genotype on larval survival, we specified gall ID nested within plant ID nested within plant genotype as random effects. Since we were interested in characterizing the fitness landscape -- the relationship between mean trait values and population mean fitness -- we assumed the mean value of our random effects (i.e. setting them to zero) to estimate selection gradients. Also, the fitness landscape assumes that traits distributions are multivariate normal. To better meet this assumption, we log-transformed clutch size and added a small constant (1) to female preference before log transforming, since our surveys occassionaly estimated zero larval densities. We then scaled all phenotypic traits to mean=0 and SD=1 in order to calculate standardized selection gradients that were comparable across traits and with other studies of natural selection. We used the method of @Janzen1998 to calculate directional ($\beta_{z_i}$), quadratic ($\gamma_{z_i,z_i}$), and correlational ($\gamma_{z_i,z_j}$) selection gradients and used parametric bootstrapping (1000 replicates) to calculate their 95\% confidence intervals (@Bolker2009). We estimated directional selection gradients by excluding quadratic terms and statistical interactions in the model. Note that for visualizing the fitness landscape we restrict trait axes to $\pm 1$ SD of the mean trait value as this contains the majority of the trait distribution that selection is acting on.
 
-As \citet{Xiao2015} argued, phasellus porttitor eros et ante condimentum, eget facilisis orci condimentum. Nulla facilisi. Proin placerat elit blandit, euismod dolor nec, dapibus diam. Mauris posuere malesuada lacus, at elementum lacus auctor eu (fig~\ref{Fig:Jumps}A). 
+Rather than imposing selection, parasitoids may themselves influence the expression of herbivore traits. Any influence on trait expression would bias selection gradients acting on those traits. In our system, it was plausible that parasitoids may influence chamber growth by promoting larval feeding (cite), speeding up larva development (cite), or killing larva before they complete their development (cite). Therefore, our estimates of selection on chamber diameter may be positively or negatively biased. To estimate this bias, we subset our data to only include galls where there was variation in larval survival (1 > survival > 0) within the same gall. We then calculated "apparent" selection differentials for each gall by comparing the average chamber diameter of all larva (before "selection") to the average chamber diameter of surviving larva and analyzed separate one-sample t-tests for each food-web treatment. This analysis is based on the assumption that larva within each gall come from the same clutch and therefore should have similar chamber diameters regardless of whether they are parasitized. In general, we found that our estimates of directional selection on chamber diameter were positively biased (Appendix). In other words, our analyses were overestimating the magnitude of selection acting on gall diameter. Therefore, we adjusted our estimates of directional selection on chamber diameter ($\beta_{diam}$) by subtracting the biased selection differentials. Note that selection gradients and selection differentials for chamber diameter were virtually the same (Appendix). 
+
+\subsection*{Quantifying Selective Constraints}
+
+The strength and pattern of selective constraints can be measured as the slope and curvature of the fitness landscape (Arnold 1992).
+
+We can translate selection surfaces of individuals to the fitness landscape of a population
+
+To characterize the net effects of food-web complexity on the slope and curvature of *Iteomyia*'s fitness landscape, we took advantage of existing theory that links selection surfaces of individuals to the fitness landscape of the population (Phillips & Arnold 1998, Arnold 2003). Specifically, the slope of the fitness landscape corresponds to the column vector of directional selection gradients:
+
+$$\text{Slope} = \beta = \begin{pmatrix} \beta_{diam} \\ \beta_{clutch} \\ \beta_{pref} \end{pmatrix} $$
+whereas the curvature of the fitness landscape is a function of the directional, nonlinear, and correlational selection gradients: 
+$$\text{Curvature} = \gamma - \beta \beta^T$$
+where \gamma represents the matrix of nonlinear and correlational selection gradients:
+$$\gamma = \begin{pmatrix} \gamma_{diam,diam}&& \\ \gamma_{diam,clutch}&\gamma_{clutch,clutch}& \\ \gamma_{diam,pref} & \gamma_{clutch,pref} &\gamma_{pref,pref} \end{pmatrix}$$
+
+Note that we ommitted the upper triangle of the matrix for clarity since it is simply the reflection of the lower triangle. Assuming that there is additive genetic variance and covariance between these traits under selection, then the slope and curvature of the fitness landscape give insight to how the population's mean trait value will change in the next generation as well as how additive genetic variance and covariance changes within a generation.
+
+While making quantitative predictions about trait evolution requires knowledge of the additive genetic variance and covariance of these traits, the slope and curvature of the fitness landscape still give qualitative insight to the evolutionary trajectory of a population. 
+
+If we assume that there is additive genetic variance and covariance between these traits, then the matrix describing the curvature of the fitness landscape gives qualitative insight to the selective constraints acting on the population. For example, the diagonal of the curvature matrix dictates (qualitatively) whether the additive genetic variance in each trait will increase ($+$), decrease ($-$), or stay the same ($0$). Similarly, the off-diagonal of the curvature matrix dictates whether selection favors trait integration (positive covariance), a tradeoff (negative covariance), or no change in genetic covariance. In other words, we can get qualitative insight to how food-web complexity influences constraints on the fitness landscape by counting the number of negative sign values along the diagnoal (which imply a decrease in additive genetic variance) and the number of positive or negative signs along the off diagonal (which imply changes in additive genetic covariance that lead to either trait integration or tradeoffs).  
+
+All analyses and visualizations were conducted in R (@R2018). 
+
+I need to go back to estimate a common alpha coefficient if the treatments do not differ from each other.
 
 \section*{Results}
 
-Lorem ipsum dolor sit amet. Aenean pulvinar malesuada commodo (see \citealt{DavisEtAl2011}; table~\ref{Table:Okapi}). Sed aliquet mauris odio, in tristique dui egestas a. Etiam eu malesuada quam. Suspendisse tincidunt eu erat sit amet vulputate. Duis at arcu et nisl dictum mattis. Maecenas vel cursus ante. Cras eleifend elit nec velit sollicitudin fermentum in ac mauris. Pellentesque rutrum magna vel elit maximus hendrerit. 
-
-\subsection*{The height of the jump}
-
-Aenean eu pellentesque quam (fig.~\ref{Fig:OkapiHorn}). Nam pellentesque augue eu finibus lacinia. Nullam nec justo vitae odio imperdiet rhoncus vitae vitae quam. Pellentesque porttitor metus et lectus ornare, ac cursus urna efficitur (fig~\ref{Fig:Jumps}B). 
-
-\subsection*{The laziness of the dog}
-
-Sed sit amet pharetra nisi (video~\ref{VideoExample}, fig.~\ref{Fig:AnotherFigure}). Praesent quis dolor in dolor molestie cursus et ac nisi. Vestibulum ante purus, semper eget est vitae, vehicula ornare nisl. Morbi efficitur euismod enim, nec feugiat tellus cursus eget. Donec mauris nibh, volutpat vehicula viverra at, iaculis congue sem. Praesent eget erat rhoncus erat sollicitudin volutpat. 
-
-If you have deposited data to Dryad, you should cite them somewhere in the main text (usually in the Methods or Results sections). A sentence like the following will do. All data are available in the Dryad Digital Repository (\citealt{CookEtAl2015}).
 
 \section*{Discussion}
 
-Nam pulvinar lorem at lorem ultrices, vel accumsan massa feugiat (\citealt{Ing11}). Proin tristique velit eget lacus iaculis, in pellentesque nulla varius. Phasellus sodales est odio, eu pulvinar magna pellentesque eu. Sed ut lobortis eros. Aliquam eget metus turpis. Sed et convallis lectus, id tincidunt enim. In porta nibh ut lacus feugiat, non consequat orci rhoncus. Morbi blandit at augue nec tempor. Sed fringilla ipsum ut justo viverra, ut euismod nisi gravida.
-
-Curabitur non posuere augue, id suscipit orci. Nunc luctus accumsan aliquam. Cras egestas turpis vitae nisl vulputate interdum. Donec pellentesque libero egestas tortor pharetra laoreet. Phasellus facilisis auctor ligula, eu sollicitudin mi sagittis non.
-
 \section*{Conclusion}
 
-Duis pharetra enim at libero cursus, eu commodo mi vestibulum. Nullam eget velit nec lectus viverra sodales. Suspendisse egestas, eros at dictum tincidunt, mi orci laoreet libero, eget rutrum sapien arcu blandit odio.
 
 %%%%%%%%%%%%%%%%%%%%%
 % Acknowledgments
@@ -145,8 +175,6 @@ Duis pharetra enim at libero cursus, eu commodo mi vestibulum. Nullam eget velit
 % final files after acceptance.
 
 \section*{Acknowledgments}
-
-OEC would like to thank the world. GHC is much indebted to the solar system. AQE was supported by a generous grant from the Milky Way (MW/01010/987654).
 
 \newpage{}
 
@@ -282,15 +310,86 @@ Xiao, X., D.~J. McGlinn, and E.~P. White. 2015.
 \setcounter{table}{0}
 
 \begin{table}[h]
-\caption{Animals in various cities with equations}
-\label{Table:Okapi}
+\caption{Table for Alpha Regression coefficients}
+\label{Table:Alphas}
 \centering
-\begin{tabular}{llc}\hline
-Animal    & City         & Equation \\ \hline
-Dog       & Springfield  & $x+y=z$ \\
-Fox       & Indianapolis & $2x+2y=2z$ \\
-Okapi$^a$ & Chicago      & $x-y<z$ \\
-Badger    & Madison      & $x+2y>z$ \\ \hline
+\begin{tabular}{lcc}
+                                                                           \\ \hline
+                       & \multicolumn{2}{c}{Food web (Estimate [95\% CI])} \\
+\textbf{Coefficient}   & \textbf{Complex} & \textbf{Simple}                \\ \hline
+$Diam$                 &  [ - ] &  [ - ] \\
+$Clutch$               &  [ - ] &  [ - ] \\
+$Pref$                 &  [ - ] &  [ - ] \\
+$Diam^2$               &  [ - ] &  [ - ] \\
+$Clutch^2$             &  [ - ] &  [ - ] \\
+$Pref^2$               &  [ - ] &  [ - ] \\
+$Diam:Clutch$          &  [ - ] &  [ - ] \\
+$Diam:Pref$            &  [ - ] &  [ - ] \\
+$Clutch:Pref$          &  [ - ] &  [ - ]              \\ \hline
+\end{tabular}
+\bigskip{}
+\\
+{\footnotesize Note: Table titles should be short. Further details should go in a `notes' area after the tabular environment, like this. $^a$ Okapis are not native to Chicago, but they are to be met with in both of the major Chicagoland zoos.}
+\end{table}
+
+\newpage{}
+
+\begin{table}[h]
+\caption{Table for \textit{Iteomyia} Selection Gradients}
+\label{Table:Gradients}
+\centering
+\begin{tabular}{lcc}
+                                                                                  \\ \hline
+                                  & \multicolumn{2}{c}{Food web (Estimate [95\% CI])} \\
+\textbf{Selection gradient}       & \textbf{Complex} & \textbf{Simple}            \\ \hline
+$\beta_{Diam}$                    &  [ - ] &  [ - ] \\
+$\beta_{Clutch}$                  &  [ - ] &  [ - ] \\
+$\beta_{Pref}$                    &  [ - ] &  [ - ] \\
+$\gamma_{Diam,Diam}$              &  [ - ] &  [ - ] \\
+$\gamma_{Clutch,Clutch}$          &  [ - ] &  [ - ] \\
+$\gamma_{Pref,Pref}$              &  [ - ] &  [ - ] \\
+$\gamma_{Diam,Clutch}$            &  [ - ] &  [ - ] \\
+$\gamma_{Diam,Pref}$              &  [ - ] &  [ - ] \\
+$\gamma_{Clutch,Pref}$            &  [ - ] &  [ - ]            \\ \hline
+\end{tabular}
+\bigskip{}
+\\
+{\footnotesize Note: Table titles should be short. Further details should go in a `notes' area after the tabular environment, like this. $^a$ Okapis are not native to Chicago, but they are to be met with in both of the major Chicagoland zoos.}
+\end{table}
+
+\newpage{}
+
+\begin{table}[h]
+\caption{Table for bias}
+\label{Table:Bias}
+\centering
+\begin{tabular}{lc}
+                                                                  \\ \hline
+\textbf{Type}                 & \textbf{Bias} \boldmath$s_{Diam}$ \\ \hline
+Complex (All)                 &  [ - ] \\
+Complex (Larval guild)        &  [ - ] \\
+Simple (\textit{Platygaster}) &  [ - ]                  \\ \hline
+\end{tabular}
+\bigskip{}
+\\
+{\footnotesize Note: Table titles should be short. Further details should go in a `notes' area after the tabular environment, like this. $^a$ Okapis are not native to Chicago, but they are to be met with in both of the major Chicagoland zoos.}
+\end{table}
+
+\newpage{}
+
+\begin{table}[h]
+\caption{Table for \textit{Platygaster} Selection Differentials}
+\label{Table:PlatySelection}
+\centering
+\begin{tabular}{lc}
+                                                                  \\ \hline
+\textbf{Selection differential} & \textbf{Estimate [95\% CI]}     \\ \hline
+$s_{Diam}$                      &  [ - ] \\
+$s_{Clutch}$                    &  [ - ] \\
+$s_{Pref}$                      &  [ - ] \\ 
+$s_{Diam,Diam}$                 &  [ - ] \\
+$s_{Clutch,Clutch}$             &  [ - ] \\
+$s_{Pref,Pref}$                 &  [ - ]                \\ \hline
 \end{tabular}
 \bigskip{}
 \\
