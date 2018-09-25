@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/Debian) (preloaded format=pdflatex 2017.9.1)  21 SEP 2018 10:44
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/Debian) (preloaded format=pdflatex 2017.9.1)  24 SEP 2018 11:51
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -27,6 +27,38 @@ File: size11.clo 2014/09/29 v1.4h Standard LaTeX file (size option)
 Package: mathpazo 2005/04/12 PSNFSS-v9.2a Palatino w/ Pazo Math (D.Puga, WaS) 
 \symupright=\mathgroup4
 )
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/graphicx.sty
+Package: graphicx 2014/10/28 v1.0g Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/keyval.sty
+Package: keyval 2014/10/28 v1.15 key=value parser (DPC)
+\KV@toks@=\toks14
+)
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/graphics.sty
+Package: graphics 2016/01/03 v1.0q Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texlive/texmf-dist/tex/latex/graphics/trig.sty
+Package: trig 2016/01/03 v1.10 sin cos tan (DPC)
+)
+(/usr/share/texlive/texmf-dist/tex/latex/latexconfig/graphics.cfg
+File: graphics.cfg 2010/04/23 v1.9 graphics configuration of TeX Live
+)
+Package graphics Info: Driver file: pdftex.def on input line 95.
+
+(/usr/share/texlive/texmf-dist/tex/latex/pdftex-def/pdftex.def
+File: pdftex.def 2011/05/27 v0.06d Graphics/color for pdfTeX
+
+(/usr/share/texlive/texmf-dist/tex/generic/oberdiek/infwarerr.sty
+Package: infwarerr 2010/04/08 v1.3 Providing info/warning/error messages (HO)
+)
+(/usr/share/texlive/texmf-dist/tex/generic/oberdiek/ltxcmds.sty
+Package: ltxcmds 2011/11/09 v1.22 LaTeX kernel commands for general use (HO)
+)
+\Gread@gobject=\count87
+))
+\Gin@req@height=\dimen103
+\Gin@req@width=\dimen104
+)
 (/usr/share/texlive/texmf-dist/tex/latex/preprint/fullpage.sty
 Package: fullpage 1999/02/23 1.1 (PWD)
 \FP@margin=\skip43
@@ -36,12 +68,12 @@ Package: natbib 2010/09/13 8.31b (PWD, AO)
 \bibhang=\skip44
 \bibsep=\skip45
 LaTeX Info: Redefining \cite on input line 694.
-\c@NAT@ctr=\count87
+\c@NAT@ctr=\count88
 )
 (/usr/share/texlive/texmf-dist/tex/latex/base/inputenc.sty
 Package: inputenc 2015/03/17 v1.2c Input encoding file
-\inpenc@prehook=\toks14
-\inpenc@posthook=\toks15
+\inpenc@prehook=\toks15
+\inpenc@posthook=\toks16
 
 (/usr/share/texlive/texmf-dist/tex/latex/base/utf8.def
 File: utf8.def 2015/12/03 v1.1r UTF-8 support for inputenc
@@ -350,19 +382,19 @@ Now handling font encoding U ...
 ))
 (/usr/share/texlive/texmf-dist/tex/latex/lineno/lineno.sty
 Package: lineno 2005/11/02 line numbers on paragraphs v4.41
-\linenopenalty=\count88
-\output=\toks16
-\linenoprevgraf=\count89
-\linenumbersep=\dimen103
-\linenumberwidth=\dimen104
-\c@linenumber=\count90
-\c@pagewiselinenumber=\count91
-\c@LN@truepage=\count92
-\c@internallinenumber=\count93
-\c@internallinenumbers=\count94
-\quotelinenumbersep=\dimen105
-\bframerule=\dimen106
-\bframesep=\dimen107
+\linenopenalty=\count89
+\output=\toks17
+\linenoprevgraf=\count90
+\linenumbersep=\dimen105
+\linenumberwidth=\dimen106
+\c@linenumber=\count91
+\c@pagewiselinenumber=\count92
+\c@LN@truepage=\count93
+\c@internallinenumber=\count94
+\c@internallinenumbers=\count95
+\quotelinenumbersep=\dimen107
+\bframerule=\dimen108
+\bframesep=\dimen109
 \bframebox=\box26
 LaTeX Info: Redefining \\ on input line 3056.
 )
@@ -371,55 +403,118 @@ Package: titlesec 2016/03/15 v2.10.1 Sectioning titles
 \ttl@box=\box27
 \beforetitleunit=\skip46
 \aftertitleunit=\skip47
-\ttl@plus=\dimen108
-\ttl@minus=\dimen109
-\ttl@toksa=\toks17
-\titlewidth=\dimen110
-\titlewidthlast=\dimen111
-\titlewidthfirst=\dimen112
+\ttl@plus=\dimen110
+\ttl@minus=\dimen111
+\ttl@toksa=\toks18
+\titlewidth=\dimen112
+\titlewidthlast=\dimen113
+\titlewidthfirst=\dimen114
 )
 (/usr/share/texlive/texmf-dist/tex/latex/titlesec/block.tss
 File: block.tss 2016/03/15
-) (./manuscript.aux)
+)
+No file manuscript.aux.
 \openout1 = `manuscript.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 44.
-LaTeX Font Info:    ... okay on input line 44.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 44.
-LaTeX Font Info:    ... okay on input line 44.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 44.
-LaTeX Font Info:    ... okay on input line 44.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 44.
-LaTeX Font Info:    ... okay on input line 44.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 44.
-LaTeX Font Info:    ... okay on input line 44.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 44.
-LaTeX Font Info:    ... okay on input line 44.
-LaTeX Font Info:    Try loading font information for OT1+pplx on input line 44.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 45.
+LaTeX Font Info:    ... okay on input line 45.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 45.
+LaTeX Font Info:    ... okay on input line 45.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 45.
+LaTeX Font Info:    ... okay on input line 45.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 45.
+LaTeX Font Info:    ... okay on input line 45.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 45.
+LaTeX Font Info:    ... okay on input line 45.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 45.
+LaTeX Font Info:    ... okay on input line 45.
+LaTeX Font Info:    Try loading font information for OT1+pplx on input line 45.
 
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/ot1pplx.fd
 File: ot1pplx.fd 2004/09/06 font definitions for OT1/pplx.
 )
-\big@size=\dimen113
-LaTeX Font Info:    Try loading font information for OML+zplm on input line 46.
+\big@size=\dimen115
+
+(/usr/share/texlive/texmf-dist/tex/context/base/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count96
+\scratchdimen=\dimen116
+\scratchbox=\box28
+\nofMPsegments=\count97
+\nofMParguments=\count98
+\everyMPshowfont=\toks19
+\MPscratchCnt=\count99
+\MPscratchDim=\dimen117
+\MPnumerator=\count100
+\makeMPintoPDFobject=\count101
+\everyMPtoPDFconversion=\toks20
+) (/usr/share/texlive/texmf-dist/tex/generic/oberdiek/pdftexcmds.sty
+Package: pdftexcmds 2011/11/29 v0.20 Utility functions of pdfTeX for LuaTeX (HO
+)
+
+(/usr/share/texlive/texmf-dist/tex/generic/oberdiek/ifluatex.sty
+Package: ifluatex 2010/03/01 v1.3 Provides the ifluatex switch (HO)
+Package ifluatex Info: LuaTeX not detected.
+)
+(/usr/share/texlive/texmf-dist/tex/generic/oberdiek/ifpdf.sty
+Package: ifpdf 2011/01/30 v2.3 Provides the ifpdf switch (HO)
+Package ifpdf Info: pdfTeX in PDF mode is detected.
+)
+Package pdftexcmds Info: LuaTeX not detected.
+Package pdftexcmds Info: \pdf@primitive is available.
+Package pdftexcmds Info: \pdf@ifprimitive is available.
+Package pdftexcmds Info: \pdfdraftmode found.
+)
+(/usr/share/texlive/texmf-dist/tex/latex/oberdiek/epstopdf-base.sty
+Package: epstopdf-base 2010/02/09 v2.5 Base part for package epstopdf
+
+(/usr/share/texlive/texmf-dist/tex/latex/oberdiek/grfext.sty
+Package: grfext 2010/08/19 v1.1 Manage graphics extensions (HO)
+
+(/usr/share/texlive/texmf-dist/tex/generic/oberdiek/kvdefinekeys.sty
+Package: kvdefinekeys 2011/04/07 v1.3 Define keys (HO)
+))
+(/usr/share/texlive/texmf-dist/tex/latex/oberdiek/kvoptions.sty
+Package: kvoptions 2011/06/30 v3.11 Key value format for package options (HO)
+
+(/usr/share/texlive/texmf-dist/tex/generic/oberdiek/kvsetkeys.sty
+Package: kvsetkeys 2012/04/25 v1.16 Key value parser (HO)
+
+(/usr/share/texlive/texmf-dist/tex/generic/oberdiek/etexcmds.sty
+Package: etexcmds 2011/02/16 v1.5 Avoid name clashes with e-TeX commands (HO)
+Package etexcmds Info: Could not find \expanded.
+(etexcmds)             That can mean that you are not using pdfTeX 1.50 or
+(etexcmds)             that some package has redefined \expanded.
+(etexcmds)             In the latter case, load this package earlier.
+)))
+Package grfext Info: Graphics extension search list:
+(grfext)             [.png,.pdf,.jpg,.mps,.jpeg,.jbig2,.jb2,.PNG,.PDF,.JPG,.JPE
+G,.JBIG2,.JB2,.eps]
+(grfext)             \AppendGraphicsExtensions on input line 452.
+
+(/usr/share/texlive/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
+e
+))
+LaTeX Font Info:    Try loading font information for OML+zplm on input line 47.
 
 
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/omlzplm.fd
 File: omlzplm.fd 2002/09/08 Fontinst v1.914 font definitions for OML/zplm.
 )
-LaTeX Font Info:    Try loading font information for OMS+zplm on input line 46.
+LaTeX Font Info:    Try loading font information for OMS+zplm on input line 47.
 
 
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/omszplm.fd
 File: omszplm.fd 2002/09/08 Fontinst v1.914 font definitions for OMS/zplm.
 )
-LaTeX Font Info:    Try loading font information for OMX+zplm on input line 46.
+LaTeX Font Info:    Try loading font information for OMX+zplm on input line 47.
 
 
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/omxzplm.fd
 File: omxzplm.fd 2002/09/08 Fontinst v1.914 font definitions for OMX/zplm.
 )
-LaTeX Font Info:    Try loading font information for OT1+zplm on input line 46.
+LaTeX Font Info:    Try loading font information for OT1+zplm on input line 47.
 
 
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/ot1zplm.fd
@@ -428,7 +523,7 @@ File: ot1zplm.fd 2002/09/08 Fontinst v1.914 font definitions for OT1/zplm.
 ! Extra }, or forgotten $.
 <template> \unskip \hfil }
                           \hskip \tabcolsep \endtemplate 
-l.46 \maketitle
+l.47 \maketitle
                
 I've deleted a group-closing symbol because it seems to be
 spurious, as in `$x}$'. But perhaps the } is legitimate and
@@ -439,7 +534,7 @@ deleted material, e.g., by typing `I$}'.
 ! Missing $ inserted.
 <inserted text> 
                 $
-l.46 \maketitle
+l.47 \maketitle
                
 I've inserted a begin-math/end-math symbol since I think
 you left one out. Proceed, with fingers crossed.
@@ -447,7 +542,7 @@ you left one out. Proceed, with fingers crossed.
 ! Missing } inserted.
 <inserted text> 
                 }
-l.46 \maketitle
+l.47 \maketitle
                
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -458,7 +553,7 @@ my insertion and my current dilemma will both disappear.
 ! Extra }, or forgotten $.
 <template> \unskip \hfil }
                           \hskip \tabcolsep \endtemplate 
-l.46 \maketitle
+l.47 \maketitle
                
 I've deleted a group-closing symbol because it seems to be
 spurious, as in `$x}$'. But perhaps the } is legitimate and
@@ -469,7 +564,7 @@ deleted material, e.g., by typing `I$}'.
 ! Missing $ inserted.
 <inserted text> 
                 $
-l.46 \maketitle
+l.47 \maketitle
                
 I've inserted a begin-math/end-math symbol since I think
 you left one out. Proceed, with fingers crossed.
@@ -477,7 +572,7 @@ you left one out. Proceed, with fingers crossed.
 ! Missing } inserted.
 <inserted text> 
                 }
-l.46 \maketitle
+l.47 \maketitle
                
 I've inserted something that you may have forgotten.
 (See the <inserted text> above.)
@@ -489,10 +584,10 @@ my insertion and my current dilemma will both disappear.
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
 LaTeX Font Info:    Font shape `OT1/pplx/bx/n' in size <14.4> not available
-(Font)              Font shape `OT1/pplx/b/n' tried instead on input line 79.
+(Font)              Font shape `OT1/pplx/b/n' tried instead on input line 80.
  [2] [3]
 ! Misplaced alignment tab character &.
-l.104 ...Bay National Wildlife Refuge (HBNWR) (40&
+l.105 ...Bay National Wildlife Refuge (HBNWR) (40&
                                                   deg;40'53"N, 124&deg;12'4"...
 I can't figure out why you would want to use a tab mark
 here. If you just want an ampersand, the remedy is
@@ -502,7 +597,7 @@ you're probably due for more error messages, and you
 might try typing `S' now just to see what is salvageable.
 
 ! Misplaced alignment tab character &.
-l.104 ...life Refuge (HBNWR) (40&deg;40'53"N, 124&
+l.105 ...life Refuge (HBNWR) (40&deg;40'53"N, 124&
                                                   deg;12'4"W) near Loleta, C...
 I can't figure out why you would want to use a tab mark
 here. If you just want an ampersand, the remedy is
@@ -512,14 +607,14 @@ you're probably due for more error messages, and you
 might try typing `S' now just to see what is salvageable.
 
 
-Overfull \hbox (12.37201pt too wide) in paragraph at lines 104--105
+Overfull \hbox (12.37201pt too wide) in paragraph at lines 105--106
 \OT1/pplx/m/n/10.95 ana*) lo-cated at Hum-boldt Bay Na-tional Wildlife Refuge (
 HB-NWR) (40deg;40'53"N, 124deg;12'4"W)
  []
 
 [4] [5] [6] [7]
 ! Misplaced alignment tab character &.
-l.142 ...s landscape of the population (Phillips &
+l.143 ...s landscape of the population (Phillips &
                                                    Arnold 1998, Arnold 2003)...
 I can't figure out why you would want to use a tab mark
 here. If you just want an ampersand, the remedy is
@@ -529,13 +624,13 @@ you're probably due for more error messages, and you
 might try typing `S' now just to see what is salvageable.
 
 
-Overfull \hbox (9.2466pt too wide) in paragraph at lines 142--143
+Overfull \hbox (9.2466pt too wide) in paragraph at lines 143--144
 []\OT1/pplx/m/n/10.95 To char-ac-ter-ize the net ef-fects of food-web com-plex-
 ity on the slope and cur-va-ture of *Iteomyia*'s
  []
 
 ! Undefined control sequence.
-l.144 $$\text
+l.145 $$\text
              {Slope} = \beta = \begin{pmatrix} \beta_{diam} \\ \beta_{clutch...
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
@@ -545,7 +640,7 @@ and I'll forget about whatever was undefined.
 
 [8]
 ! Undefined control sequence.
-l.146 $$\text
+l.147 $$\text
              {Curvature} = \gamma - \beta \beta^T$$
 The control sequence at the end of the top line
 of your error message was never \def'ed. If you have
@@ -556,13 +651,13 @@ and I'll forget about whatever was undefined.
 ! Missing $ inserted.
 <inserted text> 
                 $
-l.147 where \gamma
+l.148 where \gamma
                    represents the matrix of nonlinear and correlational sele...
 I've inserted a begin-math/end-math symbol since I think
 you left one out. Proceed, with fingers crossed.
 
 ! Misplaced alignment tab character &.
-l.148 ...mma = \begin{pmatrix} \gamma_{diam,diam}&
+l.149 ...mma = \begin{pmatrix} \gamma_{diam,diam}&
                                                   & \\ \gamma_{diam,clutch}&...
 I can't figure out why you would want to use a tab mark
 here. If you just want an ampersand, the remedy is
@@ -572,7 +667,7 @@ you're probably due for more error messages, and you
 might try typing `S' now just to see what is salvageable.
 
 ! Misplaced alignment tab character &.
-l.148 ...ma = \begin{pmatrix} \gamma_{diam,diam}&&
+l.149 ...ma = \begin{pmatrix} \gamma_{diam,diam}&&
                                                    \\ \gamma_{diam,clutch}&\...
 I can't figure out why you would want to use a tab mark
 here. If you just want an ampersand, the remedy is
@@ -582,7 +677,7 @@ you're probably due for more error messages, and you
 might try typing `S' now just to see what is salvageable.
 
 ! Misplaced alignment tab character &.
-l.148 ...ma_{diam,diam}&& \\ \gamma_{diam,clutch}&
+l.149 ...ma_{diam,diam}&& \\ \gamma_{diam,clutch}&
                                                   \gamma_{clutch,clutch}& \\...
 I can't figure out why you would want to use a tab mark
 here. If you just want an ampersand, the remedy is
@@ -592,7 +687,7 @@ you're probably due for more error messages, and you
 might try typing `S' now just to see what is salvageable.
 
 ! Misplaced alignment tab character &.
-l.148 ...mma_{diam,clutch}&\gamma_{clutch,clutch}&
+l.149 ...mma_{diam,clutch}&\gamma_{clutch,clutch}&
                                                    \\ \gamma_{diam,pref} & \...
 I can't figure out why you would want to use a tab mark
 here. If you just want an ampersand, the remedy is
@@ -602,7 +697,7 @@ you're probably due for more error messages, and you
 might try typing `S' now just to see what is salvageable.
 
 ! Misplaced alignment tab character &.
-l.148 ..._{clutch,clutch}& \\ \gamma_{diam,pref} &
+l.149 ..._{clutch,clutch}& \\ \gamma_{diam,pref} &
                                                    \gamma_{clutch,pref} &\ga...
 I can't figure out why you would want to use a tab mark
 here. If you just want an ampersand, the remedy is
@@ -612,7 +707,7 @@ you're probably due for more error messages, and you
 might try typing `S' now just to see what is salvageable.
 
 ! Misplaced alignment tab character &.
-l.148 ...amma_{diam,pref} & \gamma_{clutch,pref} &
+l.149 ...amma_{diam,pref} & \gamma_{clutch,pref} &
                                                   \gamma_{pref,pref} \end{pm...
 I can't figure out why you would want to use a tab mark
 here. If you just want an ampersand, the remedy is
@@ -624,34 +719,160 @@ might try typing `S' now just to see what is salvageable.
 ! Missing $ inserted.
 <inserted text> 
                 $
-l.149 
+l.150 
       
 I've inserted a begin-math/end-math symbol since I think
 you left one out. Proceed, with fingers crossed.
 
 [9] [10]
-LaTeX Font Info:    Font shape `OT1/pplx/bx/n' in size <9> not available
-(Font)              Font shape `OT1/pplx/b/n' tried instead on input line 234.
-
-
-LaTeX Warning: Reference `Table:Okapi' on page 11 undefined on input line 234.
-
-[11] [12] [13]
 LaTeX Font Info:    Font shape `OT1/pplx/bx/n' in size <10.95> not available
-(Font)              Font shape `OT1/pplx/b/n' tried instead on input line 319.
- [14] [15] [16] [17] [18] (./manuscript.aux)
+(Font)              Font shape `OT1/pplx/b/n' tried instead on input line 209.
+
+
+LaTeX Warning: Reference `Fig:Jumps' on page 11 undefined on input line 209.
+
+
+LaTeX Warning: Reference `Fig:JumpsOk' on page 11 undefined on input line 209.
+
+
+LaTeX Warning: Reference `Table:Rivers' on page 11 undefined on input line 219.
+
+
+LaTeX Font Info:    Font shape `OT1/pplx/bx/n' in size <9> not available
+(Font)              Font shape `OT1/pplx/b/n' tried instead on input line 235.
+
+LaTeX Warning: Reference `Table:Okapi' on page 11 undefined on input line 235.
+
+
+LaTeX Warning: Reference `Fig:Jumps' on page 11 undefined on input line 238.
+
+
+LaTeX Warning: Reference `Fig:JumpsOk' on page 11 undefined on input line 238.
+
+[11]
+
+Package natbib Warning: Citation `Xiao2015' on page 12 undefined on input line 
+259.
+
+
+Package natbib Warning: Citation `CookEtAl2015' on page 12 undefined on input l
+ine 259.
+
+[12] [13] [14] [15] [16] [17]
+<../analyses/reproduce_analyses_files/figure-html/Univariate-Fitness-Landscapes
+-1.png, id=64, 505.89pt x 361.35pt>
+File: ../analyses/reproduce_analyses_files/figure-html/Univariate-Fitness-Lands
+capes-1.png Graphic file (type png)
+
+<use ../analyses/reproduce_analyses_files/figure-html/Univariate-Fitness-Landsc
+apes-1.png>
+Package pdftex.def Info: ../analyses/reproduce_analyses_files/figure-html/Univa
+riate-Fitness-Landscapes-1.png used on input line 408.
+(pdftex.def)             Requested size: 505.88875pt x 361.34912pt.
+
+Overfull \hbox (36.13373pt too wide) in paragraph at lines 408--409
+[][] 
+ []
+
+! Undefined control sequence.
+<argument> ...election gradients acting on \texit 
+                                                  {Iteomyia} traits in compl...
+l.409 ...are based on 1,000 bootstrapped samples.}
+                                                  
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<argument> ...election gradients acting on \texit 
+                                                  {Iteomyia} traits in compl...
+l.409 ...are based on 1,000 bootstrapped samples.}
+                                                  
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<argument> ...election gradients acting on \texit 
+                                                  {Iteomyia} traits in compl...
+l.409 ...are based on 1,000 bootstrapped samples.}
+                                                  
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+<../analyses/reproduce_analyses_files/figure-html/Multivariate-Fitness-Landscap
+es-1.png, id=65, 505.89pt x 361.35pt>
+File: ../analyses/reproduce_analyses_files/figure-html/Multivariate-Fitness-Lan
+dscapes-1.png Graphic file (type png)
+
+<use ../analyses/reproduce_analyses_files/figure-html/Multivariate-Fitness-Land
+scapes-1.png>
+Package pdftex.def Info: ../analyses/reproduce_analyses_files/figure-html/Multi
+variate-Fitness-Landscapes-1.png used on input line 414.
+(pdftex.def)             Requested size: 505.88875pt x 361.34912pt.
+
+Overfull \hbox (36.13373pt too wide) in paragraph at lines 414--415
+[][] 
+ []
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[18 <../analyses/reproduce_analyses_files/figure-html/Univariate-Fitness-Landsc
+apes-1.png (PNG copy)>]
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+Package natbib Warning: Citation `LemKapEx07' on page 19 undefined on input lin
+e 465.
+
+
+Package natbib Warning: Citation `LemKapEx07' on page 19 undefined on input lin
+e 465.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+Package natbib Warning: There were undefined citations.
+
+[19 <../analyses/reproduce_analyses_files/figure-html/Multivariate-Fitness-Land
+scapes-1.png (PNG copy)>] [20] (./manuscript.aux
+
+Package natbib Warning: Citation(s) may have changed.
+(natbib)                Rerun to get citations correct.
+
+)
 
 LaTeX Warning: There were undefined references.
 
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
  ) 
 Here is how much of TeX's memory you used:
- 1615 strings out of 493029
- 19308 string characters out of 6136235
- 77575 words of memory out of 5000000
- 5121 multiletter control sequences out of 15000+600000
+ 2877 strings out of 493029
+ 38774 string characters out of 6136235
+ 100869 words of memory out of 5000000
+ 6318 multiletter control sequences out of 15000+600000
  47617 words of font info for 120 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 24i,11n,32p,2098b,250s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 38i,11n,32p,2098b,250s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/share/texliv
 e/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf
 -dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/
@@ -660,10 +881,10 @@ fonts/type1/public/mathpazo/fplmr.pfb></usr/share/texlive/texmf-dist/fonts/type
 atino/uplb8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/palatino/uplbi8
 a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb></usr/
 share/texlive/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on manuscript.pdf (18 pages, 119039 bytes).
+Output written on manuscript.pdf (20 pages, 311318 bytes).
 PDF statistics:
- 95 PDF objects out of 1000 (max. 8388607)
- 66 compressed objects within 1 object stream
+ 104 PDF objects out of 1000 (max. 8388607)
+ 71 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 1 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 11 words of extra memory for PDF output out of 10000 (max. 10000000)
 

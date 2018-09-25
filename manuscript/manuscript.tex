@@ -1,5 +1,6 @@
 \documentclass[11pt]{article}
 \usepackage[sc]{mathpazo} %Like Palatino with extensive math support
+\usepackage{graphicx} % for organizing figures
 \usepackage{fullpage}
 \usepackage[authoryear,sectionbib,sort]{natbib}
 \linespread{1.7}
@@ -310,31 +311,6 @@ Xiao, X., D.~J. McGlinn, and E.~P. White. 2015.
 \setcounter{table}{0}
 
 \begin{table}[h]
-\caption{Table for Alpha Regression coefficients}
-\label{Table:Alphas}
-\centering
-\begin{tabular}{lcc}
-                                                                           \\ \hline
-                       & \multicolumn{2}{c}{Food web (Estimate [95\% CI])} \\
-\textbf{Coefficient}   & \textbf{Complex} & \textbf{Simple}                \\ \hline
-$Diam$                 &  [ - ] &  [ - ] \\
-$Clutch$               &  [ - ] &  [ - ] \\
-$Pref$                 &  [ - ] &  [ - ] \\
-$Diam^2$               &  [ - ] &  [ - ] \\
-$Clutch^2$             &  [ - ] &  [ - ] \\
-$Pref^2$               &  [ - ] &  [ - ] \\
-$Diam:Clutch$          &  [ - ] &  [ - ] \\
-$Diam:Pref$            &  [ - ] &  [ - ] \\
-$Clutch:Pref$          &  [ - ] &  [ - ]              \\ \hline
-\end{tabular}
-\bigskip{}
-\\
-{\footnotesize Note: Table titles should be short. Further details should go in a `notes' area after the tabular environment, like this. $^a$ Okapis are not native to Chicago, but they are to be met with in both of the major Chicagoland zoos.}
-\end{table}
-
-\newpage{}
-
-\begin{table}[h]
 \caption{Table for \textit{Iteomyia} Selection Gradients}
 \label{Table:Gradients}
 \centering
@@ -342,15 +318,15 @@ $Clutch:Pref$          &  [ - ] &  [ - ]              \\ \hline
                                                                                   \\ \hline
                                   & \multicolumn{2}{c}{Food web (Estimate [95\% CI])} \\
 \textbf{Selection gradient}       & \textbf{Complex} & \textbf{Simple}            \\ \hline
-$\beta_{Diam}$                    &  [ - ] &  [ - ] \\
-$\beta_{Clutch}$                  &  [ - ] &  [ - ] \\
-$\beta_{Pref}$                    &  [ - ] &  [ - ] \\
-$\gamma_{Diam,Diam}$              &  [ - ] &  [ - ] \\
-$\gamma_{Clutch,Clutch}$          &  [ - ] &  [ - ] \\
-$\gamma_{Pref,Pref}$              &  [ - ] &  [ - ] \\
-$\gamma_{Diam,Clutch}$            &  [ - ] &  [ - ] \\
-$\gamma_{Diam,Pref}$              &  [ - ] &  [ - ] \\
-$\gamma_{Clutch,Pref}$            &  [ - ] &  [ - ]            \\ \hline
+$\beta_{Diam}$                    & 0.47 [0.36-0.58] & 0.29 [0.23,0.37] \\
+$\beta_{Clutch}$                  & 0.06 [-0.04,0.17] & -0.13 [-0.25,-0.04] \\
+$\beta_{Pref}$                    & -0.24 [-0.36,-0.11] & -0.15 [-0.23,-0.07] \\
+$\gamma_{Diam,Diam}$              & 0.13 [0.00,0.26] & 0.08 [0.00,0.16] \\
+$\gamma_{Clutch,Clutch}$          & -0.10 [-0.25,0.04] & -0.06 [-0.16,0.02] \\
+$\gamma_{Pref,Pref}$              & 0.39 [0.02,0.81] & -0.32 [-0.63,-0.03] \\
+$\gamma_{Diam,Clutch}$            & -0.08 [-0.16,0.01] & -0.05 [-0.10,0.01] \\
+$\gamma_{Diam,Pref}$              & -0.08 [-0.19,0.02] & -0.05 [-0.12,0.01] \\
+$\gamma_{Clutch,Pref}$            & 0.04 [-0.06,0.13] & 0.02 [-0.04,0.08]            \\ \hline
 \end{tabular}
 \bigskip{}
 \\
@@ -400,12 +376,20 @@ $s_{Pref,Pref}$                 &  [ - ]                \\ \hline
 
 \section*{Figure legends}
 
+%Path relative to the main .tex file 
+\graphicspath{ {../analyses/reproduce_analyses_files/figure-html/} }
+
 \begin{figure}[h!]
-%\includegraphics{horn-of-okapi}
-\caption{Figure legends can be longer than the titles of tables. However, they should not be excessively long.}
-\label{Fig:OkapiHorn}
+\includegraphics{Univariate-Fitness-Landscapes-1.png}
+\caption{Selection gradients acting on \texit{Iteomyia} traits in complex vs. simple food webs. Each panel corresponds to a different phenotypic trait: chamber diameter (A); clutch size (B); and female preference (C). Solid lines represent the estimated gradients in complex (orange) and simple (blue) food webs. Transparent lines represent bootstrapped replicates (n=100) to show the uncertainty in estimated gradients. Note that only 100 bootstraps are displayed here, but that inferences are based on 1,000 bootstrapped samples.}
+\label{Fig:FL_1D}
 \end{figure}
 
+\begin{figure}[h!]
+\includegraphics{Multivariate-Fitness-Landscapes-1.png}
+\caption{Fitness landscapes of gall traits in complex vs. simple food webs. Each panel corresponds to a different combination of traits: clutch size and chamber diameter (A); clutch size and female preference (B); female preference and chamber diameter (C). Note that traits for all plots range 1 SD below and above the mean (=0).}
+\label{Fig:FL_2D}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%
 % Videos
