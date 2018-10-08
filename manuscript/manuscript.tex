@@ -104,11 +104,11 @@ Species-interaction networks, such as a food web describing who eats whom, provi
 
 % III. Here we combine these frameworks to predict how changes in community context will affect phenotypic evolution. (empirically?)
 
-Here, we integrate species-interaction networks and the adaptive landscape to predict how changes in network structure will affect phenotypic evolution. We did this by first conducting a field experiment to characterize the effect of network structure on the adaptive landscape of a constituent species. We then used a mathematical model to simulate how changes in network structure altered phenotypic evolution. Specifically, we conducted a field experiment that manipulated the diversity of insect parasitoids that were able to impose selection on an abundant insect herbivore (\textit{Iteomyia salicisverruca})(Fig. 1). The larva of this herbivore species induce tooth-shaped galls when they feed on the developing leaves of willow trees (\textit{Salix} sp., @Russo2006). These galls provide protection from generalist predators (e.g. ants, spiders), thus the network of interacting parasitoids provides a realistic representation of the biotic environment this insect herbivore is experiencing. Therefore, our manipulation of parasitoid diversity alters the diversity of interactions, or food-web complexity, that this insect herbivore experiences.
+Here, we integrate species-interaction networks and the adaptive landscape to predict how changes in network structure will affect phenotypic evolution. We did this by conducting a field experiment to characterize the effect of network structure on the adaptive landscape of a constituent species. Specifically, we conducted a field experiment that manipulated the diversity of insect parasitoids that were able to impose selection on an abundant insect herbivore (\textit{Iteomyia salicisverruca})(Fig. 1). The larva of this herbivore species induce tooth-shaped galls when they feed on the developing leaves of willow trees (\textit{Salix} sp., @Russo2006). These galls provide protection from generalist predators (e.g. ants, spiders), thus the network of interacting parasitoids provides a realistic representation of the biotic environment this insect herbivore is experiencing. Therefore, our manipulation of parasitoid diversity alters the diversity of interactions, or food-web complexity, that this insect herbivore experiences.
 
 % IV. Lay out predictions for how changes in network structure influence the adaptive landscape.
 
-Changes in food-web complexity could influence a resource population's fitness landscape in at least two ways. First, if a more diverse community of consumers is more effective at suppressing resource densities (@Ives2005), then this will result in lower mean fitness of the resource population. A reduction in mean fitness, all else equal, will intensify natural selection (@Hunter2018). On the other hand, if consumers impose different selection pressures on resource traits, then more diverse communities could dampen the strength of selection acting on a given trait. This is because a greater diversity in selection pressures is equivalent to greater uncertainty in the selective environment. Thus, a more diverse consumer community may relax the net selection pressures acting on resource traits. Here, we evaluate these hypothesized relationships through an experimental test of how changes in food-web complexity alters the fitness landscape of a resource population.
+Changes in food-web complexity could influence a resource population's adaptive landscape in at least two ways. First, if a more diverse community of consumers is more effective at suppressing resource densities (@Ives2005), then this will result in lower mean fitness of the resource population. A reduction in mean fitness, all else equal, will intensify natural selection (@Hunter2018). On the other hand, if consumers impose different selection pressures on resource traits, then more diverse communities could dampen the strength of selection acting on a given trait. This is because a greater diversity in selection pressures is equivalent to greater uncertainty in the selective environment. Thus, a more diverse consumer community may relax the net selection pressures acting on resource traits. Here, we evaluate these hypothesized relationships through an experimental test of how changes in food-web complexity alters the adaptive landscape of a resource population.
 
 % Confronting this challenge is important now more than ever before, given the rapid changes we are witnessing in the diversity and composition of local communities (cite global change papers).
 
@@ -197,6 +197,10 @@ All analyses and visualizations were conducted in R (@R2018).
 
 I need to go back to estimate a common alpha coefficient if the treatments do not differ from each other.
 
+If we only retain non-zero selection gradients, then we can 
+
+Our two dimensional surfaces are likely representative given the fact that there is no strong evidence of correlational selection (Phillips and Arnold 1989, Evolution)
+
 \subsection*{Simulating Phenotypic Evolution}
 
 We used the method proposed by Hansen and Houle (2008) to characterize the evolvability of the G-matrices resulting from different adaptive landscapes. Their index of evolvability is theoretically linked to the theory underlying G matrices and adaptive landscapes, and describes the ability of a population to evolve in the direction of selection when stabilizing selection is absent. 
@@ -217,57 +221,24 @@ We used the method proposed by Hansen and Houle (2008) to characterize the evolv
 
 The shape of the adaptive landscape is described by its slope ($\beta$) and curvature ($\gamma - \beta \beta^\text{T}$). We found that food-web complexity altered the slope of the adaptive landscape in two key ways. First, there were fewer traits under directional selection in the complex (2 of 3) vs. simple food web (3 of 3). For example, across both food-web treatments there was directional selection for larger gall chambers and for adult females to avoid ovipositing on trees with high densities of conspecifics (fig.~\ref{Fig:FL_1D}; table~\ref{Table:Gradients}). In the simple food web, we also observed directional selection for smaller clutch sizes, but there was no evidence of selection acting on this trait in the complex food web (fig.~\ref{Fig:FL_1D}; table~\ref{Table:Gradients}). The absence of selection on clutch size in the complex food web appeared to be a result of conflicting selection pressures imposed by each guild of parasitoids. For example, when we subset our data to focus on differences between parasitoid guilds, we found that larval parasitoids actually impose directional selection for larger clutch sizes (\beta_{diam}=0.12 [0.04,0.21]). 
 
-The second key effect of food-web complexity was to steepen the slope of the adaptive landscape (i.e. increase strength of selection). For example, the magnitude of directional selection in complex vs. simple food webs was ~60\% higher for both chamber diameter and female preference. This result was not due to any difference in the relationship between larva survival and gall phenotype (INSERT REGRESSION ANALYSIS), but was a result of the fact that average larval survival was lower in complex (INSERT MEAN PROBABILITY OF SURVIVAL) vs. simple food webs (INSERT MEAN PROBABILITY OF SURVIVAL). Remember that the selection gradient can be expressed as the covariance between absolute fitness ($W$) and individual phenotype ($z$) divided by mean fitness ($\bar W$). Therefore, lower survival, and thus mean fitness, will always increase the strength of selection.
+The second key effect of food-web complexity was to steepen the slope of the adaptive landscape (i.e. increase strength of selection). For example, the magnitude of directional selection in complex vs. simple food webs was ~60\% higher for both chamber diameter and female preference. This result was not due to any difference in the relationship between larva survival and gall phenotype (Simple:coef_{Diam}=0.02 [-0.56,0.6]; Simple:coef_{Pref}=-0.16 [-0.83,0.61]), but was a result of the fact that average probability of larval survival was lower in complex (0.44 [0.30,0.58]) vs. simple food webs (0.69 [0.54,0.80]). Remember that the selection gradient can be expressed as the covariance between absolute fitness ($W$) and individual phenotype ($z$) divided by mean fitness ($\bar W$). Therefore, lower survival, and thus mean fitness, will always increase the strength of selection.
 
-Unlike the slope, the curvature of the adaptive landscape is influenced by directional ($\beta$), quadratic ($\gamma_{z_i,z_i}$), and correlational ($\gamma_{z_i,z_j}$) selection gradients. Our food-web treatment did not appear to alter correlational selection, and there was no strong evidence that any of these selection gradients differed from zero (table~\ref{Table:Gradients}). Similarly, our food-web treatment did not appear to influence quadratic selection on chamber diameter or clutch size, and there was no strong evidence that these selection gradients differed from zero (table~\ref{Table:Gradients}). In contrast, our food-web treatment did alter quadratic selection acting on female preference. Specifically, we found evidence for disruptive selection (selection for extreme phenotypes) in the complex food web, but no evidence of disruptive or stabilizing selection in the simple food web (fig.~\ref{Fig:FL_1D}; table~\ref{Table:Gradients}).
+Unlike the slope, the curvature of the adaptive landscape is influenced by directional ($\beta$), quadratic ($\gamma_{z_i,z_i}$), and correlational ($\gamma_{z_i,z_j}$) selection gradients. Our food-web treatment did not appear to alter correlational selection and there was no strong evidence that any of these selection gradients differed from zero (table~\ref{Table:Gradients}). Similarly, our food-web treatment did not appear to influence quadratic selection on chamber diameter or clutch size and there was no strong evidence that these selection gradients differed from zero (table~\ref{Table:Gradients}). In contrast, our food-web treatment did alter quadratic selection acting on female preference. Specifically, we found evidence for disruptive selection (selection for extreme phenotypes) in the complex food web, but no evidence of disruptive or stabilizing selection in the simple food web (fig.~\ref{Fig:FL_1D}; table~\ref{Table:Gradients}).
 
-The curvature ($\gamma - \beta \beta^\text{T}$) of the adaptive landscape describes how natural selection changes genetic variation ($\Delta \text{G}$) within a generation. 
-
-In the simple food web, we found that the adaptive landscape acted to decrease additive genetic variance in all three traits (diagonals of matrix). 
+The curvature ($\gamma - \beta \beta^\text{T}$) of the adaptive landscape describes how natural selection changes genetic variation ($\Delta \text{G}$) within a generation. In the simple food web, the curvature of the adaptive landscape had the following structure:
 
 $$\text{Curvature}_{simple} = \begin{pmatrix} -0.05 & 0.02 & 0.03 \\  0.02 & -0.01 & -0.01 \\  0.03 & -0.01 & -0.02 \end{pmatrix}$$
 
-In contrast, we found the adaptive landscape in the complex food web only decreased the additive genetic variance in one of the three traits (chamber diameter).
+The negative values along the diagonal of this matrix suggests that the simple food web acted to decrease additive genetic variance in all three traits. The presence of non-zero values off the diagonal indicates that simple food web favors trait integration of all three phenotypic traits. 
+
+In the complex food web, the curvature of the adaptive landscape had the following structure: 
 
 \text{Curvature}_{complex} = \begin{pmatrix} -0.13 & 0 & 0.9 \\ 0 & 0 & 0 \\ 0.09 & 0 & 0.33 \end{pmatrix}
 
-In the complex food web, we found that the adaptive landscape  We found that the adaptive landscape complex food web, 
-
-We found that there were fewer selective constraints influence *Iteomyia* in the complex vs. the simple food-web treatment. Specifically, the curvature of the complex food-web was described as:
-
-
-
-whereas the curvature of the simple food-web is summarized by the following matrix:
-
+In contrast to the simple food web, we only observed a decrease in additive genetic variance for chamber diameter ($\Delta \text{G}_{Diam}=-0.13$) in the complex food web. The complex food web did not act to change additive genetic variance in clutch size, and actually acted to increase additive genetic variance in female preference ($\Delta \text{G}_{Diam,Diam}=\text{G}_{Diam,Diam}(0.33)\text{G}_{Diam,Diam}+\text{U}_{Diam,Diam}$). Along the off diagonal, we found that the complex food web favored trait integration between chamber diameter and female preference. In other words, the adaptive landscape did not act to constrain the pattern of trait integration between clutch size and the other phenotypic traits.  
 
 
 Specifically, we found that simple food webs would result in a decrease in additive genetic variance for all phenotypic traits (matrix diagonals) within a generation, wherease in the complex food web, we only found that one trait (chamber diameter), would experience a decrease in additive genetic variance (albeit large). Any non-zero for the off diagonals is evidence of constraints. In the simple food-web, we found evidence of constraints on each additive genetic covariance, albeit small, whereas for the complex food-web, we only observed a constraint on the covariance between chamber diameter and female preference (favoring trait intergration). Taken together, we observe constrains on 2 of 6 trait variances and covariances in the complex food web, whereas 6 of 6 trait variances and covariances were constrained in the simple food web.
-
-Our two dimensional surfaces are likely representative given the fact that there is no strong evidence of correlational selection (Phillips and Arnold 1989, Evolution)
-
-\subsection*{Phenotypic evolution is less constrained in the complex food web}
-
-% of the adaptive landscape describe its shape and therefore the direction and magnitude of phenotypic ($\Delta \text{z}$) and genetic change ($\Delta \text{G}$).
-
-Three key patterns emerged from our simulations of phenotypic evolution. The first was that phenotypic evolution was faster in complex vs. simple food webs. Specifically, it took \textit{Iteomyia} twice as long to hit the boundary of the adaptive landscape in the simple vs. complex food web. This pattern was driven by the fact that the absolute strength of selection was larger in complex vs. simple food webs, as we no longer observed this strong difference if we standardized all selection gradients by average larval survival measured in the complex food web (Appendix).
-
-The second key pattern we observed was that phenotypic evolution was less constrained in complex compared to simple food webs.
-
-Finally, we found that the adaptive landscape in the complex food web enhanced the evolvability of \textit{Iteomyia} compared to the simple food web.
-
-Food-web complexity fundamentally altered the shape of the adaptive landscape. For example, 
-
-Across both food-web treatments, there was no clear evidence of correlational selection between (Table 1).
-
-We observed disruptive selection on female preference in the complex, but no evidence of any nonlinear selection the simple food web. This disruptive selection was likely driven by a different functional response of larval parasitoids to female preference. For example, when we subset our data to focus on differences between larval and egg parasitoids, we found that there was a trend for larval parasitoids to impose disruptive selection (\gamma_{pref,pref}=0.22 [-0.06,0.49]). 
-
-In both complex and simple food webs, chamber diameter was under strong directional selection with larger galls resulting in higher larval survival (fig.~\ref{Fig:FL_1D}; table~\ref{Table:Gradients}).
-
-In general, if there was evidence of selection, then the magnitude of selection was always greater in complex vs. simple food webs. These steeper selection gradients were simply due to the fact that average larval survival was lower in complex food webs.
-
-
-
-
 
 
 
