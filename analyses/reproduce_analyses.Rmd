@@ -12,6 +12,7 @@ output:
 ```{r setup, include=FALSE}
 
 ## Load required libraries ----
+library(evolqg) # need to load before dplyr
 library(car)        # for homogeneity of variance test
 library(tidyverse)  # for managing data
 library(cowplot)    # pretty default ggplots
@@ -23,6 +24,7 @@ library(piecewiseSEM) # for calculating model R-square
 library(latex2exp)  # using Latex notation for axes labels
 library(kableExtra)
 library(stringr)
+library(MVN)        # assessing multivariate normality assumption
 
 ## Load and manage data ----
 
@@ -41,24 +43,12 @@ gall_selection.df <- read_csv("../data/gall_selection_data.csv") %>%
          egg_parasitoid = as.numeric(ifelse(platy > 0, 1, 0)),
          sc.Diam = as.numeric(scale(Gall_Height_mm)), 
          sc.log.Clutch = as.numeric(scale(log(gall_individuals))), 
-         sc.log1p.Pref = as.numeric(scale(log1p(Density_per_100_shoots))),
-         sc.DiamPoly1 = poly(sc.Diam,2)[,1],
-         sc.DiamPoly2 = poly(sc.Diam,2)[,2],
-         sc.log.ClutchPoly1 = poly(sc.log.Clutch,2)[,1],
-         sc.log.ClutchPoly2 = poly(sc.log.Clutch,2)[,2],
-         sc.log1p.PrefPoly1 = poly(sc.log1p.Pref,2)[,1],
-         sc.log1p.PrefPoly2 = poly(sc.log1p.Pref,2)[,2]) 
+         sc.log1p.Pref = as.numeric(scale(log1p(Density_per_100_shoots)))) 
 
 ## Custom functions to avoid repetitive code ----
 
 ## Transform logit to probability
 inverse_logit <- function(x) exp(x)/(1+exp(x))
-
-## Compute the matrix describing the curvature of the fitness landscape
-curvature_fitness.landscape <- function(gammas, # matrix of nonlinear and correlational selection gradients 
-                                        betas){ # vector of directional selection gradients
-  gammas - betas %*% t(betas)
-}
 
 ## Bootstrap fitness estimates
 bootstrap_fitness <- function(logistic_model, #fixed_effects, 
@@ -106,9 +96,43 @@ bootstrap_fitness <- function(logistic_model, #fixed_effects,
   return(list(absolute_fitness = absolute_fitness_df, relative_fitness = relative_fitness_df))
 }
 
+
 ## Number of bootstrap replicates
 n_boots_analysis <- 1000
 n_boots_plots <- 100
+
+
+## Predicting evolutionary dynamics 
+evolutionary_dynamics <- function (betas,    # one-column matrix of directional selection gradients
+                                   gammas,   # matrix of nonlinear selection gradients
+                                   G_0,      # initial G-matrix
+                                   z_0,      # one-column matrix of initial trait values
+                                   t) {       # evolutionary time steps 
+    # Equation 2 from Phillips and Arnold 1989, Evolution
+    G <- rep(list(G_0), t) 
+    for (i in 1:t) G[[i + 1]] <- {
+      G[[i]] + G[[i]] %*% (gammas - betas %*% t(betas)) %*% G[[i]] # may need to add mutation/recombination matrix (see Phillips and Arnold 1989)
+    }
+    
+    # Equation 1 from Phillips and Arnold 1989, Evolution
+    z <- rep(list(z_0), t) 
+    for (i in 1:t) z[[i + 1]] <- {
+        z[[i]] + G[[i]] %*% betas
+    }
+    return(list(z=z,G=G))
+}
+
+## Number of evolutionary time steps for simulation
+n_evo_sims <- 200 # 1000
+
+## Tidy up evolutionary simulations
+tidy_evo_sims <- function(evo_sims) {
+  tidy_sim <- data.frame(matrix(unlist(evo_sims$z), ncol=3, byrow=T)) %>% 
+    transmute(Time=1:length(evo_sims$z), Diam=round(X1,2), Clutch=round(X2,2), Pref=round(X3,2)) %>%
+    filter(Diam < 1, Diam > -1, Clutch < 1, Clutch > -1, Pref < 1, Pref > -1) 
+  
+  return(tidy_sim)
+}
 
 ## Color palette
 
@@ -119,6 +143,20 @@ simple_color <- cbPalette[5] # 2
 treatment_colors <- c(complex_color, simple_color)
 
 ```
+
+# Evaluating assumption of multivariate normality
+
+We used graphical checks to evaluate whether our transformations of traits resulted in a multivariate normal distribution. As you can see from the multivariate qq-plot, it seems reasonable that our data approximates a multivariate normal distribution. Of course, statistical tests suggest otherwise. But as an example of how silly these tests can be, look at the distribution of gall diameter. It is the closest ecological variable I've ever seen that is normally distributed, yet a Shapiro-Wilks test says otherwise. 
+
+```{r MVN Assumption, echo=FALSE}
+
+mvn_assumption <- mvn(select(gall_selection.df, sc.Diam, sc.log.Clutch, sc.log1p.Pref), multivariatePlot = "qq", univariatePlot = "histogram")
+
+# mvn(select(gall_selection.df, sc.Diam, sc.log.Clutch, sc.log1p.Pref), multivariatePlot = "qq")
+
+mvn_assumption$univariateNormality[1, ]
+```
+
 
 # Effect of Food-Web Treatment on Larval Survival
 
@@ -213,7 +251,7 @@ model_2_adj <- update(model_2, .~. -I(sc.log1p.Pref^2))
 ```
 
 
-```{r Boot Adjusted Model 2 for accurate slope estimates}
+```{r Boot Adjusted Model 2 for accurate slope estimates, cache=TRUE}
 boot_model_2_adj <- bootMer(model_2_adj, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
 
 tidy_model_2_adj <- tidy(model_2_adj, conf.int=T) %>% 
@@ -275,7 +313,7 @@ plot_model_3 %>%
 
 There is clear evidence that food-web treatment alters the linear effect of clutch size on larva survival, but it has no effect on chamber diameter or female preference. Therefore, we fit a reduced model that removes these non-significant effects: 
 
-```{r Fit Model 4}
+```{r Fit Model 4, cache=TRUE}
 model_4 <- update(model_3, .~. -Foodweb:sc.Diam -Foodweb:sc.log1p.Pref)
 ```
 
@@ -306,8 +344,8 @@ plot_model_4 %>%
   ylab("Coefficient (logit scale)")
 ```
 
-As we did with model 2, we refit the model by removing the slope term so that we can fit different slopes for each interaction term.
-```{r Fit Model 4 adjusted for estimating clutch slopes}
+As we did with model 2, we refit the model by removing the slope term so that we can fit different slopes for each interaction term. 
+```{r Fit Model 4 adjusted for estimating clutch slopes, cache=TRUE}
 model_4_adj <- update(model_4, .~. -sc.log.Clutch)
 ```
 
@@ -499,7 +537,7 @@ tidy_egg.larval_model_2_adj <- tidy(egg.larval_model_2_adj, conf.int=T) %>%
 
 This represents our nonlinear regression coefficients.
 
-```{r Plot effect of Egg vs. Larval Parasitoid Model 2, echo=FALSE}
+```{r Plot effect of Egg vs. Larval Parasitoid adjusted Model 2, echo=FALSE}
 tidy_egg.larval_model_2_adj$term_plot <- factor(tidy_egg.larval_model_2_adj$term,
                             levels=c("I(sc.Diam^2)","I(sc.log.Clutch^2)","FoodwebEgg:I(sc.log1p.Pref^2)","FoodwebLarval:I(sc.log1p.Pref^2)","sc.Diam:sc.log.Clutch","sc.Diam:sc.log1p.Pref","sc.log.Clutch:sc.log1p.Pref"),
                             ordered = TRUE)
@@ -516,7 +554,7 @@ tidy_egg.larval_model_2_adj %>%
 
 Now we assess their contribution to the effect of food-web treatment on the linear terms.
 
-```{r Fit Egg vs. Larval Parasitoid Model 4}
+```{r Fit Egg vs. Larval Parasitoid Model 4, cache=TRUE}
 egg.larval_model_4 <- update(model_4, data=egg.vs.larval_df)
 ```
 
@@ -548,7 +586,7 @@ plot_egg.larval_model_4 %>%
   ylab("Coefficient (logit scale)")
 ```
 
-```{r Fit Egg vs. Larval Parasitoid adjusted Model 4}
+```{r Fit Egg vs. Larval Parasitoid adjusted Model 4, cache=TRUE}
 egg.larval_model_4_adj <- update(model_4_adj, data=egg.vs.larval_df)
 ```
 
@@ -708,7 +746,7 @@ bias.adj_sc.Diam_simple <- bias.adj_simple_mean_brackets * fixef(biased.diam_mod
 # This analysis suggests that there is a little bias, but not too much. 
 ```
 
-```{r Redo selection gradients}
+```{r Redo selection gradients, include=FALSE}
 bias.adj_selection_gradients <- mutate(selection_gradients, adjusted = "No") %>%
   # add bias adjusted directional selection gradient for Diameter in complex food-web
   add_row(term="sc.Diam", 
@@ -751,509 +789,69 @@ To quantify the selection differential acting on the egg parasitoid, we used sep
 We found no evidence of directional or quadratic selection on either chamber diameter or clutch size; however, we observed positive directional selection on *Iteomyia* female preference as well stabilizing selection on preference.
 
 Appears to be selection for Platygaster to attack larva at high densities in more complex food webs (and a decrease in the variance). This may be a result of the poorer searching ability of parasitoids at very high gall densities, potentially due to saturation. This suggests that the fitness landscape may be dynamic because these selective effects (assuming there is heritable variation in the egg parasitoid) will change the following year. This could be an important discussion point to take into account for future work. This is different from simply altering the strength of selection, which will occur as species move along the fitness landscape, but this result suggests that the nature of the fitness landscape may actually be changing. For example, larval parasitoids could be driving selection on Platygaster to be very efficient at foraging, which will dampen once this pressure is removed, and then could also dampen the selection acting on the galling herbivore.
-```{r Selection on Platygaster Traits, include=FALSE, eval=FALSE}
+```{r Selection on Platygaster Traits, cache=TRUE}
+
+## Subset the data to analyse change in gall phenotypes associated with Platygaster
 platy_selection_df <- gall_selection.df %>%
   filter(egg_parasitoid > 0) 
 platy_selection_df$Foodweb <- relevel(factor(platy_selection_df$Foodweb), ref = "Simple") # this represents the baseline or absence of selection by larval parasitoids
 
+## Linear mixed models of linear selection differentials (change in mean phenotype)
 platy_Diam <- lmer(sc.Diam ~ Foodweb + (1|Genotype/Plant_Position/Gall_Number), platy_selection_df)
-summary(platy_Diam)
-Anova(platy_Diam, test.statistic = "F")
 
 platy_Clutch <- lmer(sc.log.Clutch ~ Foodweb + (1|Genotype/Plant_Position), platy_selection_df)
-summary(platy_Clutch)
-Anova(platy_Clutch, test.statistic = "F")
 
 platy_Pref <- lmer(sc.log1p.Pref ~ Foodweb + (1|Genotype), platy_selection_df)
-summary(platy_Pref)
-Anova(platy_Pref, test.statistic = "F")
 
-## Test whether food-web complexity influences nonlinear selection with Levene's test for homogeneity of variance between groups
+## Levene's test for quadratic selection differentials (change in phenotypic variance)
 # Note that this result should be interepreted cautiously since we cannot account for non-independence due to plant genotype, plant ID, or gall ID
-leveneTest(sc.Diam ~ Foodweb, platy_selection_df)
-leveneTest(sc.log.Clutch ~ Foodweb, platy_selection_df)
-leveneTest(sc.log1p.Pref ~ Foodweb, platy_selection_df)
+platy_Diam_levene <- leveneTest(sc.Diam ~ Foodweb, platy_selection_df)
+platy_Clutch_levene <- leveneTest(sc.log.Clutch ~ Foodweb, platy_selection_df)
+platy_Pref_levene <- leveneTest(sc.log1p.Pref ~ Foodweb, platy_selection_df)
+```
 
-ggplot(platy_selection_df, aes(x=Foodweb, y=sc.Diam)) +
-  stat_summary(fun="mean_cl_boot", geom="errorbar", color="red", width=0.1) +
-  stat_summary(fun.y="mean", geom="point", color="black", size=3)
+```{r Plot models of Platygaster selection differentials, echo=FALSE}
+visreg_platy_Diam <- visreg(platy_Diam, xvar="Foodweb", gg=TRUE) + ylab("Chamber diameter (SD)") + xlab("")
+visreg_platy_Clutch <- visreg(platy_Clutch, xvar="Foodweb", gg=TRUE) + ylab("Clutch size (SD)") + xlab("")
+visreg_platy_Pref <- visreg(platy_Pref, xvar="Foodweb", gg=TRUE) + ylab("Female preference (SD)") + xlab("")
 
-ggplot(platy_selection_df, aes(x=Foodweb, y=sc.log.Clutch)) +
-  stat_summary(fun="mean_cl_boot", geom="errorbar", color="red", width=0.1) +
-  stat_summary(fun.y="mean", geom="point", color="black", size=3)
-
-ggplot(platy_selection_df, aes(x=Foodweb, y=sc.log1p.Pref)) +
-  stat_summary(fun="mean_cl_boot", geom="errorbar", color="red", width=0.1) +
-  stat_summary(fun.y="mean", geom="point", color="black", size=3)
+plot_grid(visreg_platy_Diam, visreg_platy_Clutch, visreg_platy_Pref, align="hv", ncol=3)
 ```
 
 
+```{r Calculate Selection Differentials for Platygaster, cache=TRUE, include=FALSE}
 
+## Calculation linear selection differentials
+boot_platy_Diam <- bootMer(platy_Diam, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+tidy_platy_Diam <- tidy(boot_platy_Diam, conf.int=T) %>% filter(term=="FoodwebComplex") %>% mutate(term="Diam")
 
+boot_platy_Clutch <- bootMer(platy_Clutch, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+tidy_platy_Clutch <- tidy(boot_platy_Clutch, conf.int=T) %>% filter(term=="FoodwebComplex") %>% mutate(term="Clutch")
 
-Note that equation 3 in Phillips and Arnold 1998 is good justification for why quadratic selection cofficients should be multiplied by two (but not correlational ones?)
+boot_platy_Pref <- bootMer(platy_Pref, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+tidy_platy_Pref <- tidy(boot_platy_Pref, conf.int=T) %>% filter(term=="FoodwebComplex") %>% mutate(term="Pref")
 
-The G-matrix is essentially a scalar. For my data, since there is no correlational selection, it doesn't matter if there is genetic covariance between the traits, as this will not effect the change in genetic covariances within a generation (because there is no selection). Also, the G_matrix does not qualitatively alter the conclusions that there will be a decrease in additive genetic variance in gall diameter due to the strong directional selection; however, there will be an increase in the additive genetic variance in female preference. Since this is an experiment, we can assume that the G-matrix is the same between treatments
+platy_linear_selection <- bind_rows(tidy_platy_Diam, tidy_platy_Clutch, tidy_platy_Pref) %>% select(Term=term, Estimate=statistic, `2.5%`=conf.low, `97.5%`=conf.high)
+platy_linear_selection$Significance <- c("NS","NS","P < 0.05")
 
-Remember that the diagonals refer to additive genetic CO-variances. Thus, positive or negative values for delta_G give insight to whether selection will act to integrate traits (positive covariance) or create trade-offs (negative covariance).
-
-Assuming that there is positive additive genetic variance and co-variance in these traits (i.e. all values of G-matrix are positive), then the curvature of the fitness landscape can give insight to qualitative changes in the G matrix. This is because the G-matrix acts as a scalar of changes in the fitness landscape.
-
-```{r Slope and Curvature of Fitness Landscape, include=FALSE, eval=FALSE}
-betas <- c(-0.5,-0.5,0.5)
-gammas_matrix <- matrix(c(-0.1, 0.0, 0.0,
-                          0.0, -0.1, 0.0,
-                          0.0, 0.0, -0.1), 
-                        nrow=3, byrow=T)
-
-## G-matrix ----
-# (1) Asssume equal additive genetic variance for all three traits
-# (2) Assume no additive genetic covariance
-# The first assumption may not be realistic, but violations of this assumption will not qualitatively alter our inferences about whether additive genetic variance will increase or decrease. Qualitative changes in additive genetic variance is only determined by the curvature of the fitness landscape. Violations of this assumption will only affect the rate of phenotypic evolution and magnitude of change in genetic variance.
-# The second assumption may also not be realistic; however, it will not affect our results because we found no evidence of correlational selection (therefore, there can be no change in genetic covariance).
-G_matrix <- matrix(c(1.0, 1.0, 1.0,
-                     1.0, 1.0, 1.0,
-                     1.0, 1.0, 1.0),
-                   nrow=3, byrow=T)
-
-# Equation 1 from Phillips and Arnold 1989, Evolution
-delta_z <- G_matrix %*% betas
-data.frame(trait = c("diam","clutch","pref"),
-           delta_z = delta_z)
-
-# Equation 2 from Phillips and Arnold 1989, Evolution
-delta_G <- G_matrix * (gammas_matrix - betas %*% t(betas)) * G_matrix
-delta_G
+## Calculate quadratic selection differentials
+# statistical significance is based on Levene's test of homogeneity of variances
+platy_quadratic_selection <- platy_selection_df %>%
+  group_by(Foodweb) %>%
+  summarise_at(c("sc.Diam","sc.log.Clutch","sc.log1p.Pref"), var) %>%
+  gather(key = Term, value = Variance, -Foodweb) %>%
+  spread(Foodweb, Variance) %>%
+  mutate(Estimate = Complex - Simple) %>%
+  select(Term, Estimate)
+platy_quadratic_selection$Term <- c("Diam^2","Pref^2","Clutch^2")
+platy_quadratic_selection$Significance <- c("NS","P < 0.05","NS")
 ```
 
+```{r Table of Platygaster selection differentials, echo=FALSE}
+platy_selection_differentials <- bind_rows(platy_linear_selection, platy_quadratic_selection)
 
-```{r LATEX NEED TO CHECK, eval=FALSE, include=FALSE}
-$$\text{Slope}_{complex} = \beta_{complex} = \begin{pmatrix} \beta_{diam} \\ \beta_{clutch} \\ \beta_{pref} \end{pmatrix} = \begin{pmatrix} 0.4 \\ 0 \\ -0.3 \end{pmatrix}$$
-$$\text{Slope}_{simple} = \beta_{simple} = \begin{pmatrix} \beta_{diam} \\ \beta_{clutch} \\ \beta_{pref} \end{pmatrix} = \begin{pmatrix} 0.3 \\ -0.2 \\ -0.3 \end{pmatrix}$$
-$$\gamma_{complex} = \begin{pmatrix} \gamma_{diam}&& \\ \gamma_{diam,clutch}&\gamma_{clutch}& \\ \gamma_{diam,pref} & \gamma_{clutch,pref} &\gamma_{pref} \end{pmatrix} = \begin{pmatrix} 0.1&& \\ 0&0& \\ 0&0&-0.3 \end{pmatrix}$$
-$$\gamma_{simple} = \begin{pmatrix} \gamma_{diam}&& \\ \gamma_{diam,clutch}&\gamma_{clutch}& \\ \gamma_{diam,pref} & \gamma_{clutch,pref} &\gamma_{pref} \end{pmatrix} = \begin{pmatrix} 0.1&& \\ 0&0& \\ 0&0&0 \end{pmatrix}$$
-$$\text{Curvature} = \gamma - \beta \beta^T$$
-$$\text{Curvature}_{complex} = \begin{pmatrix} 0.1&& \\ 0&0& \\ 0&0&0 \end{pmatrix}$$
-$$\text{Curvature}_{simple} = \begin{pmatrix} 0.1&& \\ 0&0& \\ 0&0&0 \end{pmatrix}$$
+knitr::kable(platy_selection_differentials, caption="Table of selection differentials acting on the egg parasitoid Platygaster")
 ```
-
-
-
-```{r Effects of platy vs. ecto on absolute fitness, cache=TRUE, include=FALSE, eval=FALSE}
-
-## Fit GLMM
-
-platyecto_glmer <- glmer(gall_survival ~ Foodweb*(sc.Diam*sc.log.Clutch*sc.log1p.Pref +
-                         I(sc.Diam^2) + I(sc.log.Clutch^2) + I(sc.log1p.Pref^2)) +
-                         (1|Genotype/Plant_Position/Gall_Number),
-                       data = filter(gall_selection.df, Foodweb == "Simple" | Foodweb == "Complex" & platy < 1), # exclude cases of egg-parasitism from Complex food web
-                       family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
-
-## Test for overdispersion
-overdisp_fun(platyecto_glmer) # no evidence 
-
-## Compare statistical summaries of each model
-summary(platyecto_glmer)
-piecewiseSEM::rsquared(platyecto_glmer)
-
-
-## Parse out mechanisms of food-web effects ----
-# Use drop1 to test highest order effects and visreg to visualize the effects
-
-# Marginal evidence that larval parasitoids are the drivers of nonlinear selection acting on female preference (disruptive selection)
-drop1(platyecto_glmer, test="Chisq")
-summary(platyecto_glmer)
-visreg::visreg(platyecto_glmer, xvar="sc.log1p.Pref", by="Foodweb", scale = "response") 
-
-# Marginal evidence of nonlinear selection acting on gall size. Marginal evidence of correlational selection acting on all traits.
-platyecto_glmer_2 <- update(platyecto_glmer, .~. -Foodweb:I(sc.Diam^2) -Foodweb:I(sc.log.Clutch^2) -Foodweb:I(sc.log1p.Pref^2) -Foodweb:sc.Diam:sc.log.Clutch:sc.log1p.Pref)
-drop1(platyecto_glmer_2, test="Chisq") 
-visreg::visreg(platyecto_glmer_2, xvar="sc.Diam", scale = "response") 
-# plot 3-way interaction?
-
-# Evidence of food-web treatment altering directional selection on clutch size
-platyecto_glmer_3 <- update(platyecto_glmer_2, .~. -I(sc.Diam^2) -I(sc.log.Clutch^2) -I(sc.log1p.Pref^2) -sc.Diam:sc.log.Clutch:sc.log1p.Pref -Foodweb:sc.Diam:sc.log.Clutch -Foodweb:sc.Diam:sc.log1p.Pref -Foodweb:sc.log.Clutch:sc.log1p.Pref)
-drop1(platyecto_glmer_3, test="Chisq") 
-summary(platyecto_glmer_3)
-visreg::visreg(platyecto_glmer_3, xvar="sc.log.Clutch", by="Foodweb", scale="response") # conflicting selection have net null effects in complex food web
-
-# No evidence of clear fitness effects of platy vs. ectos on absolute fitness; evidence of directional selection acting on gall size; no evidence of directional selection on clutch size (in complex food web); evidence of directional selection acting on female preference
-platyecto_glmer_4 <- update(platyecto_glmer_3, .~. -sc.Diam:sc.log.Clutch -sc.Diam:sc.log1p.Pref -sc.log.Clutch:sc.log1p.Pref -Foodweb:sc.Diam -Foodweb:sc.log.Clutch -Foodweb:sc.log1p.Pref)
-drop1(platyecto_glmer_4, test="Chisq") 
-summary(platyecto_glmer_4)
-visreg::visreg(platyecto_glmer_4, xvar="Foodweb", scale="response")
-visreg::visreg(platyecto_glmer_4, xvar="sc.Diam", scale="response")
-visreg::visreg(platyecto_glmer_4, xvar="sc.log.Clutch", scale="response")
-visreg::visreg(platyecto_glmer_4, xvar="sc.log1p.Pref", scale="response")
-```
-
-```{r For platy ecto comparison, include=FALSE, eval=FALSE}
-## Estimate mean fitness and mean brackets (ref: Janzen and Stern 1998)
-complex_predict <- predict(platyecto_glmer, newdata=filter(gall_selection.df, Foodweb == "Complex" & platy < 1), type="response")
-complex_mean_brackets <- mean(complex_predict * (1 - complex_predict))
-complex_mean_fitness <- mean(complex_predict)
-
-simple_predict <- predict(platyecto_glmer, newdata=filter(gall_selection.df, Foodweb=="Simple"), type="response")
-simple_mean_brackets <- mean(simple_predict * (1 - simple_predict))
-simple_mean_fitness <- mean(simple_predict)
-
-# test whether using alternative models influences estimes of mean "brackets" and mean fitness 
-alt_predict <- predict(platyecto_glmer_2, newdata=filter(gall_selection.df, Foodweb == "Complex" & platy < 1), type="response")
-alt_mean_brackets <- mean(alt_predict * (1 - alt_predict))
-alt_mean_fitness <- mean(alt_predict)
-complex_mean_brackets - alt_mean_brackets
-complex_mean_fitness - alt_mean_fitness
-
-platyecto_tidy_4 <- filter(tidy(platyecto_glmer_4, conf.int=T), term %in% c("(Intercept)","FoodwebSimple"))
-platyecto_tidy_3 <- filter(tidy(platyecto_glmer_3, conf.int=T), 
-                         term %in% c("sc.Diam","sc.log.Clutch","sc.log1p.Pref",
-                                     "FoodwebSimple:sc.Diam","FoodwebSimple:sc.log.Clutch","FoodwebSimple:sc.log1p.Pref"))
-platyecto_tidy_2 <- filter(tidy(platyecto_glmer_2, conf.int=T), 
-                         term %in% c("sc.Diam:sc.log.Clutch","sc.Diam:sc.log1p.Pref","sc.log.Clutch:sc.log1p.Pref",
-                                     "FoodwebSimple:sc.Diam:sc.log.Clutch","FoodwebSimple:sc.Diam:sc.log1p.Pref","FoodwebSimple:sc.log.Clutch:sc.log1p.Pref"))
-platyecto_tidy <- filter(tidy(platyecto_glmer, conf.int=T), 
-                       term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.log1p.Pref^2)",
-                                   "FoodwebSimple:I(sc.Diam^2)","FoodwebSimple:I(sc.log.Clutch^2)","FoodwebSimple:I(sc.log1p.Pref^2)",
-                                   "sc.Diam:sc.log.Clutch:sc.log1p.Pref",
-                                   "FoodwebSimple:sc.Diam:sc.log.Clutch:sc.log1p.Pref"))
-## These alphas aren't the appropriate comparison, this is because when there is no interaction term, then the average is taken across all of the food webs. This is okay for testing the statistical significance, but not appropriate when I want to actually compare the magnitudes of the alphas and betas
-#platyecto_tidy_4 <- filter(tidy(platyecto_glmer_4), term %in% c("(Intercept)","FoodwebSimple","sc.Diam","sc.log.Clutch","sc.log1p.Pref"))
-#platyecto_tidy_3 <- filter(tidy(platyecto_glmer_3), term %in% c("sc.Diam:sc.log.Clutch","sc.Diam:sc.log1p.Pref","sc.log.Clutch:sc.log1p.Pref","FoodwebSimple:sc.Diam","FoodwebSimple:sc.log.Clutch","FoodwebSimple:sc.log1p.Pref"))
-#platyecto_tidy_2 <- filter(tidy(platyecto_glmer_2), term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.log1p.Pref^2)","sc.Diam:sc.log.Clutch:sc.log1p.Pref","FoodwebSimple:sc.Diam:sc.log.Clutch","FoodwebSimple:sc.Diam:sc.log1p.Pref","FoodwebSimple:sc.log.Clutch:sc.log1p.Pref"))
-#platyecto_tidy <- filter(tidy(platyecto_glmer), term %in% c("FoodwebSimple:I(sc.Diam^2)","FoodwebSimple:I(sc.log.Clutch^2)","FoodwebSimple:I(sc.log1p.Pref^2)","FoodwebSimple:sc.Diam:sc.log.Clutch:sc.log1p.Pref"))
-
-get_alphas <- bind_rows(platyecto_tidy_4, platyecto_tidy_3, platyecto_tidy_2, platyecto_tidy) %>% 
-  mutate(alpha = round(estimate, 3), alpha_2.5 = round(conf.low, 3), alpha_97.5 = round(conf.high, 3), P = round(p.value, 3)) %>%
-  select(term, alpha, alpha_2.5, alpha_97.5, P)
-
-complex_alphas <- filter(get_alphas, !grepl("FoodwebSimple", term))
-simple_alphas <- filter(get_alphas, grepl("FoodwebSimple", term))
-
-# remember that the selection gradients need to be multiplied by 2 for quadratic gradients.
-coefs_gradients <- data.frame(Variable = complex_alphas$term, 
-           a_complex = complex_alphas$alpha,
-           a_complex_2.5 = complex_alphas$alpha_2.5,
-           a_complex_97.5 = complex_alphas$alpha_97.5,
-           a_simple = complex_alphas$alpha + simple_alphas$alpha,        # the baseline is the coefficient in the complex food web, therefore we simply add the corresponding coefficients from the simple food web to get the coefficients on the same scale as the complex web
-           a_simple_2.5 = complex_alphas$alpha + simple_alphas$alpha_2.5, # same addition process for confidence intervals
-           a_simple_97.5 = complex_alphas$alpha + simple_alphas$alpha_97.5) %>% 
-  mutate(b_complex = round(complex_mean_brackets * a_complex / complex_mean_fitness, 3),
-         b_complex_2.5 = round(complex_mean_brackets * a_complex_2.5 / complex_mean_fitness, 3),
-         b_complex_97.5 = round(complex_mean_brackets * a_complex_97.5 / complex_mean_fitness, 3),
-         b_simple = round(simple_mean_brackets * a_simple / simple_mean_fitness, 3),
-         b_simple_2.5 = round(simple_mean_brackets * a_simple_2.5 / simple_mean_fitness, 3),
-         b_simple_97.5 = round(simple_mean_brackets * a_simple_97.5 / simple_mean_fitness, 3)) %>%
-  filter(Variable != "(Intercept)")
-
-select(coefs_gradients, Variable, a_complex:a_simple_97.5)
-select(coefs_gradients, Variable, b_complex:b_simple_97.5)
-
-bind_rows(mutate(select(coefs_gradients, Variable, a=a_complex, a_2.5=a_complex_2.5, a_97.5=a_complex_97.5), Foodweb = "Complex"),
-          mutate(select(coefs_gradients, Variable, a=a_simple, a_2.5=a_simple_2.5, a_97.5=a_simple_97.5), Foodweb = "Simple")) %>%
-  ggplot(., aes(x = Variable, fill=Foodweb, color=Foodweb)) +
-  geom_point(aes(y=a), position = position_dodge(width=0.5)) +
-  geom_errorbar(aes(ymax = a_97.5, ymin = a_2.5), position = position_dodge(width=0.5)) +
-  coord_flip() +
-  geom_hline(yintercept=0, linetype="dotted")
-
-bind_rows(mutate(select(coefs_gradients, Variable, b=b_complex, b_2.5=b_complex_2.5, b_97.5=b_complex_97.5), Foodweb = "Complex"),
-          mutate(select(coefs_gradients, Variable, b=b_simple, b_2.5=b_simple_2.5, b_97.5=b_simple_97.5), Foodweb = "Simple")) %>%
-  ggplot(., aes(x = Variable, fill=Foodweb, color=Foodweb)) +
-  geom_point(aes(y=b), position = position_dodge(width=0.5)) +
-  geom_errorbar(aes(ymax = b_97.5, ymin = b_2.5), position = position_dodge(width=0.5)) +
-  coord_flip() +
-  geom_hline(yintercept=0, linetype="dotted")
-     
-inverse_logit(complex_alphas$alpha[1]) - complex_mean_fitness # small difference in mean fitness estimates compared to intercept in complex food web
-inverse_logit(complex_alphas$alpha[1] + simple_alphas$alpha[1]) - simple_mean_fitness # larger difference in mean fitness estimates from intercept in simple food web, unclear why...perhaps because the mean phenotypes don't match up as nicely?
-```
-
-
-```{r include=FALSE, eval=FALSE}
-## Calculating same coefficients as for simple vs. complex food web
-
-## Estimate mean fitness and mean brackets (ref: Janzen and Stern 1998)
-ecto_predict <- predict(platyecto_glmer, newdata=filter(gall_selection.df, Foodweb=="Complex" & platy < 1), type="response")
-ecto_mean_brackets <- mean(ecto_predict * (1 - ecto_predict))
-ecto_mean_fitness <- mean(ecto_predict)
-
-platy_predict <- predict(platyecto_glmer, newdata=filter(gall_selection.df, Foodweb=="Simple"), type="response")
-platy_mean_brackets <- mean(platy_predict * (1 - platy_predict))
-platy_mean_fitness <- mean(platy_predict)
-
-# test whether using alternative models influences estimes of mean "brackets" and mean fitness 
-alt_predict <- predict(platyecto_glmer_2, newdata=filter(gall_selection.df, Foodweb=="Complex" & platy < 1), type="response")
-alt_mean_brackets <- mean(alt_predict * (1 - alt_predict))
-alt_mean_fitness <- mean(alt_predict)
-ecto_mean_brackets - alt_mean_brackets
-ecto_mean_fitness - alt_mean_fitness
-
-# Altering so that coefficients that differed between food webs are reported, but ones that weren't are simply reported as there baselines.
-# Added multiplier column so that quadratic (nonlinear) selection coefficients can be multiplied by 2 for fair comparison
-platyecto_tidy_4 <- tidy(platyecto_glmer_4, conf.int=T) %>%
-  filter(term %in% c("(Intercept)","FoodwebSimple","sc.Diam","sc.log1p.Pref")) %>%
-  mutate(platyecto = c("ecto","platy","Common","Common"),
-         Selection_form = c(NA,NA,"Directional","Directional"),
-         Multiplier = c(1,1,1,1))
-
-platyecto_tidy_3 <- tidy(platyecto_glmer_3, conf.int=T) %>%
-  filter(term %in% c("sc.log.Clutch","sc.Diam:sc.log.Clutch","sc.Diam:sc.log1p.Pref","sc.log.Clutch:sc.log1p.Pref","FoodwebSimple:sc.log.Clutch")) %>%
-  mutate(platyecto = c("ecto","Common","Common","Common","platy"),
-         Selection_form = c("Directional","Correlational","Correlational","Correlational","Directional"),
-         Multiplier = c(1,1,1,1,1))
-
-platyecto_tidy_2 <- tidy(platyecto_glmer_2, conf.int=T) %>%
-  filter(term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","sc.Diam:sc.log.Clutch:sc.log1p.Pref")) %>%
-  mutate(platyecto = c("Common","Common","Common"),
-         Selection_form = c("Nonlinear","Nonlinear","Correlational"),
-         Multiplier = c(2,2,1))
-
-platyecto_tidy <- tidy(platyecto_glmer, conf.int=T) %>%
-  filter(term %in% c("I(sc.log1p.Pref^2)","FoodwebSimple:I(sc.log1p.Pref^2)")) %>%
-  mutate(platyecto = c("ecto","platy"),
-         Selection_form = c("Nonlinear","Nonlinear"),
-         Multiplier = c(2,2))
-
-get_platyecto_alphas <- bind_rows(platyecto_tidy_4, platyecto_tidy_3, platyecto_tidy_2, platyecto_tidy) %>% 
-  mutate(alpha = round(estimate, 3), alpha_2.5 = round(conf.low, 3), alpha_97.5 = round(conf.high, 3), P = round(p.value, 3)) %>%
-  select(term, platyecto, alpha, alpha_2.5, alpha_97.5, P, Selection_form, Multiplier)
-
-ecto_alphas <- filter(get_platyecto_alphas, platyecto == "ecto"); ecto_alphas
-platy_alphas <- filter(get_platyecto_alphas, platyecto == "platy"); platy_alphas
-common_platyecto_alphas <- filter(get_platyecto_alphas, platyecto == "Common"); common_platyecto_alphas
-
-
-coefs_gradients.ecto_platy <- data.frame(Variable = ecto_alphas$term, 
-           a_ecto = ecto_alphas$alpha,
-           a_ecto_2.5 = ecto_alphas$alpha_2.5,
-           a_ecto_97.5 = ecto_alphas$alpha_97.5,
-           a_platy = ecto_alphas$alpha + platy_alphas$alpha,        # the baseline is the coefficient in the ecto food web, therefore we simply add the corresponding coefficients from the platy food web to get the coefficients on the same scale as the ecto web
-           a_platy_2.5 = ecto_alphas$alpha + platy_alphas$alpha_2.5, # same addition process for confidence intervals
-           a_platy_97.5 = ecto_alphas$alpha + platy_alphas$alpha_97.5,
-           Selection_form = ecto_alphas$Selection_form,                # doesn't matter whether platy_ or ecto_alphas is chosen for Selection_form or Multiplier
-           Multiplier = ecto_alphas$Multiplier) %>%                     
-  mutate(b_ecto = round(ecto_mean_brackets * a_ecto / ecto_mean_fitness, 3) * Multiplier,
-         b_ecto_2.5 = round(ecto_mean_brackets * a_ecto_2.5 / ecto_mean_fitness, 3) * Multiplier,
-         b_ecto_97.5 = round(ecto_mean_brackets * a_ecto_97.5 / ecto_mean_fitness, 3) * Multiplier,
-         b_platy = round(platy_mean_brackets * a_platy / platy_mean_fitness, 3) * Multiplier,
-         b_platy_2.5 = round(platy_mean_brackets * a_platy_2.5 / platy_mean_fitness, 3) * Multiplier,
-         b_platy_97.5 = round(platy_mean_brackets * a_platy_97.5 / platy_mean_fitness, 3) * Multiplier) 
-
-coefs_gradients.ecto_platy.common <- data.frame(Variable = common_platyecto_alphas$term, 
-           a_ecto = common_platyecto_alphas$alpha,
-           a_ecto_2.5 = common_platyecto_alphas$alpha_2.5,
-           a_ecto_97.5 = common_platyecto_alphas$alpha_97.5,
-           a_platy = common_platyecto_alphas$alpha,        
-           a_platy_2.5 = common_platyecto_alphas$alpha_2.5, 
-           a_platy_97.5 = common_platyecto_alphas$alpha_97.5,
-           Selection_form = common_platyecto_alphas$Selection_form,
-           Multiplier = common_platyecto_alphas$Multiplier) %>% 
-  # for the selection gradients though, calculate them on the scale of relative fitness for each food-web treatment
-  mutate(b_ecto = round(ecto_mean_brackets * a_ecto / ecto_mean_fitness, 3) * Multiplier,
-         b_ecto_2.5 = round(ecto_mean_brackets * a_ecto_2.5 / ecto_mean_fitness, 3) * Multiplier,
-         b_ecto_97.5 = round(ecto_mean_brackets * a_ecto_97.5 / ecto_mean_fitness, 3) * Multiplier,
-         b_platy = round(platy_mean_brackets * a_platy / platy_mean_fitness, 3) * Multiplier,
-         b_platy_2.5 = round(platy_mean_brackets * a_platy_2.5 / platy_mean_fitness, 3) * Multiplier,
-         b_platy_97.5 = round(platy_mean_brackets * a_platy_97.5 / platy_mean_fitness, 3) * Multiplier)
-
-coefs_gradients.ecto_platy <- bind_rows(coefs_gradients.ecto_platy, coefs_gradients.ecto_platy.common)
-
-
-bind_rows(mutate(select(coefs_gradients.ecto_platy, Variable, a=a_ecto, a_2.5=a_ecto_2.5, a_97.5=a_ecto_97.5), platyecto = "ecto"),
-          mutate(select(coefs_gradients.ecto_platy, Variable, a=a_platy, a_2.5=a_platy_2.5, a_97.5=a_platy_97.5), platyecto = "platy")) %>%
-  filter(Variable != "(Intercept)") %>%
-  ggplot(., aes(x = Variable, fill=platyecto, color=platyecto)) +
-  geom_point(aes(y=a), position = position_dodge(width=0.5)) +
-  geom_errorbar(aes(ymax = a_97.5, ymin = a_2.5), position = position_dodge(width=0.5)) +
-  coord_flip() +
-  geom_hline(yintercept=0, linetype="dotted") +
-  ylab("Regression coefficient")
-
-## Modify to be directional, nonlinear, then correlational with legend in 4th area.
-## Modify so that axes have gamma and beta with the trait as a subscript
-bind_rows(mutate(select(coefs_gradients.ecto_platy, Variable, b=b_ecto, b_2.5=b_ecto_2.5, b_97.5=b_ecto_97.5, Selection_form), platyecto = "ecto"),
-          mutate(select(coefs_gradients.ecto_platy, Variable, b=b_platy, b_2.5=b_platy_2.5, b_97.5=b_platy_97.5, Selection_form), platyecto = "platy")) %>%
-  filter(Variable != "(Intercept)") %>%
-  ggplot(., aes(x = Variable, fill=platyecto, color=platyecto)) +
-  geom_point(aes(y=b), position = position_dodge(width=0.5)) +
-  geom_errorbar(aes(ymax = b_97.5, ymin = b_2.5), position = position_dodge(width=0.5)) +
-  coord_flip() +
-  geom_hline(yintercept=0, linetype="dotted") +
-  facet_wrap(~Selection_form, nrow=2, scales = "free_y") +
-  ylab("Selection gradient")
-```
-
-
-Compared to the GLM, the GLMM gives the same inferences about the effect of food-web treatment. The main difference was that there was stronger evidence of correlational selection, but no evidence that this correlational selection varied among food-web treatments. Still, this stronger evidence for correlational selection should be interpreted with caution since the GLM does not account for the non-indepedence of these fitness estimates. 
-```{r Compare GLMM to GLM, include=FALSE, eval=FALSE}
-## Fit GLMs. Dispersion parameter was ~1, so I just used a binomial model. 
-null_glm <- glm(gall_survival ~ sc.Diam*sc.log.Clutch*sc.log1p.Pref + 
-                      I(sc.Diam^2) + I(sc.log.Clutch^2) + I(sc.log1p.Pref^2),
-                    data = gall_selection.df,
-                    family = binomial(link = logit))
-
-foodweb_glm <- glm(gall_survival ~ Foodweb*(sc.Diam*sc.log.Clutch*sc.log1p.Pref +
-                         I(sc.Diam^2) + I(sc.log.Clutch^2) + I(sc.log1p.Pref^2)),
-                       data = gall_selection.df,
-                       family = binomial(link = logit))
-
-## Compare statistical summaries of each model
-summary(null_glm)
-summary(foodweb_glm)
-piecewiseSEM::rsquared(null_glm)
-piecewiseSEM::rsquared(foodweb_glm)
-
-## Test statistical significance of effects ----
-
-# Overall, there is clear evidence that food-web treatment alters absolute fitness
-anova(null_glm, foodweb_glm, test = "Chisq") 
-
-## Parse out mechanisms of food-web effects ----
-# Use drop1 to test highest order effects and visreg to visualize the effects
-
-# Evidence that food-web treatment alters nonlinear selection acting on female preference. Appears to be evidence for disruptive selection in complex food web.
-# Unique to GLM: marginal evidence for food-web treatment altering nonlinear selection on clutch size
-drop1(foodweb_glm, test="Chisq")
-visreg::visreg(foodweb_glm, xvar="sc.log1p.Pref", by="Foodweb", scale = "response") 
-visreg::visreg(foodweb_glm, xvar="sc.log.Clutch", by="Foodweb", scale = "response")
-
-# Evidence of nonlinear selection acting on gall size. No evidence of disruptive selection.
-# No unique effects in the glm
-foodweb_glm_2 <- update(foodweb_glm, .~. -Foodweb:I(sc.Diam^2) -Foodweb:I(sc.log.Clutch^2) -Foodweb:I(sc.log1p.Pref^2) -Foodweb:sc.Diam:sc.log.Clutch:sc.log1p.Pref)
-drop1(foodweb_glm_2, test="Chisq") 
-visreg::visreg(foodweb_glm_2, xvar="sc.Diam", scale = "response") 
-
-# Evidence of food-web treatment altering directional selection on clutch size
-# Unique to GLM: there is stronger support for correlational selection acting on gall size and clutch size; also, there is evidence for correlational selection acting on clutch size and female preference.
-foodweb_glm_3 <- update(foodweb_glm_2, .~. -I(sc.Diam^2) -I(sc.log.Clutch^2) -I(sc.log1p.Pref^2) -sc.Diam:sc.log.Clutch:sc.log1p.Pref -Foodweb:sc.Diam:sc.log.Clutch -Foodweb:sc.Diam:sc.log1p.Pref -Foodweb:sc.log.Clutch:sc.log1p.Pref)
-drop1(foodweb_glm_3, test="Chisq") 
-visreg::visreg(foodweb_glm_3, xvar="sc.log.Clutch", by="Foodweb", scale="response")
-visreg::visreg(foodweb_glm_3, xvar="sc.Diam", by="sc.log.Clutch", scale="response")
-visreg::visreg(foodweb_glm_3, xvar="sc.log.Clutch", by="sc.Diam", scale="response") # a different perspective
-visreg::visreg(foodweb_glm_3, xvar="sc.log1p.Pref", by="sc.log.Clutch", scale="response")
-visreg::visreg(foodweb_glm_3, xvar="sc.log.Clutch", by="sc.log1p.Pref", scale="response")
-
-# Evidence that food-web treatment alters absolute fitness; evidence of directional selection acting on gall size; no evidence of directional selection on clutch size (in complex food web); evidence of directional selection acting on female preference
-# No unique effects in the glm
-foodweb_glm_4 <- update(foodweb_glm_3, .~. -sc.Diam:sc.log.Clutch -sc.Diam:sc.log1p.Pref -sc.log.Clutch:sc.log1p.Pref -Foodweb:sc.Diam -Foodweb:sc.log.Clutch -Foodweb:sc.log1p.Pref)
-drop1(foodweb_glm_4, test="Chisq") 
-visreg::visreg(foodweb_glm_4, xvar="Foodweb", scale="response")
-visreg::visreg(foodweb_glm_4, xvar="sc.Diam", scale="response")
-visreg::visreg(foodweb_glm_4, xvar="sc.log.Clutch", scale="response")
-visreg::visreg(foodweb_glm_4, xvar="sc.log1p.Pref", scale="response")
-```
-
-```{r Get Selection Gradients for GLM, include=FALSE, eval=FALSE}
-complex_predict <- predict(foodweb_glm, newdata=filter(gall_selection.df, Foodweb=="Complex"), type="response")
-complex_mean_brackets <- mean(complex_predict * (1 - complex_predict))
-complex_mean_fitness <- mean(complex_predict)
-
-simple_predict <- predict(foodweb_glm, newdata=filter(gall_selection.df, Foodweb=="Simple"), type="response")
-simple_mean_brackets <- mean(simple_predict * (1 - simple_predict))
-simple_mean_fitness <- mean(simple_predict)
-
-foodweb_tidy_4 <- filter(tidy(foodweb_glm_4), term %in% c("(Intercept)","FoodwebSimple","sc.Diam","sc.log.Clutch","sc.log1p.Pref"))
-foodweb_tidy_3 <- filter(tidy(foodweb_glm_3), term %in% c("sc.Diam:sc.log.Clutch","sc.Diam:sc.log1p.Pref","sc.log.Clutch:sc.log1p.Pref","FoodwebSimple:sc.Diam","FoodwebSimple:sc.log.Clutch","FoodwebSimple:sc.log1p.Pref"))
-foodweb_tidy_2 <- filter(tidy(foodweb_glm_2), term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.log1p.Pref^2)","sc.Diam:sc.log.Clutch:sc.log1p.Pref","FoodwebSimple:sc.Diam:sc.log.Clutch","FoodwebSimple:sc.Diam:sc.log1p.Pref","FoodwebSimple:sc.log.Clutch:sc.log1p.Pref"))
-foodweb_tidy <- filter(tidy(foodweb_glm), term %in% c("FoodwebSimple:I(sc.Diam^2)","FoodwebSimple:I(sc.log.Clutch^2)","FoodwebSimple:I(sc.log1p.Pref^2)","FoodwebSimple:sc.Diam:sc.log.Clutch:sc.log1p.Pref"))
-
-get_alphas <- bind_rows(foodweb_tidy_4, foodweb_tidy_3, foodweb_tidy_2, foodweb_tidy) %>% 
-  mutate(alpha = round(estimate, 3), alpha_SE = round(std.error, 3), P = round(p.value, 3)) %>%
-  select(term, alpha, alpha_SE, P)
-
-complex_alphas <- filter(get_alphas, !grepl("FoodwebSimple", term))
-simple_alphas <- filter(get_alphas, grepl("FoodwebSimple", term))
-
-# remember that the selection gradients need to be multiplied by 2 for quadratic gradients.
-data.frame(Variable = complex_alphas$term, 
-           alpha_complex = complex_alphas$alpha, 
-           alpha_simple = complex_alphas$alpha + simple_alphas$alpha) %>% # add the corresponding coefficients to get the coefficients on the same scale as the complex web)
-  mutate(beta_complex = round(complex_mean_brackets * alpha_complex / complex_mean_fitness, 3),
-         beta_simple = round(simple_mean_brackets * alpha_simple / simple_mean_fitness, 3)) %>%
-  filter(Variable != "(Intercept)")
-
-inverse_logit(complex_alphas$alpha[1]) - complex_mean_fitness # small difference in mean fitness estimates compared to intercept in complex food web
-inverse_logit(complex_alphas$alpha[1] + simple_alphas$alpha[1]) - simple_mean_fitness # larger difference in mean fitness estimates from intercept in simple food web, unclear why...perhaps because the mean phenotypes don't match up as nicely?
-```
-
-
-
-```{r Mortality, include=FALSE, eval=FALSE}
-# 8-10% mortality induced by intraguild predators
-mean(control_df$platy)
-mean(treatment_df$platy)
-mean(eggptoid_control_df$platy)
-
-# Gall mortality to Platy
-1 - mean(treatment_df$pupa)
-
-# Gall mortality to Ectos
-
-# Platy mortality to intraguild predation
-mean(treatment_df$platy) - mean(control_df$platy) 
-
-mean(control_df$ectos)
-mean(treatment_df$ectos)
-mean(ectoptoid_control_df$ectos)
-
-mean(control_df$pupa)
-mean(treatment_df$pupa)
-mean(eggptoid_control_df$pupa)
-mean(ectoptoid_control_df$pupa)
-```
-
-
-
-<!--$$logit(E(W))=\mu+\beta_{diameter}+\beta_{clutch}+\beta_{preference}+$$
-$$logit(E(W))=\mu+treatment+s(diam):treat+s(clutch)+s(pref)+diam:cluch+diam:pref+clutch:pref+(1|Genotype/Plant/Gall)$$-->
-
-<!-- We used generalized linear mixed models (GLMMs, @Bolker2009) to test the effects of food-web complexity on the shape of the fitness landscape. 
-Larva survival (0 or 1) was our response variable and measure of fitness. 
-<!-- Need to clean up the language part of this section without it being too complicated and confusing. I should also include tests of non-linear selection gradients. -->
-<!-- We specified our food-web treatment, each gall trait, two-way interactions between gall traits, as well interactions between gall trait and food-web treatment, as fixed effects to fully explore the effects of food-web complexity on the fitness landscape. 
-This analysis implicitly assumes that selection is linear, which we felt was a necessary trade-off for exploring the shape of the fitness landscape. 
-To account for the correlated structure of clutch size (gall level) and female preference (plant level) as well as any other independent effects of willow genotype on parasitism rates, we specified gall ID nested within plant ID nested within plant genotype as random intercepts in our statistical models. 
-<!-- To identify the appropriate level of model complexity for testing the effects of food-web complexity on the fitness landscapes, we compared models using Aikaike Information Criteria. 
-The maximal complexity we explored was a generalized additive mixed model that fit cubic splines to each trait as well as linear interactions between a maximum of two traits as well as an interaction with food-web treatment. -->
-
-<!-- We used a spline-based semiparametric regression (Schluter 1988, Morrissey and Sakedra 2014). These analyses are desirable because they lead to inferences of the form of selection that make few \textit{a priori} assumptions (Schluter 1988), and can now be used to quantify standardized selection gradients (Morrissey and Sakrera 2014).
-
-We then calculated selection gradients as the partial derivatives in absolute fitness (larva survival) with response to multivariate phenotype using the \textit{gsg} package in R (cite Morrissey and R project). We standardized phenotypes (mean=0, SD=1), so that first-order derivatives correspond to the intensity of directional selection ($\beta$\textsubscript{trait}), while second-order derivatives correspond to intensity of nonlinear ($\gamma$\textsubscript{trait}) and correlational selection ($\gamma$\textsubscript{trait$_i$,}\textsubscript{trait$_j$}) and are thus comparable within this study as well as to others. -->
-
-<!-- Our GLMMs are useful for testing the effects of food-web complexity on the fitness landscape within the context of our experimental design; however, coefficients from GLMMs cannot be easily converted into quantitative estimates of selection gradients (cite Morrissey's work). Therefore, for each treatment, we fit separate generalized additive models (GAMs) for gall traits that we identified as being under selection from our GLMMs. Estimating selection gradients from GAMs can give insight to both linear and non-linear selection gradients, which we assumed were all linear for our GLMMs, given the complexity of already fitting up to 4-way interactions in these models. For the number of larva per gall and gall density, we aggregated larva survival at the gall or plant level, respectively, to avoid pseudoreplication in our GAMs. -->
-
-```{r Figure 1, include=FALSE, eval=FALSE, echo=FALSE, fig.cap="Illustrations of complex (A) and simple (B) food webs associated with the insect herbivore, *Iteomyia salicisverruca*. Black arrows denote 'who-eats-whom' in this network of trophic interactions."}
-knitr::include_graphics("complex_simple_foodwebs_compressed.pdf")
-```
-
-
-```{r OLD TEXT, include=FALSE, eval=FALSE}
-$\chi^2_{`r foodweb_test$[2,"Chi.Df"]`}=`r foodweb_test$[2,"statistic"]`, P=`r foodweb_test$[2,"p.value"]`$). 
-
-Two key patterns emerged from our analyses. First, fewer phenotypic traits were under selection in the complex vs. simple food web. 
-In both complex and simple food webs, gall diameter was under strong directional selection, with larger galls resulting in higher larval survival (complex $\beta_{diam}=$`r paste0(filter(summary_beta_control, Phenotype=="Gall diameter")$Estimate," [",filter(summary_beta_control, Phenotype=="Gall diameter")$lower_2.5,",",filter(summary_beta_control, Phenotype=="Gall diameter")$upper_97.5,"]")`; simple $\beta_{diam}=$ `r paste0(filter(summary_beta_treatment, Phenotype=="Gall diameter")$Estimate," [",filter(summary_beta_treatment, Phenotype=="Gall diameter")$lower_2.5,",",filter(summary_beta_treatment, Phenotype=="Gall diameter")$upper_97.5,"]")`)(Fig. \ref{fig:Univariate_Landscapes}A). 
-
-In the complex food web, we found that there was no selection acting on clutch size
-
-In simple food webs, both clutch size and female preference experience directional selection, with smaller clutch sizes ($\beta_{clutch}=$
-`r paste0(filter(summary_beta_treatment, Phenotype=="Clutch size")$Estimate," [",filter(summary_beta_treatment, Phenotype=="Clutch size")$lower_2.5,",",filter(summary_beta_treatment, Phenotype=="Clutch size")$upper_97.5,"]")`
-and weaker preferences ($\beta_{pref}=$
-`r paste0(filter(summary_beta_treatment, Phenotype=="Female preference")$Estimate," [",filter(summary_beta_treatment, Phenotype=="Female preference")$lower_2.5,",",filter(summary_beta_treatment, Phenotype=="Female preference")$upper_97.5,"]")`
-) resulting in higher larval survival (blue lines in Fig. \ref{fig:Univariate_Landscapes}B,C).
-In contrast, there was no evidence of selection on clutch size ($\beta_{clutch}=$
-`r paste0(filter(summary_beta_control, Phenotype=="Clutch size")$Estimate," [",filter(summary_beta_control, Phenotype=="Clutch size")$lower_2.5,",",filter(summary_beta_control, Phenotype=="Clutch size")$upper_97.5,"]")`
-) or female preference ($\beta_{pref}=$
-`r paste0(filter(summary_beta_control, Phenotype=="Female preference")$Estimate," [",filter(summary_beta_control, Phenotype=="Female preference")$lower_2.5,",",filter(summary_beta_control, Phenotype=="Female preference")$upper_97.5,"]")`
-) in complex food webs (orange lines in Fig. \ref{fig:Univariate_Landscapes}B,C). The absence of selection on clutch size and female preference was likely a result of conflicting selection pressures imposed by each guild of parasitoids due to their different functional relationships with gall traits. Together, these different patterns of selection resulted in an ideal combination of traits having higher fitness in the simple food web (large diameter, smaller clutches, weaker preference), whereas there was a larger combination of trait values that had equal fitness in the complex food web (Fig. \ref{fig:Multivariate_Landscapes}).
-We did not find any strong evidence for nonlinear or correlational selection gradients acting on gall traits in either food-web treatment.
-The second major pattern was that the overall intensity of selection was stronger in the complex vs. simple food web. This result appeared to be driven by selection on gall diameter in the complex food web, which was more than 
-`r round(filter(summary_beta_control, Phenotype=="Gall diameter")$Estimate/filter(summary_beta_treatment, Phenotype=="Gall diameter")$Estimate,1)`
-$\times$ larger than any other selection gradient in our analyses. 
-
--->
-```
-
-
 
 ```{r Get Gall Diameter Relative Fitness Landscape, cache=TRUE, include=FALSE}
 
@@ -1581,23 +1179,10 @@ AF_gradients
 
 my_breaks <- c(0.2,0.4,0.6,0.8)
 
-# Size x Preference
-AF_plot_Diam.Pref <- RF_Diam.Pref$absolute_fitness %>% #bind_rows(mutate(RF_treatment_size.x.preference$absolute_fitness, Food_Web = "Simple"), 
-          #mutate(RF_control_size.x.preference$absolute_fitness, Food_Web = "Complex")) %>%
-  ggplot(., aes(x=sc.Diam, y=sc.log1p.Pref, fill=average)) +
-  geom_raster() +
-  facet_wrap(~Foodweb) +
-  xlab("Chamber diameter (SDs)") +
-  ylab("Female preference (SDs)") +
-  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
-  scale_y_continuous(labels = c(-1,-0.5,0,0.5,1)) +
-  scale_fill_viridis(name = "Mean larva\nsurvival", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(AF_range$min, AF_range$max))#, 
-
 # Size x Clutch
-AF_plot_Diam.Clutch <- RF_Diam.Clutch$absolute_fitness %>% #bind_rows(mutate(RF_treatment_size.x.clutch$absolute_fitness, Food_Web = "Simple"), 
-          #mutate(RF_control_size.x.clutch$absolute_fitness, Food_Web = "Complex")) %>%
-  ggplot(., aes(x=sc.Diam, y=sc.log.Clutch, fill=average)) +
-  geom_raster() +
+AF_plot_Diam.Clutch <- RF_Diam.Clutch$absolute_fitness %>% 
+  ggplot(., aes(x=sc.Diam, y=sc.log.Clutch)) +
+  geom_raster(aes(fill=average)) +
   facet_wrap(~Foodweb) +
   xlab("Gall diameter (SDs)") +
   ylab("Clutch size (SDs)") +
@@ -1605,17 +1190,27 @@ AF_plot_Diam.Clutch <- RF_Diam.Clutch$absolute_fitness %>% #bind_rows(mutate(RF_
   scale_y_continuous(labels = c(-1,-0.5,0,0.5,1)) +
   scale_fill_viridis(name = "Mean larva\nsurvival", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(AF_range$min, AF_range$max))#, 
 
+# Size x Preference
+AF_plot_Diam.Pref <- RF_Diam.Pref$absolute_fitness %>% 
+  ggplot(., aes(x=sc.Diam, y=sc.log1p.Pref)) +
+  geom_raster(aes(fill=average)) +
+  facet_wrap(~Foodweb) +
+  xlab("Chamber diameter (SDs)") +
+  ylab("Female preference (SDs)") +
+  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_y_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_fill_viridis(name = "Mean larva\nsurvival", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(AF_range$min, AF_range$max))#, 
+
 # Clutch x Preference
-AF_plot_Clutch.Pref <- RF_Clutch.Pref$absolute_fitness %>% #bind_rows(mutate(RF_treatment_clutch.x.preference$absolute_fitness, Food_Web = "Simple"), 
-         # mutate(RF_control_clutch.x.preference$absolute_fitness, Food_Web = "Complex")) %>%
-  ggplot(., aes(x=sc.log1p.Pref, y=sc.log.Clutch, fill=average)) +
-  geom_raster() +
+AF_plot_Clutch.Pref <- RF_Clutch.Pref$absolute_fitness %>%
+  ggplot(., aes(x=sc.log1p.Pref, y=sc.log.Clutch)) +
+  geom_raster(aes(fill=average)) +
   facet_wrap(~Foodweb) +
   xlab("Female preference (SDs)") +
   ylab("Clutch size (SDs)") +
   scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
   scale_y_continuous(labels = c(-1,-0.5,0,0.5,1)) +
-  scale_fill_viridis(name = "Mean larva\nsurvival", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(AF_range$min, AF_range$max))#, 
+  scale_fill_viridis(name = "Mean larva\nsurvival", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(AF_range$min, AF_range$max)) 
 ```
 
 ```{r Multivariate-Fitness-Landscapes, echo=FALSE, fig.cap="Fitness landscapes of gall traits in complex vs. simple food webs. Each panel corresponds to a different combination of traits: clutch size and gall diameter (A); clutch size and female preference (B); female preference and gall diameter (C). Note that traits for all plots range 1 SD below and above the mean (=0)."}
@@ -1642,4 +1237,659 @@ AF_landscape_2d
 #save_plot("../figures/fitness_landscapes_2D.png", AF_landscape_2d)#, base_height=6, base_width = 8)
 ```
 
+Note that equation 3 in Phillips and Arnold 1998 is good justification for why quadratic selection cofficients should be multiplied by two (but not correlational ones?)
+
+The G-matrix is essentially a scalar. For my data, since there is no correlational selection, it doesn't matter if there is genetic covariance between the traits, as this will not effect the change in genetic covariances within a generation (because there is no selection). Also, the G_matrix does not qualitatively alter the conclusions that there will be a decrease in additive genetic variance in gall diameter due to the strong directional selection; however, there will be an increase in the additive genetic variance in female preference. Since this is an experiment, we can assume that the G-matrix is the same between treatments
+
+Remember that the diagonals refer to additive genetic CO-variances. Thus, positive or negative values for delta_G give insight to whether selection will act to integrate traits (positive covariance) or create trade-offs (negative covariance).
+
+Assuming that there is positive additive genetic variance and co-variance in these traits (i.e. all values of G-matrix are positive), then the curvature of the fitness landscape can give insight to qualitative changes in the G matrix. This is because the G-matrix acts as a scalar of changes in the fitness landscape.
+
+Create a simple rule. If the confidence interval of the selection gradient overlaps zero, then I set it to zero. Otherwise, I set it to our best estimate of the gradient
+
+```{r Slope and Curvature of the Adaptive Landscape, include=FALSE}
+
+## Create beta-matrix for complex food-web treatment
+complex_betas_df <- bias.adj_selection_gradients %>%
+  filter(`Food web`=="Complex", term_ord %in% c("Pref","Clutch") | term_ord == "Diam" & adjusted=="Yes") %>% 
+  select(term_ord, gradient, low=`2.5%`, high=`97.5%`) %>% data.frame()
+rownames(complex_betas_df) <- complex_betas_df$term_ord
+
+complex_betas <- matrix(nrow = 3, ncol = 1, dimnames = list(c("Diam","Clutch","Pref"), c("")))
+complex_betas["Diam",] <- ifelse(complex_betas_df["Diam","low"]*complex_betas_df["Diam","high"] > 0, 
+                                        complex_betas_df["Diam","gradient"], 0)
+complex_betas["Clutch",] <- ifelse(complex_betas_df["Clutch","low"]*complex_betas_df["Clutch","high"] > 0,
+                                            complex_betas_df["Clutch","gradient"], 0)
+complex_betas["Pref",] <- ifelse(complex_betas_df["Pref","low"]*complex_betas_df["Pref","high"] > 0,
+                                        complex_betas_df["Pref","gradient"], 0)
+complex_betas <- round(complex_betas, 2)
+
+## Create gamma-matrix for complex food-web treatment
+complex_gammas_df <- bias.adj_selection_gradients %>%
+  filter(`Food web`=="Complex", term_ord %in% c("Diam^2","Clutch^2","Pref^2","Diam:Clutch","Diam:Pref","Clutch:Pref")) %>% 
+  select(term_ord, gradient, low=`2.5%`, high=`97.5%`) %>% data.frame()
+rownames(complex_gammas_df) <- complex_gammas_df$term_ord
+
+complex_gammas <- matrix(nrow = 3, ncol = 3, dimnames = list(c("Diam","Clutch","Pref"), c("Diam","Clutch","Pref")))
+complex_gammas["Diam","Diam"] <- ifelse(complex_gammas_df["Diam^2","low"]*complex_gammas_df["Diam^2","high"] > 0, 
+                                        complex_gammas_df["Diam^2","gradient"], 0)
+complex_gammas["Clutch","Clutch"] <- ifelse(complex_gammas_df["Clutch^2","low"]*complex_gammas_df["Clutch^2","high"] > 0,
+                                            complex_gammas_df["Clutch^2","gradient"], 0)
+complex_gammas["Pref","Pref"] <- ifelse(complex_gammas_df["Pref^2","low"]*complex_gammas_df["Pref^2","high"] > 0,
+                                        complex_gammas_df["Pref^2","gradient"], 0)
+complex_gammas["Diam","Clutch"] <- ifelse(complex_gammas_df["Diam:Clutch","low"]*complex_gammas_df["Diam:Clutch","high"] > 0,
+                                          complex_gammas_df["Diam:Clutch","gradient"], 0)
+complex_gammas["Clutch","Diam"] <- complex_gammas["Diam","Clutch"]
+complex_gammas["Diam","Pref"] <- ifelse(complex_gammas_df["Diam:Pref","low"]*complex_gammas_df["Diam:Pref","high"] > 0,
+                                            complex_gammas_df["Diam:Pref","gradient"], 0)
+complex_gammas["Pref","Diam"] <- complex_gammas["Diam","Pref"]
+complex_gammas["Clutch","Pref"] <- ifelse(complex_gammas_df["Clutch:Pref","low"]*complex_gammas_df["Clutch:Pref","high"] > 0, 
+                                        complex_gammas_df["Clutch:Pref","gradient"], 0)
+complex_gammas["Pref","Clutch"] <- complex_gammas["Clutch","Pref"]
+complex_gammas <- round(complex_gammas, 2)
+
+## Create matrix of Betas in simple food-web treatment
+simple_betas_df <- bias.adj_selection_gradients %>%
+  filter(`Food web`=="Simple", term_ord %in% c("Pref","Clutch") | term_ord == "Diam" & adjusted=="Yes") %>% 
+  select(term_ord, gradient, low=`2.5%`, high=`97.5%`) %>% data.frame()
+rownames(simple_betas_df) <- simple_betas_df$term_ord
+
+simple_betas <- matrix(nrow = 3, ncol = 1, dimnames = list(c("Diam","Clutch","Pref"), c("")))
+simple_betas["Diam",] <- ifelse(simple_betas_df["Diam","low"]*simple_betas_df["Diam","high"] > 0, 
+                                        simple_betas_df["Diam","gradient"], 0)
+simple_betas["Clutch",] <- ifelse(simple_betas_df["Clutch","low"]*simple_betas_df["Clutch","high"] > 0,
+                                            simple_betas_df["Clutch","gradient"], 0)
+simple_betas["Pref",] <- ifelse(simple_betas_df["Pref","low"]*simple_betas_df["Pref","high"] > 0,
+                                        simple_betas_df["Pref","gradient"], 0)
+simple_betas <- round(simple_betas, 2)
+
+## Create gamma-matrix for simple food-web treatment
+simple_gammas_df <- bias.adj_selection_gradients %>%
+  filter(`Food web`=="Simple", term_ord %in% c("Diam^2","Clutch^2","Pref^2","Diam:Clutch","Diam:Pref","Clutch:Pref")) %>% 
+  select(term_ord, gradient, low=`2.5%`, high=`97.5%`) %>% data.frame()
+rownames(simple_gammas_df) <- simple_gammas_df$term_ord
+
+simple_gammas <- matrix(nrow = 3, ncol = 3, dimnames = list(c("Diam","Clutch","Pref"), c("Diam","Clutch","Pref")))
+simple_gammas["Diam","Diam"] <- ifelse(simple_gammas_df["Diam^2","low"]*simple_gammas_df["Diam^2","high"] > 0, 
+                                        simple_gammas_df["Diam^2","gradient"], 0)
+simple_gammas["Clutch","Clutch"] <- ifelse(simple_gammas_df["Clutch^2","low"]*simple_gammas_df["Clutch^2","high"] > 0,
+                                            simple_gammas_df["Clutch^2","gradient"], 0)
+simple_gammas["Pref","Pref"] <- ifelse(simple_gammas_df["Pref^2","low"]*simple_gammas_df["Pref^2","high"] > 0,
+                                        simple_gammas_df["Pref^2","gradient"], 0)
+simple_gammas["Diam","Clutch"] <- ifelse(simple_gammas_df["Diam:Clutch","low"]*simple_gammas_df["Diam:Clutch","high"] > 0,
+                                          simple_gammas_df["Diam:Clutch","gradient"], 0)
+simple_gammas["Clutch","Diam"] <- simple_gammas["Diam","Clutch"]
+simple_gammas["Diam","Pref"] <- ifelse(simple_gammas_df["Diam:Pref","low"]*simple_gammas_df["Diam:Pref","high"] > 0,
+                                            simple_gammas_df["Diam:Pref","gradient"], 0)
+simple_gammas["Pref","Diam"] <- simple_gammas["Diam","Pref"]
+simple_gammas["Clutch","Pref"] <- ifelse(simple_gammas_df["Clutch:Pref","low"]*simple_gammas_df["Clutch:Pref","high"] > 0, 
+                                        simple_gammas_df["Clutch:Pref","gradient"], 0)
+simple_gammas["Pref","Clutch"] <- simple_gammas["Clutch","Pref"]
+simple_gammas <- round(simple_gammas, 2)
+
+## Calculate Curvature of the Fitness landscape
+complex_curvature <- complex_gammas - complex_betas %*% t(complex_betas)
+simple_curvature <- simple_gammas - simple_betas %*% t(simple_betas)
+```
+
+## Slope of adaptive landscape
+
+$$\text{Slope} = \beta = \begin{pmatrix} \beta_{diam} \\ \beta_{clutch} \\ \beta_{pref} \end{pmatrix}$$
+
+$$\text{Slope}_{complex} = \begin{pmatrix} `r complex_betas["Diam", ]` \\ `r complex_betas["Clutch", ]` \\ `r complex_betas["Pref", ]` \end{pmatrix}$$
+$$\text{Slope}_{simple} =  \begin{pmatrix} `r simple_betas["Diam", ]` \\ `r simple_betas["Clutch", ]` \\ `r simple_betas["Pref", ]` \end{pmatrix}$$
+
+## Curvature of adaptive landscape
+
+$$\text{Curvature} = \gamma - \beta \beta^\text{T}$$
+
+$$\gamma = \begin{pmatrix} \gamma_{diam} & \gamma_{diam,clutch} & \gamma_{diam,pref} \\ \gamma_{clutch,diam} & \gamma_{clutch} & \gamma_{clutch,pref} \\ \gamma_{pref,diam} & \gamma_{pref,clutch} &\gamma_{pref} \end{pmatrix}$$
+$$\gamma_{complex} = \begin{pmatrix} `r complex_gammas["Diam","Diam"]` & `r complex_gammas["Diam","Clutch"]` & `r complex_gammas["Diam","Pref"]` \\  `r complex_gammas["Clutch","Diam"]` & `r complex_gammas["Clutch","Clutch"]` & `r complex_gammas["Clutch","Pref"]` \\  `r complex_gammas["Pref","Diam"]` & `r complex_gammas["Pref","Clutch"]` & `r complex_gammas["Pref","Pref"]` \end{pmatrix}$$
+$$\gamma_{simple} = \begin{pmatrix} `r simple_gammas["Diam","Diam"]` & `r simple_gammas["Diam","Clutch"]` & `r simple_gammas["Diam","Pref"]` \\  `r simple_gammas["Clutch","Diam"]` & `r simple_gammas["Clutch","Clutch"]` & `r simple_gammas["Clutch","Pref"]` \\  `r simple_gammas["Pref","Diam"]` & `r simple_gammas["Pref","Clutch"]` & `r simple_gammas["Pref","Pref"]` \end{pmatrix}$$
+
+
+$$\text{Curvature}_{complex} = \begin{pmatrix} `r complex_curvature["Diam","Diam"]` & `r complex_curvature["Diam","Clutch"]` & `r complex_curvature["Diam","Pref"]` \\  `r complex_curvature["Clutch","Diam"]` & `r complex_curvature["Clutch","Clutch"]` & `r complex_curvature["Clutch","Pref"]` \\  `r complex_curvature["Pref","Diam"]` & `r complex_curvature["Pref","Clutch"]` & `r complex_curvature["Pref","Pref"]` \end{pmatrix}$$
+
+$$\text{Curvature}_{simple} = \begin{pmatrix} `r simple_curvature["Diam","Diam"]` & `r simple_curvature["Diam","Clutch"]` & `r simple_curvature["Diam","Pref"]` \\  `r simple_curvature["Clutch","Diam"]` & `r simple_curvature["Clutch","Clutch"]` & `r simple_curvature["Clutch","Pref"]` \\  `r simple_curvature["Pref","Diam"]` & `r simple_curvature["Pref","Clutch"]` & `r simple_curvature["Pref","Pref"]` \end{pmatrix}$$
+
+## Observed phenotypic variance-covariance matrix
+
+```{r Observe P matrix}
+
+## setup P-matrix
+P_matrix <- matrix(1, nrow=3, ncol=3, dimnames = list(c("Diam","Clutch","Pref"),c("Diam","Clutch","Pref")))
+
+## confirm that variance of phenotypic traits = 1
+P_matrix["Diam","Diam"] <- var(gall_selection.df$sc.Diam)
+P_matrix["Clutch","Clutch"] <- var(gall_selection.df$sc.log.Clutch)
+P_matrix["Pref","Pref"] <- var(gall_selection.df$sc.log1p.Pref)
+
+## calculate covariance between phenotypic traits
+P_matrix["Diam","Clutch"] <- with(gall_selection.df, cov(sc.Diam, sc.log.Clutch))
+P_matrix["Clutch","Diam"] <- P_matrix["Diam","Clutch"]
+
+P_matrix["Diam","Pref"] <- with(gall_selection.df, cov(sc.Diam, sc.log1p.Pref))
+P_matrix["Pref","Diam"] <- P_matrix["Diam","Pref"]
+
+P_matrix["Clutch","Pref"] <- with(gall_selection.df, cov(sc.log.Clutch, sc.log1p.Pref))
+P_matrix["Pref","Clutch"] <- P_matrix["Clutch","Pref"]
+
+heritability <- 0.3 # since all traits are scaled to SD (and variance)=1, then a narrow-sense heritability of 0.3 (which is reasonable) corresponds to an additive genetic variance of 0.3 (Vg = h2 * Vp)
+
+G_matrix <- P_matrix * heritability
+```
+
+$$\text{P} = \begin{pmatrix} `r round(P_matrix["Diam","Diam"],2)` & `r round(P_matrix["Diam","Clutch"],2)` & `r round(P_matrix["Diam","Pref"],2)` \\  `r round(P_matrix["Clutch","Diam"],2)` & `r round(P_matrix["Clutch","Clutch"],2)` & `r round(P_matrix["Clutch","Pref"],2)` \\  `r round(P_matrix["Pref","Diam"],2)` & `r round(P_matrix["Pref","Clutch"],2)` & `r round(P_matrix["Pref","Pref"],2)` \end{pmatrix}$$
+Note that the variance of each phenotypic trait is standardized to 1. If we assume that each phenotypic trait has a narrow-sense heritability ($h^2$) of `r heritability`, then the additive genetic variance of each trait is equal to its narrow-sense heritability. The resulting G-matrix is:
+
+$$\text{G} = \begin{pmatrix} `r round(G_matrix["Diam","Diam"],2)` & `r round(G_matrix["Diam","Clutch"],2)` & `r round(G_matrix["Diam","Pref"],2)` \\  `r round(G_matrix["Clutch","Diam"],2)` & `r round(G_matrix["Clutch","Clutch"],2)` & `r round(G_matrix["Clutch","Pref"],2)` \\  `r round(G_matrix["Pref","Diam"],2)` & `r round(G_matrix["Pref","Clutch"],2)` & `r round(G_matrix["Pref","Pref"],2)` \end{pmatrix}$$
+```{r Change in G-matrices, include=FALSE}
+complex_G_matrix <- G_matrix + G_matrix %*% complex_curvature %*% G_matrix
+simple_G_matrix <- G_matrix + G_matrix %*% simple_curvature %*% G_matrix
+```
+
+
+# Change in complex G-matrix
+
+$$\text{G}_{complex} = \begin{pmatrix} `r round(complex_G_matrix["Diam","Diam"],3)` & `r round(complex_G_matrix["Diam","Clutch"],3)` & `r round(complex_G_matrix["Diam","Pref"],3)` \\  `r round(complex_G_matrix["Clutch","Diam"],3)` & `r round(complex_G_matrix["Clutch","Clutch"],3)` & `r round(complex_G_matrix["Clutch","Pref"],3)` \\  `r round(complex_G_matrix["Pref","Diam"],3)` & `r round(complex_G_matrix["Pref","Clutch"],3)` & `r round(complex_G_matrix["Pref","Pref"],3)` \end{pmatrix}$$
+
+# Change in simple G-matrix
+
+$$\text{G}_{simple} = \begin{pmatrix} `r round(simple_G_matrix["Diam","Diam"],3)` & `r round(simple_G_matrix["Diam","Clutch"],3)` & `r round(simple_G_matrix["Diam","Pref"],3)` \\  `r round(simple_G_matrix["Clutch","Diam"],3)` & `r round(simple_G_matrix["Clutch","Clutch"],3)` & `r round(simple_G_matrix["Clutch","Pref"],3)` \\  `r round(simple_G_matrix["Pref","Diam"],3)` & `r round(simple_G_matrix["Pref","Clutch"],3)` & `r round(simple_G_matrix["Pref","Pref"],3)` \end{pmatrix}$$
+
+```{r Evo dynamics derived from observed phenotypic variance-covariance, include=FALSE}
+
+# initial trait values
+z_initial <- matrix(0, nrow=3, ncol=1, dimnames = list(c("Diam","Clutch","Pref")))
+
+# checks to see whether disruptive selection on preference is driving the relationship
+alt_complex_gammas <- complex_gammas
+alt_complex_gammas["Pref","Pref"] <- 0
+
+# basically, controls for differences in mean fitness
+alt_simple_betas <- complex_betas 
+alt_simple_betas["Clutch", ] <- simple_betas["Clutch", ] * simple_mean_fitness / complex_mean_fitness # best estimate on complex mean fitness scale, need to confirm...
+
+# simulate evolutionary dynamics
+complex_evo_dynamics <- evolutionary_dynamics(betas = complex_betas, 
+                                              gammas = complex_gammas, 
+                                              G_0 = G_matrix,
+                                              z_0 = z_initial,
+                                              t = n_evo_sims)
+
+simple_evo_dynamics <- evolutionary_dynamics(betas = simple_betas, 
+                                             gammas = simple_gammas, 
+                                             G_0 = G_matrix,
+                                             z_0 = z_initial,
+                                             t = n_evo_sims)
+
+## Tidy simulations
+complex_z_feasible <- mutate(tidy_evo_sims(complex_evo_dynamics), Foodweb="Complex")
+
+simple_z_feasible <- mutate(tidy_evo_sims(simple_evo_dynamics), Foodweb="Simple")
+```
+
+```{r altered parameters}
+complex_betas
+```
+
+
+## Walk across the adaptive landscape
+
+```{r Evo-Sim-Hyp-G, echo=FALSE, fig.cap="Evolutionary simulation of a hypothetical G-matrix"}
+
+# Make plots
+evosim_AF_plot_Diam.Clutch <- AF_plot_Diam.Clutch +
+  geom_line(data=bind_rows(complex_z_feasible, simple_z_feasible), aes(x=Diam, y=Clutch)) +
+  geom_point(data=bind_rows(complex_z_feasible, simple_z_feasible), aes(x=Diam, y=Clutch))
+  
+evosim_AF_plot_Clutch.Pref <- AF_plot_Clutch.Pref +
+  geom_line(data=bind_rows(complex_z_feasible, simple_z_feasible), aes(x=Pref, y=Clutch)) +
+  geom_point(data=bind_rows(complex_z_feasible, simple_z_feasible), aes(x=Pref, y=Clutch))
+  
+evosim_AF_plot_Diam.Pref <-  AF_plot_Diam.Pref +
+  geom_line(data=bind_rows(complex_z_feasible, simple_z_feasible), aes(x=Diam, y=Pref)) +
+  geom_point(data=bind_rows(complex_z_feasible, simple_z_feasible), aes(x=Diam, y=Pref))
+
+# Get legend
+evosim_AF_landscape_legend <- get_legend(evosim_AF_plot_Diam.Pref)
+
+# Format plots
+evosim_AF_landscape_plots <- plot_grid(
+  evosim_AF_plot_Diam.Clutch + theme(legend.position = "none", 
+                              axis.title.y = element_text(size=11),
+                              axis.title.x = element_blank(),
+                              axis.text = element_text(size=10)),
+ evosim_AF_plot_Clutch.Pref + theme(legend.position = "none", 
+                              axis.title.y = element_blank(), 
+                              axis.text = element_text(size=10), 
+                              axis.title.x = element_text(size=11)),
+  evosim_AF_plot_Diam.Pref + theme(legend.position = "none", 
+                            axis.text = element_text(size=10),
+                            axis.title = element_text(size=11)), 
+  nrow=2, align="hv", labels = "AUTO")
+evosim_AF_landscape_2d <- ggdraw(evosim_AF_landscape_plots) + draw_grob(evosim_AF_landscape_legend, x = 0.7, y=-0.2)
+evosim_AF_landscape_2d
+```
+
+
+## Compare evolvabilities of hypothetical G-matrix over time
+
+Since my covariance is standardized, it should be okay to calculate the mean squared correlation as an overall measure of trait integration.
+
+```{r Compare changes in hypothetical G-matric over time, echo=FALSE}
+last(complex_z_feasible$Time)/last(simple_z_feasible$Time)
+
+complex_evolvability <- c()
+complex_conditional.evolvability <- c()
+complex_constraints <- c()
+complex_autonomy <- c()
+complex_MeanSquaredCorrelation <- c()
+for(i in 1:last(complex_z_feasible$Time)){
+  complex_evolvability[i] <- MeanMatrixStatistics(complex_evo_dynamics$G[[i]])["evolvability"] 
+  complex_conditional.evolvability[i] <- MeanMatrixStatistics(complex_evo_dynamics$G[[i]])["conditional.evolvability"]
+  complex_constraints[i] <- MeanMatrixStatistics(complex_evo_dynamics$G[[i]])["constraints"]
+  complex_autonomy[i] <- MeanMatrixStatistics(complex_evo_dynamics$G[[i]])["autonomy"]
+  complex_MeanSquaredCorrelation[i] <- MeanMatrixStatistics(complex_evo_dynamics$G[[i]])["MeanSquaredCorrelation"]
+}
+
+simple_evolvability <- c()
+simple_conditional.evolvability <- c()
+simple_constraints <- c()
+simple_autonomy <- c()
+simple_MeanSquaredCorrelation <- c()
+for(i in 1:last(simple_z_feasible$Time)){
+  simple_evolvability[i] <- MeanMatrixStatistics(simple_evo_dynamics$G[[i]])["evolvability"] 
+  simple_conditional.evolvability[i] <- MeanMatrixStatistics(simple_evo_dynamics$G[[i]])["conditional.evolvability"]
+  simple_constraints[i] <- MeanMatrixStatistics(simple_evo_dynamics$G[[i]])["constraints"] 
+  simple_autonomy[i] <- MeanMatrixStatistics(simple_evo_dynamics$G[[i]])["autonomy"]
+  simple_MeanSquaredCorrelation[i] <- MeanMatrixStatistics(simple_evo_dynamics$G[[i]])["MeanSquaredCorrelation"]
+}
+
+gather_G_matrix_data <- bind_rows(
+  data.frame(Time=1:last(complex_z_feasible$Time), Foodweb="Complex", 
+             evolvability=complex_evolvability,
+             conditional.evolvability=complex_conditional.evolvability,
+             constraints=complex_constraints,
+             autonomy=complex_autonomy,
+             MeanSquaredCorrelation=complex_MeanSquaredCorrelation),
+  data.frame(Time=1:last(simple_z_feasible$Time), Foodweb="Simple",
+             evolvability=simple_evolvability,
+             conditional.evolvability=simple_conditional.evolvability,
+             constraints=simple_constraints,
+             autonomy=simple_autonomy,
+             MeanSquaredCorrelation=simple_MeanSquaredCorrelation)) %>%
+  gather(key=G_metric, value=value, -Time, -Foodweb)
+
+
+gather_G_matrix_data %>%
+  ggplot(., aes(x=Time, y=value, color=Foodweb)) +
+  geom_point() +
+  geom_line() +
+  scale_color_manual(values=treatment_colors) +
+  facet_wrap(~G_metric, ncol=2, scales = "free_y")
+
+#bind_rows(data.frame(Time=1:last(complex_z_feasible$Time), Foodweb="Complex", conditional.evolvability=complex_conditional.evolvability),
+#          data.frame(Time=1:last(simple_z_feasible$Time), Foodweb="Simple", conditional.evolvability=simple_conditional.evolvability)) %>%
+#  ggplot(., aes(x=Time, y=conditional.evolvability, color=Foodweb)) +
+#  geom_point() +
+#  geom_line() +
+#  scale_color_manual(values=treatment_colors)
+
+#bind_rows(data.frame(Time=1:last(complex_z_feasible$Time), Foodweb="Complex", constraints=complex_constraints),
+#          data.frame(Time=1:last(simple_z_feasible$Time), Foodweb="Simple", constraints=simple_constraints)) %>%
+#  ggplot(., aes(x=Time, y=constraints, color=Foodweb)) +
+#  geom_point() +
+#  geom_line() +
+#  scale_color_manual(values=treatment_colors)
+
+#bind_rows(data.frame(Time=1:last(complex_z_feasible$Time), Foodweb="Complex", autonomy=complex_autonomy),
+#          data.frame(Time=1:last(simple_z_feasible$Time), Foodweb="Simple", autonomy=simple_autonomy)) %>%
+#  ggplot(., aes(x=Time, y=autonomy, color=Foodweb)) +
+#  geom_point() +
+#  geom_line() +
+#  scale_color_manual(values=treatment_colors)
+```
+
+
+## More walks across the adaptive landscape
+
+```{r Generate random G matrices and simulate Evo Dynamics, include=FALSE}
+
+## Define the maximum additive genetic variance
+max_add_G <- 0.5
+
+## Number of G-matrix simulations
+n_G_sims <- 200 # 1000
+
+## Simulate G-matrices
+
+## ALTERNATIVE APPROACH: RandomMatrix(num.traits=3, num.matrices = 1, min.var=0, max.var=0.5)
+
+# additive genetic variance is sampled from a random uniform distribution and varies between 0 and max_add_G
+# additive genetic covariances can be positive or negative with a maximum absolute value determined by the product of additive genetic variances.
+sim_G <- list()
+for(i in 1:n_G_sims){
+  sim_G[[i]] <- diag(x = runif(n=3, min = 0, max = max_add_G), nrow = 3)
+  sim_G[[i]][1,2] <- runif(n=1, min=-(sim_G[[i]][1,1]*sim_G[[i]][2,2]), max=(sim_G[[i]][1,1]*sim_G[[i]][2,2]))
+  sim_G[[i]][2,1] <- sim_G[[i]][1,2]
+  sim_G[[i]][1,3] <- runif(n=1, min=-(sim_G[[i]][1,1]*sim_G[[i]][3,3]), max=(sim_G[[i]][1,1]*sim_G[[i]][3,3]))
+  sim_G[[i]][3,1] <- sim_G[[i]][1,3]
+  sim_G[[i]][2,3] <- runif(n=1, min=-(sim_G[[i]][2,2]*sim_G[[i]][3,3]), max=(sim_G[[i]][2,2]*sim_G[[i]][3,3]))
+  sim_G[[i]][3,2] <- sim_G[[i]][2,3]
+}
+
+## Simulations for complex food-web treatment
+complex_evo_sims <- lapply(X = sim_G, FUN = function(x) evolutionary_dynamics(betas = complex_betas, # test_betas, #
+                                                                              gammas = complex_gammas, # test_gammas, #
+                                                                              G_0 = x, z_0 = z_initial, t = n_evo_sims))
+
+tidy_complex_sims <- lapply(X = complex_evo_sims, FUN = tidy_evo_sims)
+
+tidier_complex_sims <- list()
+for(i in 1:length(tidy_complex_sims)){
+  tidier_complex_sims[[i]] <- mutate(tidy_complex_sims[[i]], simulation = i, Foodweb="Complex")
+}
+
+tidiest_complex_sims <- bind_rows(tidier_complex_sims)
+
+## Simulations for simple food-web treatment
+simple_evo_sims <- lapply(X = sim_G, FUN = function(x) evolutionary_dynamics(betas = simple_betas, # simple_betas
+                                                                             gammas = simple_gammas, # test_gammas, #
+                                                                             G_0 = x, z_0 = z_initial, t = n_evo_sims))
+
+tidy_simple_sims <- lapply(X = simple_evo_sims, FUN = tidy_evo_sims)
+
+tidier_simple_sims <- list()
+for(i in 1:length(tidy_simple_sims)){
+  tidier_simple_sims[[i]] <- mutate(tidy_simple_sims[[i]], simulation = i, Foodweb="Simple")
+}
+
+tidiest_simple_sims <- bind_rows(tidier_simple_sims)
+
+## Combine evolutionary simulations for plotting
+combine_tidied_evo_sims <- bind_rows(tidiest_complex_sims, tidiest_simple_sims)
+
+sims_to_subsample <- sample(unique(combine_tidied_evo_sims$simulation), 100)
+
+sub_tidied_evo_sims <- combine_tidied_evo_sims %>% filter(simulation %in% sims_to_subsample) # subsample 100 for plotting
+```
+
+```{r Plot evo sims of many G-matrices, include=FALSE}
+evosim.manyG_AF_plot_Diam.Clutch <- AF_plot_Diam.Clutch +
+  geom_line(data=sub_tidied_evo_sims, aes(x=Diam, y=Clutch, group=simulation), alpha=0.1)
+  
+evosim.manyG_AF_plot_Clutch.Pref <- AF_plot_Clutch.Pref +
+  geom_line(data=sub_tidied_evo_sims, aes(x=Pref, y=Clutch, group=simulation), alpha=0.1)
+  
+evosim.manyG_AF_plot_Diam.Pref <-  AF_plot_Diam.Pref +
+  geom_line(data=sub_tidied_evo_sims, aes(x=Diam, y=Pref, group=simulation), alpha=0.1)
+```
+
+```{r Evo-Sim-Many-G, echo=FALSE, fig.cap="Evolutionary simulation of a range of G-matrices"}
+# Get legend
+evosim.manyG_AF_landscape_legend <- get_legend(evosim.manyG_AF_plot_Diam.Pref)
+
+# Format plots
+evosim.manyG_AF_landscape_plots <- plot_grid(
+  evosim.manyG_AF_plot_Diam.Clutch + theme(legend.position = "none", 
+                              axis.title.y = element_text(size=11),
+                              axis.title.x = element_blank(),
+                              axis.text = element_text(size=10)),
+ evosim.manyG_AF_plot_Clutch.Pref + theme(legend.position = "none", 
+                              axis.title.y = element_blank(), 
+                              axis.text = element_text(size=10), 
+                              axis.title.x = element_text(size=11)),
+  evosim.manyG_AF_plot_Diam.Pref + theme(legend.position = "none", 
+                            axis.text = element_text(size=10),
+                            axis.title = element_text(size=11)), 
+  nrow=2, align="hv", labels = "AUTO")
+evosim.manyG_AF_landscape_2d <- ggdraw(evosim.manyG_AF_landscape_plots) + draw_grob(evosim.manyG_AF_landscape_legend, x = 0.7, y=-0.2)
+evosim.manyG_AF_landscape_2d
+```
+
+## Multivariate trait differences
+
+```{r Multivariate trait differences, include=FALSE, eval=FALSE}
+library(vegan)
+
+multivariate_trait_evolution <- combine_tidied_evo_sims %>%
+  group_by(simulation, Foodweb) %>%
+  summarise_at(vars(Diam, Clutch, Pref), funs(last)) %>%
+  ungroup()
+
+multivariate_trait_evolution %>%
+  group_by(Foodweb) %>%
+  summarise_at(vars(Diam, Clutch, Pref), funs(mean, sd))
+
+multivariate_trait_distance <- vegdist(x = select(multivariate_trait_evolution, Diam, Clutch, Pref), method = "euclidean")
+# multivariate_traits <- adonis(multivariate_trait_distance ~ Foodweb, data = multivariate_trait_evolution)
+
+trait_disper <- betadisper(d = multivariate_trait_distance, group = multivariate_trait_evolution$Foodweb)
+anova(trait_disper)
+plot(trait_disper)
+boxplot(trait_disper)
+```
+
+
+## How does the adaptive landscape influence the rate of evolution?
+
+Here we are going to see how fast it took for the *Iteomyia* to hit the edge of the adaptive landscape across many different G-matrices.
+```{r Rate of phenotypic evolution, include=FALSE}
+evo_sim_duration <-combine_tidied_evo_sims %>%
+  group_by(simulation, Foodweb) %>%
+  summarise_at(vars(Time), funs(last))
+
+which(evo_sim_duration$Time == n_evo_sims) # note that a boundary was hit on the adaptive landscape for all simulations prior to the simulation duration
+
+evo_sim_duration %>%
+  ggplot(., aes(x=Foodweb, y=Time, group=simulation)) +
+  geom_point() + 
+  geom_line() +
+  scale_y_log10() +
+  stat_summary(fun.y = "mean", color="red", geom="point", size=5, mapping=aes(group=Foodweb))
+
+# only 10 times out of 500 simulations where it took longer to hit the boundary in the complex food web (so in general, its faster)
+spread(evo_sim_duration, Foodweb, Time) %>%
+  filter(Complex > Simple)
+
+wide_evo_sim_duration <- spread(evo_sim_duration, Foodweb, Time) %>%
+  mutate(Diff = Simple - Complex, Diff.Percent = Diff/Complex, Diff.Fold = Simple/Complex)
+
+round(mean(wide_evo_sim_duration$Diff.Fold),1)
+```
+
+In general, *Iteomyia* hit the edge of the adaptive landscape faster in the complex vs. simple food web.
+
+```{r Intuition about evolvability, eval=FALSE}
+base_matrix <- matrix(c(1,0,0,
+                        0,1,0,
+                        0,0,1), nrow=3, ncol=3)
+base_G <- 0.5
+
+G_1 <- base_G*base_matrix
+MeanMatrixStatistics(G_1)
+G_2 <- G_1
+G_2[2,1] <- -G_1[1,1]*G_1[2,2]
+G_2[1,2] <- G_2[2,1]
+MeanMatrixStatistics(G_2)
+G_3 <- G_2
+G_3[3,1] <- -G_2[1,1]*G_2[3,3]
+G_3[1,3] <- G_3[3,1]
+MeanMatrixStatistics(G_3)
+G_4 <- G_3
+G_4[3,2] <- -G_3[2,2]*G_3[3,3]
+G_4[2,3] <- G_4[3,2]
+MeanMatrixStatistics(G_4)
+
+G_5 <- base_G*base_matrix
+MeanMatrixStatistics(G_5)
+G_6 <- G_5
+G_6[2,1] <- G_5[1,1]*G_5[2,2]
+G_6[1,2] <- G_6[2,1]
+MeanMatrixStatistics(G_6)
+G_7 <- G_6
+G_7[3,1] <- G_6[1,1]*G_6[3,3]
+G_7[1,3] <- G_7[3,1]
+MeanMatrixStatistics(G_7)
+G_8 <- G_7
+G_8[3,2] <- G_7[2,2]*G_7[3,3]
+G_8[2,3] <- G_8[3,2]
+MeanMatrixStatistics(G_8)
+
+bind_rows(MeanMatrixStatistics(G_1), MeanMatrixStatistics(G_2), MeanMatrixStatistics(G_3), #MeanMatrixStatistics(G_4),
+          MeanMatrixStatistics(G_5), MeanMatrixStatistics(G_6), MeanMatrixStatistics(G_7), MeanMatrixStatistics(G_8)) %>%
+  mutate(G_name = c(1:3,5:8), base_G = base_G) %>%
+  select(G_name, evolvability, conditional.evolvability, autonomy, constraints)
+```
+
+```{r Intuition about matrix multiplication, eval=FALSE}
+
+beta <- matrix(c(0.2,0,0.1), nrow = 3)
+- (beta %*% t(beta)) # decrease in genetic covariance between traits 1 and 3
+
+beta2 <- matrix(c(0.2,0,-0.1), nrow = 3)
+- (beta2 %*% t(beta2)) # increase in genetic covariance between traits 1 and 3
+
+cov.test <- matrix(1, nrow = 3, ncol=3)*0.5
+cov.test[2,1] <- cov.test[1,1]*cov.test[2,2]
+cov.test[1,2] <- cov.test[2,1]
+cov.test[3,1] <- cov.test[1,1]*cov.test[3,3]
+cov.test[1,3] <- cov.test[3,1]
+cov.test[2,3] <- cov.test[3,3]*cov.test[2,2]
+cov.test[3,2] <- cov.test[2,3]
+
+sim_data <- MASS::mvrnorm(n=10, mu=rep(0,3), Sigma=cov.test)
+plot(sim_data[,1] ~ sim_data[,2])
+```
+
+
+```{r Compare evolvabilities at end of simulation, echo=FALSE}
+
+complex_G_end <- list()
+simple_G_end <- list()
+for(i in 1:n_evo_sims){ #n_evo_sims
+  
+  complex_time_end <- filter(evo_sim_duration, Foodweb=="Complex", simulation == i)$Time
+  simple_time_end <- filter(evo_sim_duration, Foodweb=="Simple", simulation == i)$Time
+  
+  if(isSymmetric(complex_evo_sims[[i]]$G[[complex_time_end]])==TRUE){
+    complex_G_end[[i]] <- data.frame(t(MeanMatrixStatistics(complex_evo_sims[[i]]$G[[complex_time_end]]))) %>% select(evolvability, conditional.evolvability, autonomy, constraints, MeanSquaredCorrelation)
+  } else {complex_G_end[[i]] <- data.frame(evolvability=NA, conditional.evolvability=NA, autonomy=NA, constraints=NA, MeanSquaredCorrelation=NA)}
+  
+  if(isSymmetric(simple_evo_sims[[i]]$G[[simple_time_end]])==TRUE){
+    simple_G_end[[i]] <- data.frame(t(MeanMatrixStatistics(simple_evo_sims[[i]]$G[[simple_time_end]]))) %>% select(evolvability, conditional.evolvability, autonomy, constraints, MeanSquaredCorrelation)
+  } else {simple_G_end[[i]] <- data.frame(evolvability=NA, conditional.evolvability=NA, autonomy=NA, constraints=NA, MeanSquaredCorrelation=NA)}
+}
+
+tidy_G_matrix_stats <- bind_rows(
+  mutate(bind_rows(complex_G_end), sim = 1:n_evo_sims, Foodweb="Complex"),
+  mutate(bind_rows(simple_G_end), sim = 1:n_evo_sims, Foodweb="Simple")) %>%
+  gather(key=G_metric, value=value, -sim, -Foodweb)
+
+tidy_G_matrix_stats %>%
+  ggplot(., aes(x=Foodweb, y=value, group=sim)) +
+  geom_point() + 
+  geom_line() +
+  stat_summary(fun.y = "mean", color="red", geom="point", size=5, mapping=aes(group=Foodweb)) +
+  facet_wrap(~G_metric, ncol=2, scales="free_y")
+
+#tidy_G_matrix_stats %>%
+#  ggplot(., aes(x=Foodweb, y=evolvability, group=sim)) +
+#  geom_point() + 
+#  geom_line() +
+#  stat_summary(fun.y = "mean", color="red", geom="point", size=5, mapping=aes(group=Foodweb))
+
+#tidy_G_matrix_stats %>%
+#  ggplot(., aes(x=Foodweb, y=conditional.evolvability, group=sim)) +
+#  geom_point() + 
+#  geom_line() +
+#  stat_summary(fun.y = "mean", color="red", geom="point", size=5, mapping=aes(group=Foodweb))
+
+#tidy_G_matrix_stats %>%
+#  ggplot(., aes(x=Foodweb, y=autonomy, group=sim)) +
+#  geom_point() + 
+#  geom_line() +
+#  stat_summary(fun.y = "mean", color="red", geom="point", size=5, mapping=aes(group=Foodweb))
+
+#tidy_G_matrix_stats %>%
+#  ggplot(., aes(x=Foodweb, y=constraints, group=sim)) +
+#  geom_point() + 
+#  geom_line() +
+#  stat_summary(fun.y = "mean", color="red", geom="point", size=5, mapping=aes(group=Foodweb))
+
+#evolvability_stats <- tidy_G_matrix_stats %>%
+#  select(sim, Foodweb, evolvability) %>%
+#  spread(Foodweb, evolvability) %>%
+#  mutate(Diff.mag = Complex/Simple)
+
+#mean(evolvability_stats$Diff.mag, na.rm=T) # Resulting G-matrix is 2x more evolvable in complex vs. simple food web.
+```
+
+
+
+```{r Mortality, include=FALSE, eval=FALSE}
+# 8-10% mortality induced by intraguild predators
+mean(control_df$platy)
+mean(treatment_df$platy)
+mean(eggptoid_control_df$platy)
+
+# Gall mortality to Platy
+1 - mean(treatment_df$pupa)
+
+# Gall mortality to Ectos
+
+# Platy mortality to intraguild predation
+mean(treatment_df$platy) - mean(control_df$platy) 
+
+mean(control_df$ectos)
+mean(treatment_df$ectos)
+mean(ectoptoid_control_df$ectos)
+
+mean(control_df$pupa)
+mean(treatment_df$pupa)
+mean(eggptoid_control_df$pupa)
+mean(ectoptoid_control_df$pupa)
+```
+
+
+
+<!--$$logit(E(W))=\mu+\beta_{diameter}+\beta_{clutch}+\beta_{preference}+$$
+$$logit(E(W))=\mu+treatment+s(diam):treat+s(clutch)+s(pref)+diam:cluch+diam:pref+clutch:pref+(1|Genotype/Plant/Gall)$$-->
+
+<!-- We used generalized linear mixed models (GLMMs, @Bolker2009) to test the effects of food-web complexity on the shape of the fitness landscape. 
+Larva survival (0 or 1) was our response variable and measure of fitness. 
+<!-- Need to clean up the language part of this section without it being too complicated and confusing. I should also include tests of non-linear selection gradients. -->
+<!-- We specified our food-web treatment, each gall trait, two-way interactions between gall traits, as well interactions between gall trait and food-web treatment, as fixed effects to fully explore the effects of food-web complexity on the fitness landscape. 
+This analysis implicitly assumes that selection is linear, which we felt was a necessary trade-off for exploring the shape of the fitness landscape. 
+To account for the correlated structure of clutch size (gall level) and female preference (plant level) as well as any other independent effects of willow genotype on parasitism rates, we specified gall ID nested within plant ID nested within plant genotype as random intercepts in our statistical models. 
+
+
+
+
+```{r OLD TEXT, include=FALSE, eval=FALSE}
+$\chi^2_{`r foodweb_test$[2,"Chi.Df"]`}=`r foodweb_test$[2,"statistic"]`, P=`r foodweb_test$[2,"p.value"]`$). 
+
+Two key patterns emerged from our analyses. First, fewer phenotypic traits were under selection in the complex vs. simple food web. 
+In both complex and simple food webs, gall diameter was under strong directional selection, with larger galls resulting in higher larval survival (complex $\beta_{diam}=$`r paste0(filter(summary_beta_control, Phenotype=="Gall diameter")$Estimate," [",filter(summary_beta_control, Phenotype=="Gall diameter")$lower_2.5,",",filter(summary_beta_control, Phenotype=="Gall diameter")$upper_97.5,"]")`; simple $\beta_{diam}=$ `r paste0(filter(summary_beta_treatment, Phenotype=="Gall diameter")$Estimate," [",filter(summary_beta_treatment, Phenotype=="Gall diameter")$lower_2.5,",",filter(summary_beta_treatment, Phenotype=="Gall diameter")$upper_97.5,"]")`)(Fig. \ref{fig:Univariate_Landscapes}A). 
+
+In the complex food web, we found that there was no selection acting on clutch size
+
+In simple food webs, both clutch size and female preference experience directional selection, with smaller clutch sizes ($\beta_{clutch}=$
+`r paste0(filter(summary_beta_treatment, Phenotype=="Clutch size")$Estimate," [",filter(summary_beta_treatment, Phenotype=="Clutch size")$lower_2.5,",",filter(summary_beta_treatment, Phenotype=="Clutch size")$upper_97.5,"]")`
+and weaker preferences ($\beta_{pref}=$
+`r paste0(filter(summary_beta_treatment, Phenotype=="Female preference")$Estimate," [",filter(summary_beta_treatment, Phenotype=="Female preference")$lower_2.5,",",filter(summary_beta_treatment, Phenotype=="Female preference")$upper_97.5,"]")`
+) resulting in higher larval survival (blue lines in Fig. \ref{fig:Univariate_Landscapes}B,C).
+In contrast, there was no evidence of selection on clutch size ($\beta_{clutch}=$
+`r paste0(filter(summary_beta_control, Phenotype=="Clutch size")$Estimate," [",filter(summary_beta_control, Phenotype=="Clutch size")$lower_2.5,",",filter(summary_beta_control, Phenotype=="Clutch size")$upper_97.5,"]")`
+) or female preference ($\beta_{pref}=$
+`r paste0(filter(summary_beta_control, Phenotype=="Female preference")$Estimate," [",filter(summary_beta_control, Phenotype=="Female preference")$lower_2.5,",",filter(summary_beta_control, Phenotype=="Female preference")$upper_97.5,"]")`
+) in complex food webs (orange lines in Fig. \ref{fig:Univariate_Landscapes}B,C). The absence of selection on clutch size and female preference was likely a result of conflicting selection pressures imposed by each guild of parasitoids due to their different functional relationships with gall traits. Together, these different patterns of selection resulted in an ideal combination of traits having higher fitness in the simple food web (large diameter, smaller clutches, weaker preference), whereas there was a larger combination of trait values that had equal fitness in the complex food web (Fig. \ref{fig:Multivariate_Landscapes}).
+We did not find any strong evidence for nonlinear or correlational selection gradients acting on gall traits in either food-web treatment.
+The second major pattern was that the overall intensity of selection was stronger in the complex vs. simple food web. This result appeared to be driven by selection on gall diameter in the complex food web, which was more than 
+`r round(filter(summary_beta_control, Phenotype=="Gall diameter")$Estimate/filter(summary_beta_treatment, Phenotype=="Gall diameter")$Estimate,1)`
+$\times$ larger than any other selection gradient in our analyses. 
+
+-->
+```
 

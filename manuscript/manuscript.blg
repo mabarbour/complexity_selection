@@ -1,47 +1,51 @@
 This is BibTeX, Version 0.99d (TeX Live 2015/Debian)
 Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
 The top-level auxiliary file: manuscript.aux
-I found no \bibdata command---while reading file manuscript.aux
-I found no \bibstyle command---while reading file manuscript.aux
-You've used 3 entries,
-            0 wiz_defined-function locations,
-            89 strings with 554 characters,
-and the built_in function-call counts, 0 in all, are:
-= -- 0
-> -- 0
+The style file: amnat.bst
+Database file #1: bibliography.bib
+Warning--I didn't find a database entry for "Xiao2015"
+Warning--I didn't find a database entry for "CookEtAl2015"
+Warning--I didn't find a database entry for "LemKapEx07"
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+You've used 1 entry,
+            3251 wiz_defined-function locations,
+            669 strings with 5060 characters,
+and the built_in function-call counts, 650 in all, are:
+= -- 54
+> -- 30
 < -- 0
-+ -- 0
-- -- 0
-* -- 0
-:= -- 0
-add.period$ -- 0
-call.type$ -- 0
-change.case$ -- 0
-chr.to.int$ -- 0
-cite$ -- 0
-duplicate$ -- 0
-empty$ -- 0
-format.name$ -- 0
-if$ -- 0
-int.to.chr$ -- 0
-int.to.str$ -- 0
-missing$ -- 0
-newline$ -- 0
-num.names$ -- 0
-pop$ -- 0
-preamble$ -- 0
-purify$ -- 0
++ -- 10
+- -- 9
+* -- 49
+:= -- 110
+add.period$ -- 4
+call.type$ -- 1
+change.case$ -- 8
+chr.to.int$ -- 1
+cite$ -- 1
+duplicate$ -- 44
+empty$ -- 45
+format.name$ -- 12
+if$ -- 124
+int.to.chr$ -- 1
+int.to.str$ -- 1
+missing$ -- 9
+newline$ -- 9
+num.names$ -- 4
+pop$ -- 17
+preamble$ -- 1
+purify$ -- 7
 quote$ -- 0
-skip$ -- 0
+skip$ -- 13
 stack$ -- 0
-substring$ -- 0
-swap$ -- 0
+substring$ -- 36
+swap$ -- 20
 text.length$ -- 0
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 0
+type$ -- 9
 warning$ -- 0
-while$ -- 0
+while$ -- 5
 width$ -- 0
-write$ -- 0
-(There were 2 error messages)
+write$ -- 16
+(There were 3 warnings)

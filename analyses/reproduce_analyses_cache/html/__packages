@@ -1,4 +1,6 @@
 base
+plyr
+evolqg
 carData
 car
 tidyverse
@@ -20,4 +22,8 @@ lme4
 piecewiseSEM
 latex2exp
 kableExtra
+MVN
 bindrcpp
+permute
+lattice
+vegan
