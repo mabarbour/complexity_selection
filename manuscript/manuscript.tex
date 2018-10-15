@@ -14,6 +14,8 @@
 % Added packages
 \usepackage{amsmath} % for matrices
 \usepackage{graphicx} % for organizing figures
+\usepackage{lmodern} % for tilde
+\usepackage[T1]{fontenc} % for tilde
 
 %%%%%%%%%%%%%%%%%%%%%
 % Line numbering
@@ -24,7 +26,11 @@
 % off by adding percent signs to the lines %\usepackage{lineno} and
 % to %\linenumbers{} and %\modulolinenumbers[3] below.
 
-\title{Phenotypic evolution is less constrained in complex food webs}
+\title{TBD}
+% 1. Populations experience fewer selective constraints in complex food webs
+% 2. Complex food webs impose fewer selective constraints on linked populations
+% 3. Food-web complexity reduces selective constraints on an insect herbivore
+% 4. Phenotypic evolution is less constrained in complex food webs
 
 % This version of the LaTeX template was last updated on
 % January 11, 2018.
@@ -40,7 +46,7 @@
 \author{Matthew A. Barbour$^{1,2,\ast}$ \\ 
 Christopher J. Greyson-Gaito$^{1,3}$ \\ 
 Arezoo Sootodeh$^{3}$ \\
-Brendan Lock$^{4} \\
+Brendan Locke$^{4} \\
 Jordi Bascompte$^{2}}
 
 \date{}
@@ -61,11 +67,11 @@ Jordi Bascompte$^{2}}
 
 \bigskip
 
-\textit{Manuscript elements}: Figure~1, figure~2, table~1, online appendices~A and B (including figure~A1 and figure~A2). Figure~2 is to print in color.
+\textit{Manuscript elements}: Figure~1, figure~2, figure~3. All figures should be printed in color.
 
 \bigskip
 
-\textit{Keywords}: Examples, model, template, guidelines.
+\textit{Keywords}: Adaptive landscape, host-parasitoid, natural selection, G-matrix.
 
 \bigskip
 
@@ -201,6 +207,8 @@ If we only retain non-zero selection gradients, then we can
 
 Our two dimensional surfaces are likely representative given the fact that there is no strong evidence of correlational selection (Phillips and Arnold 1989, Evolution)
 
+The curvature ($\gamma - \beta \beta^\text{T}$) of the adaptive landscape describes how natural selection changes additive genetic (co)variances ($\Delta \text{G}$) within a generation. Specifically, the diagonals of the curvature matrix describe the effect of the adaptive landscape on additive genetic variance within a generation; therefore, any negative values along the diagonal are evidence of selective constraints. The off-diagonals of the curvature matrix describe the effect of the adaptive landscape on additive genetic covariances within a generation; therefore, any non-zero values are evidence of selective constraints as they favor trait integration.
+
 \subsection*{Simulating Phenotypic Evolution}
 
 We used the method proposed by Hansen and Houle (2008) to characterize the evolvability of the G-matrices resulting from different adaptive landscapes. Their index of evolvability is theoretically linked to the theory underlying G matrices and adaptive landscapes, and describes the ability of a population to evolve in the direction of selection when stabilizing selection is absent. 
@@ -217,29 +225,27 @@ We used the method proposed by Hansen and Houle (2008) to characterize the evolv
 
 \section*{Results}
 
-\subsection*{Shape of the adaptive landscape}
+\subsection*{Slope of the adaptive landscape}
 
-The shape of the adaptive landscape is described by its slope ($\beta$) and curvature ($\gamma - \beta \beta^\text{T}$). We found that food-web complexity altered the slope of the adaptive landscape in two key ways. First, there were fewer traits under directional selection in the complex (2 of 3) vs. simple food web (3 of 3). For example, across both food-web treatments there was directional selection for larger gall chambers and for adult females to avoid ovipositing on trees with high densities of conspecifics (fig.~\ref{Fig:FL_1D}; table~\ref{Table:Gradients}). In the simple food web, we also observed directional selection for smaller clutch sizes, but there was no evidence of selection acting on this trait in the complex food web (fig.~\ref{Fig:FL_1D}; table~\ref{Table:Gradients}). The absence of selection on clutch size in the complex food web appeared to be a result of conflicting selection pressures imposed by each guild of parasitoids. For example, when we subset our data to focus on differences between parasitoid guilds, we found that larval parasitoids actually impose directional selection for larger clutch sizes (\beta_{diam}=0.12 [0.04,0.21]). 
+We found that food-web complexity altered the slope of the adaptive landscape ($\beta$) in two key ways. First, there were fewer traits under directional selection in the complex (2 of 3) vs. simple food web (3 of 3). For example, in both simple and complex food webs there was directional selection for larger chamber diameters and for adult females to avoid ovipositing on trees with high densities of conspecifics (fig.~\ref{Fig:LABEL}; fig.~\ref{Fig:FL_1D}). In the simple food web, we also observed directional selection for smaller clutch sizes, but there was no evidence of selection acting on this trait in the complex food web (fig.~\ref{Fig:LABEL}; fig.~\ref{Fig:FL_1D}). The absence of selection on clutch size in the complex food web appeared to be a result of conflicting selection pressures imposed by each guild of parasitoids. Specifically, when we subset our data to focus on differences between parasitoid guilds, we found that larval parasitoids actually impose directional selection for larger clutch sizes (fig.~\ref{Fig:LABEL}). 
 
-The second key effect of food-web complexity was to steepen the slope of the adaptive landscape (i.e. increase strength of selection). For example, the magnitude of directional selection in complex vs. simple food webs was ~60\% higher for both chamber diameter and female preference. This result was not due to any difference in the relationship between larva survival and gall phenotype (Simple:coef_{Diam}=0.02 [-0.56,0.6]; Simple:coef_{Pref}=-0.16 [-0.83,0.61]), but was a result of the fact that average probability of larval survival was lower in complex (0.44 [0.30,0.58]) vs. simple food webs (0.69 [0.54,0.80]). Remember that the selection gradient can be expressed as the covariance between absolute fitness ($W$) and individual phenotype ($z$) divided by mean fitness ($\bar W$). Therefore, lower survival, and thus mean fitness, will always increase the strength of selection.
+The second key effect of food-web complexity was to steepen the slope of the adaptive landscape (i.e. increase strength of selection). For example, the magnitude of directional selection in complex vs. simple food webs was \textasciitilde 60\% higher for both chamber diameter and female preference (fig.~\ref{Fig:LABEL}; fig.~\ref{Fig:FL_1D}). This result was not due to any difference in the relationship between larva survival and gall phenotype ($\textrm{Simple:coef}_{Diam}=0.02 \ [-0.56,0.60]$; $\textrm{Simple:coef}_{Pref}=-0.16 \ [-0.83,0.61]$), but was due to the fact that the average probability of larval survival was lower in complex (0.44 [0.30,0.58]) vs. simple food webs (0.69 [0.54,0.80]). %Note that although the selection gradient is typically expressed as the covariance between relative fitness ($w$) and phenotype ($z_i$), $\beta_{z_i}=\textrm{cov}(w,z_i)$, it can be rewritten as a function of both absolute fitness ($W$) and mean fitness ($\bar W$), $\beta_{z_i}=\textrm{cov}(W,z_i)/ \bar W$. This alternative expression makes clear that lower survival, and thus mean fitness, will always increase the strength of selection.
 
-Unlike the slope, the curvature of the adaptive landscape is influenced by directional ($\beta$), quadratic ($\gamma_{z_i,z_i}$), and correlational ($\gamma_{z_i,z_j}$) selection gradients. Our food-web treatment did not appear to alter correlational selection and there was no strong evidence that any of these selection gradients differed from zero (table~\ref{Table:Gradients}). Similarly, our food-web treatment did not appear to influence quadratic selection on chamber diameter or clutch size and there was no strong evidence that these selection gradients differed from zero (table~\ref{Table:Gradients}). In contrast, our food-web treatment did alter quadratic selection acting on female preference. Specifically, we found evidence for disruptive selection (selection for extreme phenotypes) in the complex food web, but no evidence of disruptive or stabilizing selection in the simple food web (fig.~\ref{Fig:FL_1D}; table~\ref{Table:Gradients}).
+\subsection*{Curvature of the adaptive landscape}
 
-The curvature ($\gamma - \beta \beta^\text{T}$) of the adaptive landscape describes how natural selection changes genetic variation ($\Delta \text{G}$) within a generation. In the simple food web, the curvature of the adaptive landscape had the following structure:
+Unlike the slope, the curvature of the adaptive landscape ($\gamma - \beta \beta^\text{T}$) is influenced by directional ($\beta_{z_i}$), quadratic ($\gamma_{z_i,z_i}$), and correlational ($\gamma_{z_i,z_j}$) selection gradients. Our food-web treatment did not appear to alter correlational selection for any combination of traits and there was no strong evidence that any of these selection gradients differed from zero (fig.~\ref{Fig:LABEL}). Similarly, our food-web treatment did not influence quadratic selection on chamber diameter or clutch size and there was no strong evidence that these selection gradients differed from zero (fig.~\ref{Fig:LABEL}). In contrast, our food-web treatment did alter quadratic selection acting on female preference. Specifically, we found evidence for disruptive selection in the complex food web, but no evidence of disruptive or stabilizing selection in the simple food web (fig.~\ref{Fig:LABEL}; fig.~\ref{Fig:FL_1D}). Disruptive selection in the complex food web appeared to be due to the presence of larval parasitoids enhancing the relative fitness of larva occuring on either low or high density trees (fig.~\ref{Fig:LABEL}).   
 
-$$\text{Curvature}_{simple} = \begin{pmatrix} -0.05 & 0.02 & 0.03 \\  0.02 & -0.01 & -0.01 \\  0.03 & -0.01 & -0.02 \end{pmatrix}$$
+We can quantify the curvature ($C$) of the adaptive landscape by subtracting the matrix of directional selection gradients ($\beta \beta^\text{T}$) from the matrix of quadratic and correlational selection gradients ($\gamma$):
 
-The negative values along the diagonal of this matrix suggests that the simple food web acted to decrease additive genetic variance in all three traits. The presence of non-zero values off the diagonal indicates that simple food web favors trait integration of all three phenotypic traits. 
+$$C = \begin{pmatrix} C_{Diam,Diam} &  &  \\  C_{Clutch,Diam} & C_{Clutch,Clutch} &  \\  C_{Pref,Diam} & C_{Pref,Clutch} & C_{Pref,Pref} \end{pmatrix}$$
 
-In the complex food web, the curvature of the adaptive landscape had the following structure: 
+We omit the upper triangle of the matrix for clarity, because it is a mirror image of the lower triangle. Each component of this matrix describes how the adaptive landscape changes additive genetic (co)variances in phenotypic traits within a generation. To empirically estimate the curvature, we only retained nonzero selection gradients (i.e. 95\% CI does not overlap with zero). We found that the curvature of the adaptive landscape in the complex and simple food web exhibited the following structures:
 
-\text{Curvature}_{complex} = \begin{pmatrix} -0.13 & 0 & 0.9 \\ 0 & 0 & 0 \\ 0.09 & 0 & 0.33 \end{pmatrix}
+$$C_{Complex} = \begin{pmatrix} -0.13 &  &  \\ 0 & 0 &  \\ 0.09 & 0 & 0.33 \end{pmatrix}$$
 
-In contrast to the simple food web, we only observed a decrease in additive genetic variance for chamber diameter ($\Delta \text{G}_{Diam}=-0.13$) in the complex food web. The complex food web did not act to change additive genetic variance in clutch size, and actually acted to increase additive genetic variance in female preference ($\Delta \text{G}_{Diam,Diam}=\text{G}_{Diam,Diam}(0.33)\text{G}_{Diam,Diam}+\text{U}_{Diam,Diam}$). Along the off diagonal, we found that the complex food web favored trait integration between chamber diameter and female preference. In other words, the adaptive landscape did not act to constrain the pattern of trait integration between clutch size and the other phenotypic traits.  
+$$C_{Simple} = \begin{pmatrix} -0.05 &  &  \\  0.02 & -0.01 &  \\  0.03 & -0.01 & -0.02 \end{pmatrix}$$
 
-
-Specifically, we found that simple food webs would result in a decrease in additive genetic variance for all phenotypic traits (matrix diagonals) within a generation, wherease in the complex food web, we only found that one trait (chamber diameter), would experience a decrease in additive genetic variance (albeit large). Any non-zero for the off diagonals is evidence of constraints. In the simple food-web, we found evidence of constraints on each additive genetic covariance, albeit small, whereas for the complex food-web, we only observed a constraint on the covariance between chamber diameter and female preference (favoring trait intergration). Taken together, we observe constrains on 2 of 6 trait variances and covariances in the complex food web, whereas 6 of 6 trait variances and covariances were constrained in the simple food web.
-
+Comparing these matrices, we find evidence of selective constraints acting on 2 of 6 trait (co)variances in the complex food web, whereas 6 of 6 trait (co)variances experience selective constraints in the simple food web. Specifically, we found that simple food webs acted to decrease genetic variance for all three phenotypic traits (negative diagonal terms), whereas only one trait (chamber diameter) experienced a decrease in additive genetic variance in the complex food web. For genetic covariances, we found that the simple food web favored integration among all three phenotypic traits (nonzero off-diagonal terms), and thus constraints along all three axes of covariance (fig.~\ref{Fig:FL_2D}). In contrast, the complex food web only constrained genetic covariance by favoring integration between chamber diameter and female preference (fig.~\ref{Fig:FL_2D}).
 
 
 \section*{Discussion}
@@ -265,91 +271,6 @@ Two key patterns emerged from our study. First, selection was stronger and thus 
 
 \newpage{}
 
-\section*{Appendix A: Supplementary Figures}
-
-% Please reset counters for the appendix (thus normally figure A1, 
-% figure A2, table A1, etc.).
-
-% In certain cases, it may be appropriate to have a PRINT appendix in
-% addition to (or instead of) an online appendix. In this case, please 
-% name the print appendix Appendix A, and any subsequent appendixes (if 
-% there are any) should be named Online Appendix B, Online Appendix C,
-% etc.
-
-% Counters for each appendix should match the letter of that appendix.
-% For example, tables in Appendix C should be numbered table C1, table C2,
-% etc. This applies to tables, equations, and figures.
-
-% It's better not to use the \appendix command, because we have some
-% formatting peculiarities that \appendix conflicts with.
-
-\renewcommand{\theequation}{A\arabic{equation}}
-% redefine the command that creates the equation number.
-\renewcommand{\thetable}{A\arabic{table}}
-\setcounter{equation}{0}  % reset counter 
-\setcounter{figure}{0}
-\setcounter{table}{0}
-
-\subsection*{Fox--dog encounters through the ages}
-
-The quick red fox jumps over the lazy brown dog. The quick red fox has always jumped over the lazy brown dog. The quick red fox began jumping over the lazy brown dog in the 19th century and has never ceased from so jumping, as we shall see in figure~\ref{Fig:Jumps}. But there can be surprises (figure~\ref{Fig:JumpsOk}).
-
-If the order and location of figures is not otherwise clear, feel free to include explanatory dummy text like this:
-
-[Figure A1 goes here.]
-
-[Figure A2 goes here.]
-
-\subsection*{Further insights}
-
-Tables in the appendices can appear in the appendix text (see table~\ref{Table:Rivers} for an example), unlike appendix figure legends which should be grouped at the end of the document together with the other figure legends.
-
-\begin{table}[h]
-\caption{Various rivers, cities, and animals}
-\label{Table:Rivers}
-\centering
-\begin{tabular}{lll}\hline
-River        & City        & Animal            \\ \hline
-Chicago      & Chicago     & Raccoon           \\
-Des Plaines  & Joliet      & Coyote            \\
-Illinois     & Peoria      & Cardinal          \\
-Kankakee     & Bourbonnais & White-tailed deer \\
-Mississippi  & Galena      & Bald eagle        \\ \hline
-\end{tabular}
-\bigskip{}
-\\
-{\footnotesize Note: See table~\ref{Table:Okapi} below for further table formatting hints.}
-\end{table}
-
-Lorem ipsum dolor sit amet, as we have seen in figures~\ref{Fig:Jumps} and \ref{Fig:JumpsOk}.
-
-\newpage{}
-
-\section*{Appendix B: Additional Methods}
-
-\subsection*{Measuring the height of fox jumps without a meterstick}
-
-Pellentesque ac nibh placerat, luctus lectus non, elementum mauris. 
-Morbi odio velit, eleifend ut hendrerit vitae, consequat sit amet 
-nulla. Pellentesque porttitor vitae nisl quis tempus. Pellentesque 
-habitant morbi tristique senectus et netus et malesuada fames ac 
-turpis egestas. Praesent ut nisi odio. Vivamus vel lorem gravida 
-odio molestie volutpat condimentum et arcu. 
-
-\begin{equation}
-{ \frac{1}{N_k-1} \sum \limits_{t=1}^{N_k} (M_{tjk} - \bar{M}_{jk})^2}
-\end{equation}
-
-\subsection*{Quantifying the brownness of the dog}
-
-Pellentesque eu nulla odio (\citealt{Xiao2015,CookEtAl2015}). Nulla aliquam porta metus, quis malesuada orci faucibus quis. Suspendisse nunc magna, tristique sit amet sollicitudin nec, elementum et lacus. Sed vitae elementum mi. In hac habitasse platea dictumst. Etiam eu tortor elit. Sed ac tortor purus. Aliquam volutpat, odio sit amet posuere pretium, dolor ex interdum ante, sed luctus quam eros ac nulla. 
-
-\begin{equation}
-{ (\sum \limits_{p=1}^P {n_{sp}})^{-1}\sum \limits_{p=1}^P {n_{sp}Q_{p}}}
-\end{equation}
-
-\newpage{}
-
 %%%%%%%%%%%%%%%%%%%%%
 % Bibliography
 %%%%%%%%%%%%%%%%%%%%%
@@ -366,73 +287,98 @@ Pellentesque eu nulla odio (\citealt{Xiao2015,CookEtAl2015}). Nulla aliquam port
 
 \newpage{}
 
-\section*{Tables}
-\renewcommand{\thetable}{\arabic{table}}
-\setcounter{table}{0}
+%\section*{Tables}
+%\renewcommand{\thetable}{\arabic{table}}
+%\setcounter{table}{0}
 
-\begin{table}[h]
-\caption{Table for \textit{Iteomyia} Selection Gradients}
-\label{Table:Gradients}
-\centering
-\begin{tabular}{lcc}
-                                                                                  \\ \hline
-                                  & \multicolumn{2}{c}{Food web (Estimate [95\% CI])} \\
-\textbf{Selection gradient}       & \textbf{Complex} & \textbf{Simple}            \\ \hline
-$\beta_{Diam}$                    & 0.47 [0.36,0.59] & 0.29 [0.23,0.37] \\
-$\beta_{Clutch}$                  & 0.06 [-0.05,0.19] & -0.09 [-0.17,-0.02] \\
-$\beta_{Pref}$                    & -0.24 [-0.38,-0.11] & -0.15 [-0.24,-0.07] \\
-$\gamma_{Diam,Diam}$              & 0.13 [0.00,0.26] & 0.08 [0.00,0.16] \\
-$\gamma_{Clutch,Clutch}$          & -0.10 [-0.25,0.05] & -0.06 [-0.16,0.03] \\
-$\gamma_{Pref,Pref}$              & 0.39 [0.04,0.74] & -0.07 [-0.25,0.11] \\
-$\gamma_{Diam,Clutch}$            & -0.08 [-0.16,0.01] & -0.05 [-0.10,0.00] \\
-$\gamma_{Diam,Pref}$              & -0.08 [-0.18,0.01] & -0.05 [-0.11,0.01] \\
-$\gamma_{Clutch,Pref}$            & 0.04 [-0.05,0.13] & 0.02 [-0.03,0.08]            \\ \hline
-\end{tabular}
-\bigskip{}
-\\
-{\footnotesize Note: Table titles should be short. Further details should go in a `notes' area after the tabular environment, like this. $^a$ Okapis are not native to Chicago, but they are to be met with in both of the major Chicagoland zoos.}
-\end{table}
+%\begin{table}[h]
+%\caption{Selection gradients acting on \textit{Iteomyia} in complex vs. simple food webs.}
+%\label{Table:ComplexSimple}
+%\centering
+%\begin{tabular}{lcc}
+%                                                                                  \\ \hline
+                                  %& \multicolumn{2}{c}{Food web (Estimate [95\% CI])} \\
+%\textbf{Selection gradient}       & \textbf{Complex} & \textbf{Simple}            \\ \hline
+%$\beta_{Diam}^a$                    & 0.47 [0.36,0.59] & 0.29 [0.23,0.37] \\
+%$\beta_{Clutch}$                  & 0.06 [-0.05,0.19] & -0.09 [-0.17,-0.02] \\
+%$\beta_{Pref}$                    & -0.24 [-0.38,-0.11] & -0.15 [-0.24,-0.07] \\
+%$\gamma_{Diam,Diam}$              & 0.13 [0.00,0.26] & 0.08 [0.00,0.16] \\
+%$\gamma_{Clutch,Clutch}$          & -0.10 [-0.25,0.05] & -0.06 [-0.16,0.03] \\
+%$\gamma_{Pref,Pref}$              & 0.39 [0.04,0.74] & -0.07 [-0.25,0.11] \\
+%$\gamma_{Diam,Clutch}$            & -0.08 [-0.16,0.01] & -0.05 [-0.10,0.00] \\
+%$\gamma_{Diam,Pref}$              & -0.08 [-0.18,0.01] & -0.05 [-0.11,0.01] \\
+%$\gamma_{Clutch,Pref}$            & 0.04 [-0.05,0.13] & 0.02 [-0.03,0.08]            \\ \hline
+%\end{tabular}
+%\bigskip{}
+%\\
+%{\footnotesize Note: Values within brackets represent 95\% confidence intervals. $^a$ Adjusted for bias.}
+%\end{table}
 
-\newpage{}
+%\newpage{}
 
-\begin{table}[h]
-\caption{Table for bias}
-\label{Table:Bias}
-\centering
-\begin{tabular}{lc}
+%\begin{table}[h]
+%\caption{Selection gradients imposed by larval vs. egg parasitoids on \textit{Iteomyia}.}
+%\label{Table:LarvalEgg}
+%\centering
+%\begin{tabular}{lcc}
+%                                                                                  \\ \hline
+                                  %& \multicolumn{2}{c}{Food web (Estimate [95\% CI])} \\
+%\textbf{Selection gradient}       & \textbf{Larval} & \textbf{Egg}            \\ \hline
+%$\beta_{Diam}^a$                    & 0.47 [0.36,0.59] & 0.29 [0.23,0.37] \\
+%$\beta_{Clutch}$                  & 0.06 [-0.05,0.19] & -0.09 [-0.17,-0.02] \\
+%$\beta_{Pref}$                    & -0.24 [-0.38,-0.11] & -0.15 [-0.24,-0.07] \\
+%$\gamma_{Diam,Diam}$              & 0.13 [0.00,0.26] & 0.08 [0.00,0.16] \\
+%$\gamma_{Clutch,Clutch}$          & -0.10 [-0.25,0.05] & -0.06 [-0.16,0.03] \\
+%$\gamma_{Pref,Pref}$              & 0.39 [0.04,0.74] & -0.07 [-0.25,0.11] \\
+%$\gamma_{Diam,Clutch}$            & -0.08 [-0.16,0.01] & -0.05 [-0.10,0.00] \\
+%$\gamma_{Diam,Pref}$              & -0.08 [-0.18,0.01] & -0.05 [-0.11,0.01] \\
+%$\gamma_{Clutch,Pref}$            & 0.04 [-0.05,0.13] & 0.02 [-0.03,0.08]            \\ \hline
+%\end{tabular}
+%\bigskip{}
+%\\
+%{\footnotesize Note: Values within brackets represent 95\% confidence intervals. Selection gradients and confidence intervals for egg parasitoids are equivalent to estimates for the simple food web. $^a$ Adjusted for bias.}
+%\end{table}
+
+%\newpage{}
+
+%\begin{table}[h]
+%\caption{Table for bias}
+%\label{Table:Bias}
+%\centering
+%\begin{tabular}{lc}
+%                                                                  \\ \hline
+%\textbf{Type}                 & \textbf{Bias} \boldmath$s_{Diam}$ \\ \hline
+%Complex (All)                 &  [ - ] \\
+%Complex (Larval guild)        &  [ - ] \\
+%Simple (\textit{Platygaster}) &  [ - ]                  \\ \hline
+%\end{tabular}
+%\bigskip{}
+%\\
+%{\footnotesize Note: Table titles should be short. Further details should go in a `notes' area after the tabular environment, like this. $^a$ Okapis are not native to Chicago, but they are to be met with in both of the major Chicagoland zoos.}
+%\end{table}
+
+%\newpage{}
+
+%\begin{table}[h]
+%\caption{Table for \textit{Platygaster} Selection Differentials}
+%\label{Table:PlatySelection}
+%\centering
+%\begin{tabular}{lc}
                                                                   \\ \hline
-\textbf{Type}                 & \textbf{Bias} \boldmath$s_{Diam}$ \\ \hline
-Complex (All)                 &  [ - ] \\
-Complex (Larval guild)        &  [ - ] \\
-Simple (\textit{Platygaster}) &  [ - ]                  \\ \hline
-\end{tabular}
-\bigskip{}
-\\
-{\footnotesize Note: Table titles should be short. Further details should go in a `notes' area after the tabular environment, like this. $^a$ Okapis are not native to Chicago, but they are to be met with in both of the major Chicagoland zoos.}
-\end{table}
+%\textbf{Selection differential} & \textbf{Estimate [95\% CI]}     \\ \hline
+%$s_{Diam}$                      & 0.06 [-0.14,0.27] \\
+%$s_{Clutch}$                    & 0.20 [-0.10,0.51] \\
+%$s_{Pref}$                      & 0.20 [0.07,0.33 \\ 
+%$s_{Diam,Diam}$                 & -0.11 \\
+%$s_{Clutch,Clutch}$             & -0.91 \\
+%$s_{Pref,Pref}$                 & -0.24                \\ \hline
+%\end{tabular}
+%\bigskip{}
+%\\
+%{\footnotesize Note: Table titles should be short. Further details should go in a `notes' area after the tabular environment, like this. $^a$ Okapis are not native to Chicago, but they are to be met with in both of the major Chicagoland zoos.}
+%\end{table}
 
-\newpage{}
-
-\begin{table}[h]
-\caption{Table for \textit{Platygaster} Selection Differentials}
-\label{Table:PlatySelection}
-\centering
-\begin{tabular}{lc}
-                                                                  \\ \hline
-\textbf{Selection differential} & \textbf{Estimate [95\% CI]}     \\ \hline
-$s_{Diam}$                      & 0.06 [-0.14,0.27] \\
-$s_{Clutch}$                    & 0.20 [-0.10,0.51] \\
-$s_{Pref}$                      & 0.20 [0.07,0.33 \\ 
-$s_{Diam,Diam}$                 & -0.11 \\
-$s_{Clutch,Clutch}$             & -0.91 \\
-$s_{Pref,Pref}$                 & -0.24                \\ \hline
-\end{tabular}
-\bigskip{}
-\\
-{\footnotesize Note: Table titles should be short. Further details should go in a `notes' area after the tabular environment, like this. $^a$ Okapis are not native to Chicago, but they are to be met with in both of the major Chicagoland zoos.}
-\end{table}
-
-\newpage{}
+%\newpage{}
 
 \section*{Figure legends}
 
@@ -440,68 +386,42 @@ $s_{Pref,Pref}$                 & -0.24                \\ \hline
 \graphicspath{ {../analyses/reproduce_analyses_files/figure-html/} }
 
 \begin{figure}[h!]
+%\includegraphics{FIGURE}
+\caption{Selection gradients acting on \textit{Iteomyia} phenotypes. Points and lines correspond to estimated means and 95\% confidence intervals, respectively. Orange and blue colors correspond to estimated gradients in complex and simple food webs, respectively. Yellow colors correspond to selection gradients imposed by larval parasitoids. Note that we only plot selection gradients for larval parasitoids when they differed from egg parasitoids (simple food web).}
+\label{Fig:LABEL}
+\end{figure}
+
+\begin{figure}[h!]
 \includegraphics{Univariate-Fitness-Landscapes-1.png}
-\caption{Selection gradients acting on \texit{Iteomyia} traits in complex vs. simple food webs. Each panel corresponds to a different phenotypic trait: chamber diameter (A); clutch size (B); and female preference (C). Solid lines represent the estimated gradients in complex (orange) and simple (blue) food webs. Transparent lines represent bootstrapped replicates (n=100) to show the uncertainty in estimated gradients. Note that only 100 bootstraps are displayed here, but that inferences are based on 1,000 bootstrapped samples.}
+\caption{Adaptive landscape of \textit{Iteomyia} phenotypes in complex vs. simple food webs. Each panel corresponds to a different phenotypic trait: chamber diameter (A); clutch size (B); and female preference (C). Solid lines represent the estimated gradients in complex (orange) and simple (blue) food webs. Transparent lines represent bootstrapped replicates to show the uncertainty in estimated gradients. For clarity, we only display 100 bootstraps even though inferences are based on 1,000 bootstrapped samples. Note the mean larva survival is plotted on a natural log scale to accurately reflect the shape of the adaptive landscape.}
 \label{Fig:FL_1D}
 \end{figure}
 
 \begin{figure}[h!]
 \includegraphics{Multivariate-Fitness-Landscapes-1.png}
-\caption{Fitness landscapes of gall traits in complex vs. simple food webs. Each panel corresponds to a different combination of traits: clutch size and chamber diameter (A); clutch size and female preference (B); female preference and chamber diameter (C). Note that traits for all plots range 1 SD below and above the mean (=0).}
+\caption{Two dimensional view of adaptive landscapes in complex vs. simple food webs. Each panel corresponds to a different combination of traits: clutch size and chamber diameter (A); clutch size and female preference (B); female preference and chamber diameter (C). Note the mean larva survival is plotted on a natural log scale to accurately reflect the shape of the adaptive landscape.}
 \label{Fig:FL_2D}
 \end{figure}
 
-%%%%%%%%%%%%%%%%%%%%%
-% Videos
-%%%%%%%%%%%%%%%%%%%%%
-% If you have videos, journal style for them is similar to that for
-% figures. You'll want to include a still image (such as a JPEG)
-% to give your readers a preview of what the video looks like.
 
-%%%%% Include the text below if you have videos
+%\subsection*{Online figure legends}
 
-\renewcommand{\figurename}{Video} 
-\setcounter{figure}{0}
-% Thanks to Flo Debarre for the pro tip of putting
-% \renewcommand{\figurename}{Video} before the Video legend and
-% \renewcommand{\figurename}{Figure} after it!
+%\renewcommand{\thefigure}{A\arabic{figure}}
+%\setcounter{figure}{0}
 
-\begin{figure}[h!]
-%\includegraphics{VideoScreengrab.jpg}
-\caption{Video legends can follow the same principles as figure legends. Counters should be set and reset so that videos and figures are enumerated separately.}
-\label{VideoExample}
-\end{figure}
-
-\renewcommand{\figurename}{Figure}
-\setcounter{figure}{1}
-
-%%%%% Include the above if you have videos
-
-
-\begin{figure}[h!]
-%\includegraphics{elegance}
-\caption{In this way, figure legends can be listed at the end of the document, with references that work, even though the graphic itself should be included for final files after acceptance. Instead, upload the relevant figure files separately to Editorial Manager; Editorial Manager should insert them at the end of the PDF automatically.}
-\label{Fig:AnotherFigure}
-\end{figure}
-
-\subsection*{Online figure legends}
-
-\renewcommand{\thefigure}{A\arabic{figure}}
-\setcounter{figure}{0}
-
-\begin{figure}[h!]
+%\begin{figure}[h!]
 %\includegraphics{jumps20m}
-\caption{\textit{A}, the quick red fox proceeding to jump 20~m straight into the air over not one, but several lazy dogs. \textit{B}, the quick red fox landing gracefully despite the skepticism of naysayers.}
-\label{Fig:Jumps}
-\end{figure}
+%\caption{\textit{A}, the quick red fox proceeding to jump 20~m straight into the air over not one, but several lazy dogs. \textit{B}, the quick red fox landing gracefully despite the skepticism of naysayers.}
+%\label{Fig:Jumps}
+%\end{figure}
 
-\begin{figure}[h!]
+%\begin{figure}[h!]
 %\includegraphics{jumps20m}
-\caption{The quicker the red fox jumps, the likelier it is to land near an okapi. For further details, see \citet{LemKapEx07}.}
-\label{Fig:JumpsOk}
-\end{figure}
+%\caption{The quicker the red fox jumps, the likelier it is to land near an okapi. For further details, see \citet{LemKapEx07}.}
+%\label{Fig:JumpsOk}
+%\end{figure}
 
-\renewcommand{\thefigure}{B\arabic{figure}}
-\setcounter{figure}{0}
+%\renewcommand{\thefigure}{B\arabic{figure}}
+%\setcounter{figure}{0}
 
 \end{document}

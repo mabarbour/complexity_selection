@@ -3,13 +3,10 @@ Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
 The top-level auxiliary file: manuscript.aux
 The style file: amnat.bst
 Database file #1: bibliography.bib
-Warning--I didn't find a database entry for "Xiao2015"
-Warning--I didn't find a database entry for "CookEtAl2015"
-Warning--I didn't find a database entry for "LemKapEx07"
 Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
 You've used 1 entry,
             3251 wiz_defined-function locations,
-            669 strings with 5060 characters,
+            663 strings with 5000 characters,
 and the built_in function-call counts, 650 in all, are:
 = -- 54
 > -- 30
@@ -48,4 +45,3 @@ warning$ -- 0
 while$ -- 5
 width$ -- 0
 write$ -- 16
-(There were 3 warnings)
