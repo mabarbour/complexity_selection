@@ -292,6 +292,8 @@ boot_model_3 <- bootMer(model_3, FUN = fixef, nsim=n_boots_analysis, parallel="m
 tidy_model_3 <- tidy(boot_model_3, conf.int=T) 
 ```
 
+Note that there was no effect of food-web structure on on chamber diameter (coef=`r round(filter(tidy_model_3, term=="FoodwebSimple:sc.Diam")$statistic,2)`, 95%CI=`r round(filter(tidy_model_3, term=="FoodwebSimple:sc.Diam")$conf.low,2)`,`r round(filter(tidy_model_3, term=="FoodwebSimple:sc.Diam")$conf.high,2)`) or female preference (coef=`r round(filter(tidy_model_3, term=="FoodwebSimple:sc.log1p.Pref")$statistic,2)`, 95%CI=`r round(filter(tidy_model_3, term=="FoodwebSimple:sc.log1p.Pref")$conf.low,2)`,`r round(filter(tidy_model_3, term=="FoodwebSimple:sc.log1p.Pref")$conf.high,2)`).
+
 ```{r Plot Model 3, echo=FALSE}
 plot_model_3 <- tidy_model_3 %>%
   mutate(Food_web = ifelse(grepl("FoodwebSimple:", .$term)==TRUE,"Simple","Complex")) %>%
@@ -374,7 +376,19 @@ plot_model_4_adj %>%
   ylab("Coefficient (logit scale)")
 ```
 
+```{r Average larval survival, cache=TRUE}
+model_4_survival_ests <- update(model_4_adj, .~. -1)
 
+boot_model_4_survival_ests <- bootMer(model_4_survival_ests, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+
+tidy_model_4_survival_ests <- tidy(boot_model_4_survival_ests, conf.int=T) 
+
+tidy_model_4_survival_ests
+```
+
+Mean larval survival in complex food web = `r round(inverse_logit(filter(tidy_model_4_survival_ests, term=="FoodwebComplex")$statistic),2)` [`r round(inverse_logit(filter(tidy_model_4_survival_ests, term=="FoodwebComplex")$conf.low),2)`,`r round(inverse_logit(filter(tidy_model_4_survival_ests, term=="FoodwebComplex")$conf.high),2)`].
+
+Mean larval survival in simple food web = `r round(inverse_logit(filter(tidy_model_4_survival_ests, term=="FoodwebSimple")$statistic),2)` [`r round(inverse_logit(filter(tidy_model_4_survival_ests, term=="FoodwebSimple")$conf.low),2)`, `r round(inverse_logit(filter(tidy_model_4_survival_ests, term=="FoodwebSimple")$conf.high),2)`].
 
 So, for plotting the results, we are going to use the focused nonlinear model. This provides the best representation of the fitness landscape (although we can't use it to assess to quantify the effects of directional selection.
 
@@ -779,6 +793,90 @@ bias.adj_selection_gradients %>%
   scale_color_manual(values=treatment_colors) +
   scale_shape_manual(name="Bias\nadjusted", values=c(21,23))
 ```
+
+## Figure for manuscript
+
+Only use selection gradients for larval parasitoids, use both complex and simple food webs, and only bias adjusted for chamber diameter.
+
+```{r Prep selection gradients figure, echo=FALSE}
+
+focus_gradients <- bind_rows(filter(bias.adj_selection_gradients, term_ord == "Diam" & adjusted == "Yes" | term_ord != "Diam"),
+                             filter(egg.larval_selection_gradients, `Food web` == "Larval" & term_ord %in% c("Clutch","Pref^2"))) %>%
+  mutate(Type = ifelse(grepl("\\^2", .$term_ord)==TRUE, "Quadratic", ifelse(grepl(":", .$term_ord)==TRUE, "Correlational", "Directional"))) 
+
+focus_gradients$Type_ord <- factor(focus_gradients$Type, 
+                                   levels=c("Directional","Quadratic","Correlational"),
+                                   ordered = TRUE)
+
+focus_gradients$axis_x_labels <- as.character(focus_gradients$term_ord)
+
+max_gradient <- max(focus_gradients$`97.5%`)
+min_gradient <- min(focus_gradients$`2.5%`)
+gradient_limits <- c(-0.3, 0.75)
+
+legend_labels <- c("Egg + Larval (Complex)","Larval parasitoids","Egg parasitoid (Simple)")
+
+directional <- filter(focus_gradients, Type=="Directional") %>%
+  ggplot(., aes(x=term_ord)) +
+  geom_linerange(aes(ymin=`2.5%`, ymax=`97.5%`, color=`Food web`), position=position_dodge(width=0.5)) +
+  geom_point(aes(y=gradient, fill=`Food web`), color="black", size=3, position=position_dodge(width=0.5), shape=21) +
+  #coord_flip() +
+  geom_hline(yintercept=0, linetype="dotted") +
+  ylab("Selection Gradient") +
+  scale_fill_manual(values=cbPalette[c(6,4,5)], labels=legend_labels) +
+  scale_color_manual(values=cbPalette[c(6,4,5)], labels=legend_labels) +
+  facet_wrap(~Type_ord, ncol=2, scales="free_x") +
+  scale_x_discrete(name="", labels=parse(text=c("beta[Diam]","beta[Clutch]","beta[Pref]"))) +
+  scale_y_continuous(limits = gradient_limits) +
+  theme(legend.title.align = 0.5)
+
+quadratic <- filter(focus_gradients, Type=="Quadratic") %>%
+  ggplot(., aes(x=term_ord)) +
+  geom_linerange(aes(ymin=`2.5%`, ymax=`97.5%`, color=`Food web`), position=position_dodge(width=0.5)) +
+  geom_point(aes(y=gradient, fill=`Food web`), color="black", size=3, position=position_dodge(width=0.5), shape=21) +
+  #coord_flip() +
+  geom_hline(yintercept=0, linetype="dotted") +
+  ylab("Selection Gradient") +
+  scale_fill_manual(values=cbPalette[c(6,4,5)]) +
+  scale_color_manual(values=cbPalette[c(6,4,5)]) +
+  facet_wrap(~Type_ord, ncol=2, scales="free_x") +
+  scale_x_discrete(name="", labels=parse(text=c("gamma[Diam:Diam]","gamma[Clutch:Clutch]","gamma[Pref:Pref]"))) +
+  scale_y_continuous(limits = gradient_limits)
+
+correlational <- filter(focus_gradients, Type=="Correlational") %>%
+  ggplot(., aes(x=term_ord)) +
+  geom_linerange(aes(ymin=`2.5%`, ymax=`97.5%`, color=`Food web`), position=position_dodge(width=0.5)) +
+  geom_point(aes(y=gradient, fill=`Food web`), color="black", size=3, position=position_dodge(width=0.5), shape=21) +
+  #coord_flip() +
+  geom_hline(yintercept=0, linetype="dotted") +
+  ylab("Selection Gradient") +
+  scale_fill_manual(values=cbPalette[c(6,5)]) + # changed from 6,4,5 since larval parasitoids didn't differ for any correlational gradients
+  scale_color_manual(values=cbPalette[c(6,5)]) + # same as above
+  facet_wrap(~Type_ord, ncol=2, scales="free_x") +
+  scale_x_discrete(name="", labels=parse(text=c("gamma[Diam:Clutch]","gamma[Diam:Pref]","gamma[Clutch:Pref]"))) +
+  scale_y_continuous(limits = gradient_limits)
+```
+
+Standardized selection gradients estimate selection on a trait in terms of the effects on relative fitness in units of (phenotypic) standard deviations of the trait, allowing direct comparisons among traits, fitness components, and study systems (Kingsolver et al. 2001, Am. Nat.).
+
+```{r Selection-Gradients, echo=FALSE, fig.cap="Selection gradients. Points and lines represents means and 95% confidence intervals (n=1,000 bootstrapped samples)."}
+
+# Get legend
+gradients_legend <- get_legend(directional)
+
+# Format plots
+gradients_plots <- plot_grid(
+  directional + theme(legend.position = "none", axis.title = element_blank()),
+  quadratic + theme(legend.position = "none", axis.title = element_blank()),
+  correlational + theme(legend.position = "none", axis.title = element_blank()), 
+  nrow=2, align="hv", labels = "")
+gradients_plots_legend <- ggdraw(gradients_plots) + draw_grob(gradients_legend, x = 0.6, y=-0.2) # x = 0.7, y=-0.2
+gradients_y_title <- ggdraw() + draw_label("Selection gradient (SDs)", angle = 90)
+
+gradients_figure <- plot_grid(gradients_y_title, gradients_plots_legend, ncol=2, rel_widths = c(0.05,1))
+gradients_figure
+```
+
 
 ## Selection on the egg parasitoid *Platygaster*
 
@@ -1354,7 +1452,7 @@ $$\text{Curvature}_{simple} = \begin{pmatrix} `r simple_curvature["Diam","Diam"]
 
 ## Observed phenotypic variance-covariance matrix
 
-```{r Observe P matrix}
+```{r Observe P matrix, include=FALSE}
 
 ## setup P-matrix
 P_matrix <- matrix(1, nrow=3, ncol=3, dimnames = list(c("Diam","Clutch","Pref"),c("Diam","Clutch","Pref")))
@@ -1397,7 +1495,7 @@ $$\text{G}_{complex} = \begin{pmatrix} `r round(complex_G_matrix["Diam","Diam"],
 
 $$\text{G}_{simple} = \begin{pmatrix} `r round(simple_G_matrix["Diam","Diam"],3)` & `r round(simple_G_matrix["Diam","Clutch"],3)` & `r round(simple_G_matrix["Diam","Pref"],3)` \\  `r round(simple_G_matrix["Clutch","Diam"],3)` & `r round(simple_G_matrix["Clutch","Clutch"],3)` & `r round(simple_G_matrix["Clutch","Pref"],3)` \\  `r round(simple_G_matrix["Pref","Diam"],3)` & `r round(simple_G_matrix["Pref","Clutch"],3)` & `r round(simple_G_matrix["Pref","Pref"],3)` \end{pmatrix}$$
 
-```{r Evo dynamics derived from observed phenotypic variance-covariance, include=FALSE}
+```{r Evo dynamics derived from observed phenotypic variance-covariance, include=FALSE, eval=FALSE}
 
 # initial trait values
 z_initial <- matrix(0, nrow=3, ncol=1, dimnames = list(c("Diam","Clutch","Pref")))
@@ -1429,14 +1527,14 @@ complex_z_feasible <- mutate(tidy_evo_sims(complex_evo_dynamics), Foodweb="Compl
 simple_z_feasible <- mutate(tidy_evo_sims(simple_evo_dynamics), Foodweb="Simple")
 ```
 
-```{r altered parameters}
+```{r altered parameters, include=FALSE, eval=FALSE}
 complex_betas
 ```
 
 
 ## Walk across the adaptive landscape
 
-```{r Evo-Sim-Hyp-G, echo=FALSE, fig.cap="Evolutionary simulation of a hypothetical G-matrix"}
+```{r Evo-Sim-Hyp-G, include=FALSE, eval=FALSE, echo=FALSE, fig.cap="Evolutionary simulation of a hypothetical G-matrix"}
 
 # Make plots
 evosim_AF_plot_Diam.Clutch <- AF_plot_Diam.Clutch +
@@ -1477,7 +1575,7 @@ evosim_AF_landscape_2d
 
 Since my covariance is standardized, it should be okay to calculate the mean squared correlation as an overall measure of trait integration.
 
-```{r Compare changes in hypothetical G-matric over time, echo=FALSE}
+```{r Compare changes in hypothetical G-matric over time, echo=FALSE, include=FALSE, eval=FALSE}
 last(complex_z_feasible$Time)/last(simple_z_feasible$Time)
 
 complex_evolvability <- c()
@@ -1554,7 +1652,7 @@ gather_G_matrix_data %>%
 
 ## More walks across the adaptive landscape
 
-```{r Generate random G matrices and simulate Evo Dynamics, include=FALSE}
+```{r Generate random G matrices and simulate Evo Dynamics, include=FALSE, eval=FALSE}
 
 ## Define the maximum additive genetic variance
 max_add_G <- 0.5
@@ -1615,7 +1713,7 @@ sims_to_subsample <- sample(unique(combine_tidied_evo_sims$simulation), 100)
 sub_tidied_evo_sims <- combine_tidied_evo_sims %>% filter(simulation %in% sims_to_subsample) # subsample 100 for plotting
 ```
 
-```{r Plot evo sims of many G-matrices, include=FALSE}
+```{r Plot evo sims of many G-matrices, include=FALSE, eval=FALSE}
 evosim.manyG_AF_plot_Diam.Clutch <- AF_plot_Diam.Clutch +
   geom_line(data=sub_tidied_evo_sims, aes(x=Diam, y=Clutch, group=simulation), alpha=0.1)
   
@@ -1626,7 +1724,7 @@ evosim.manyG_AF_plot_Diam.Pref <-  AF_plot_Diam.Pref +
   geom_line(data=sub_tidied_evo_sims, aes(x=Diam, y=Pref, group=simulation), alpha=0.1)
 ```
 
-```{r Evo-Sim-Many-G, echo=FALSE, fig.cap="Evolutionary simulation of a range of G-matrices"}
+```{r Evo-Sim-Many-G, include=FALSE, eval=FALSE, fig.cap="Evolutionary simulation of a range of G-matrices"}
 # Get legend
 evosim.manyG_AF_landscape_legend <- get_legend(evosim.manyG_AF_plot_Diam.Pref)
 
@@ -1675,7 +1773,7 @@ boxplot(trait_disper)
 ## How does the adaptive landscape influence the rate of evolution?
 
 Here we are going to see how fast it took for the *Iteomyia* to hit the edge of the adaptive landscape across many different G-matrices.
-```{r Rate of phenotypic evolution, include=FALSE}
+```{r Rate of phenotypic evolution, include=FALSE, eval=FALSE}
 evo_sim_duration <-combine_tidied_evo_sims %>%
   group_by(simulation, Foodweb) %>%
   summarise_at(vars(Time), funs(last))
@@ -1701,7 +1799,7 @@ round(mean(wide_evo_sim_duration$Diff.Fold),1)
 
 In general, *Iteomyia* hit the edge of the adaptive landscape faster in the complex vs. simple food web.
 
-```{r Intuition about evolvability, eval=FALSE}
+```{r Intuition about evolvability, include=FALSE, eval=FALSE}
 base_matrix <- matrix(c(1,0,0,
                         0,1,0,
                         0,0,1), nrow=3, ncol=3)
@@ -1743,7 +1841,7 @@ bind_rows(MeanMatrixStatistics(G_1), MeanMatrixStatistics(G_2), MeanMatrixStatis
   select(G_name, evolvability, conditional.evolvability, autonomy, constraints)
 ```
 
-```{r Intuition about matrix multiplication, eval=FALSE}
+```{r Intuition about matrix multiplication, include=FALSE, eval=FALSE}
 
 beta <- matrix(c(0.2,0,0.1), nrow = 3)
 - (beta %*% t(beta)) # decrease in genetic covariance between traits 1 and 3
@@ -1764,7 +1862,7 @@ plot(sim_data[,1] ~ sim_data[,2])
 ```
 
 
-```{r Compare evolvabilities at end of simulation, echo=FALSE}
+```{r Compare evolvabilities at end of simulation, include=FALSE, eval=FALSE}
 
 complex_G_end <- list()
 simple_G_end <- list()
