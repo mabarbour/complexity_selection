@@ -11,14 +11,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Top Priority
 
-> Decide on which target journal to submit to.
-
-> Output regression stats for the absence of an effect of food-web on larval survival for chamber diameter and female preference.
-
-> Update model_4 to give separate effects of food-web complexity on larval survival.
-
-> Translate required data and figures to main manuscript.
-
 > Write, write, write!!!
 
 ## Lower Priority
