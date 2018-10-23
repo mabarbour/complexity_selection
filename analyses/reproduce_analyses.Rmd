@@ -780,6 +780,35 @@ bias.adj_selection_gradients <- mutate(selection_gradients, adjusted = "No") %>%
           adjusted="Yes")
 ```
 
+```{r Bias in gradients on chamber diameter}
+fixef(biased.diam_model_4)["sc.Diam"]
+```
+
+```{r Variance explained in chamber diameter}
+chamber_diam <- lmer(sc.Diam ~ Foodweb + (1|Genotype/Plant_Position/Gall_Number), data=gall_selection.df)
+summary(chamber_diam)
+car::Anova(chamber_diam, test="F")
+
+# variance explained by gall ID
+0.5374/(0.5374+0.0956+0.1671+0.2031)
+```
+
+```{r Variance explained in other traits}
+clutch_size <- lmer(sc.log.Clutch ~ Foodweb + (1|Genotype/Plant_Position), data=distinct(gall_selection.df, Foodweb, Genotype, Plant_Position, Gall_Number, sc.log.Clutch))
+summary(clutch_size)
+car::Anova(clutch_size, test="F")
+
+female_pref <- lmer(sc.log1p.Pref ~ Foodweb + (1|Genotype), data=distinct(gall_selection.df, Foodweb, Genotype, Plant_Position, sc.log1p.Pref))
+summary(female_pref)
+car::Anova(female_pref, test="F")
+```
+
+
+```{r female pref plot, echo=F}
+visreg::visreg(female_pref, xvar="Foodweb")
+```
+
+
 ```{r Plot of bias adjusted Selection Gradients, echo=FALSE}
 bias.adj_selection_gradients %>%
   ggplot(., aes(x=term_ord, shape=adjusted)) +
@@ -907,6 +936,13 @@ platy_Diam_levene <- leveneTest(sc.Diam ~ Foodweb, platy_selection_df)
 platy_Clutch_levene <- leveneTest(sc.log.Clutch ~ Foodweb, platy_selection_df)
 platy_Pref_levene <- leveneTest(sc.log1p.Pref ~ Foodweb, platy_selection_df)
 ```
+
+```{r Levene tests}
+platy_Diam_levene
+platy_Clutch_levene
+platy_Pref_levene
+```
+
 
 ```{r Plot models of Platygaster selection differentials, echo=FALSE}
 visreg_platy_Diam <- visreg(platy_Diam, xvar="Foodweb", gg=TRUE) + ylab("Chamber diameter (SD)") + xlab("")
@@ -1960,7 +1996,7 @@ Larva survival (0 or 1) was our response variable and measure of fitness.
 <!-- Need to clean up the language part of this section without it being too complicated and confusing. I should also include tests of non-linear selection gradients. -->
 <!-- We specified our food-web treatment, each gall trait, two-way interactions between gall traits, as well interactions between gall trait and food-web treatment, as fixed effects to fully explore the effects of food-web complexity on the fitness landscape. 
 This analysis implicitly assumes that selection is linear, which we felt was a necessary trade-off for exploring the shape of the fitness landscape. 
-To account for the correlated structure of clutch size (gall level) and female preference (plant level) as well as any other independent effects of willow genotype on parasitism rates, we specified gall ID nested within plant ID nested within plant genotype as random intercepts in our statistical models. 
+To account for the correlated structure of clutch size (gall level) and female preference (plant level) as well as any other independent effects of willow genotype on parasitism rates, we specified gall ID nested within plant ID nested within plant genotype as random intercepts in our statistical models. -->
 
 
 
@@ -1991,3 +2027,426 @@ $\times$ larger than any other selection gradient in our analyses.
 -->
 ```
 
+## Contributions of egg parasitoids to selection gradients
+
+To identify the mechanisms by which food-web treatment altered selection gradients, we refit our models so that the complex food-web treatment only contained cases of parasitisms from egg parasitoids. Therefore, these analyses identify the change in apparent selection imposed by the egg parasitoid (egg parasitoid from simple food web; egg parasitoid from complex food web).
+
+
+```{r Egg vs. egg Parasitoids Model, cache=TRUE}
+
+# excludes cases of egg-parasitism from Complex food web
+egg.vs.egg_df <- filter(gall_selection.df, Foodweb == "Simple" | Foodweb == "Complex" & ectos < 1) #%>% 
+ # mutate(Foodweb = ifelse(Foodweb == "Simple", "Egg", "egg"))
+
+egg.vs.egg_df$Foodweb <- relevel(factor(egg.vs.egg_df$Foodweb), ref = "Simple") # this represents the baseline or absence of selection by larval parasitoids
+
+egg.egg_model_1 <- update(model_1, data=egg.vs.egg_df)
+summary(egg.egg_model_1)
+```
+
+```{r egg vs egg ggplot explore}
+densities <- gall_selection.df %>%
+  distinct(Foodweb, Genotype, Plant_Position, sc.log1p.Pref, Density_per_100_shoots)
+
+survival <- gall_selection.df %>%
+  group_by(Foodweb, Plant_Position) %>%
+  summarise_at(vars(gall_survival, egg_parasitoid, ectos), funs(sum, n())) %>%
+  ungroup() %>%
+  mutate(ptoids_sum = egg_parasitoid_sum + ectos_sum)
+
+left_join(densities, survival) %>%
+  filter(Foodweb=="Complex") %>%
+  ggplot(., aes(x=sc.log1p.Pref, y=ectos_sum/ptoids_sum)) +
+  geom_point(aes(size=ptoids_sum), shape=21) +
+  geom_smooth(method = "glm", formula = y ~ x + I(x^2), method.args = list(family="binomial")) #+
+  #scale_x_continuous(limits=c(-2,1.25))
+
+left_join(densities, survival) %>%
+  filter(Foodweb=="Complex") %>%
+  ggplot(., aes(x=sc.log1p.Pref, y=egg_parasitoid_sum/ptoids_sum)) +
+  geom_point(aes(size=ptoids_sum), shape=21) +
+  geom_smooth(method = "glm", formula = y ~ x + I(x^2), method.args = list(family="binomial")) 
+
+left_join(densities, survival) %>%
+  ggplot(., aes(x=sc.log1p.Pref, y=gall_survival_sum/gall_survival_n, color=Foodweb)) +
+  geom_point(aes(size=gall_survival_n), shape=21) +
+  geom_smooth(method = "glm", formula = y ~ x + I(x^2), method.args = list(family="binomial"))
+
+left_join(densities, survival) %>%
+  ggplot(., aes(x=sc.log1p.Pref, y=gall_survival_n, color=Foodweb)) +
+  geom_point(aes(size=gall_survival_n), shape=21) +
+  geom_smooth(method = "lm", formula = y ~ x, aes(weight=gall_survival_n))
+
+left_join(densities, survival) %>%
+  filter(Foodweb=="Complex") %>%
+  ggplot(., aes(x=sc.log1p.Pref)) +
+  #geom_point(aes(size=ptoids_sum), shape=21) +
+  geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=gall_survival_sum/gall_survival_n), color="red", method.args = list(family="binomial")) +
+  geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=egg_parasitoid_sum/gall_survival_n), color="black", method.args = list(family="binomial")) +
+  geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=ectos_sum/gall_survival_n), color="green", method.args = list(family="binomial")) + 
+  scale_x_continuous(limits=c(-1,1))
+
+left_join(densities, survival) %>%
+  filter(Foodweb=="Simple") %>%
+  ggplot(., aes(x=sc.log1p.Pref)) +
+  #geom_point(aes(size=ptoids_sum), shape=21) +
+  geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=gall_survival_sum/gall_survival_n), color="red", method.args = list(family="binomial")) +
+  geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=egg_parasitoid_sum/gall_survival_n), color="black", method.args = list(family="binomial")) +  # geom_smooth(method = "lm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=ectos_sum/gall_survival_n), color="green")
+  scale_x_continuous(limits=c(-1,1))
+
+
+# in the complex food web, there is a positive relationship between the number of gall samples and gall density (makes sense); there is the opposite pattern in the simple foodweb...
+density_n_lm <- lm(gall_survival_n ~ sc.log1p.Pref*Foodweb, left_join(densities, survival))
+visreg::visreg(density_n_lm, xvar="sc.log1p.Pref", by="Foodweb")
+summary(density_n_lm)
+wt_density_n_lm <- lm(gall_survival_n ~ sc.log1p.Pref*Foodweb, left_join(densities, survival), weights = gall_survival_n)
+visreg::visreg(wt_density_n_lm, xvar="sc.log1p.Pref", by="Foodweb")
+summary(wt_density_n_lm)
+
+# good thing is that I get the same qualitative answer with or without weighting
+test_glm <- glm(gall_survival_sum/gall_survival_n ~ Foodweb*(sc.log1p.Pref + I(sc.log1p.Pref^2)), left_join(densities, survival), family="quasibinomial")
+visreg::visreg(test_glm, xvar="sc.log1p.Pref", by="Foodweb", scale="response")
+summary(test_glm)
+
+wt_test_glm <- glm(gall_survival_sum/gall_survival_n ~ Foodweb*(sc.log1p.Pref + I(sc.log1p.Pref^2)), left_join(densities, survival), family="quasibinomial", weights = gall_survival_n)
+visreg::visreg(wt_test_glm, xvar="sc.log1p.Pref", by="Foodweb", scale="response")
+summary(wt_test_glm)
+
+# now with just egg parasitoids
+egg.densities <- egg.vs.egg_df %>%
+  distinct(Foodweb, Plant_Position, sc.log1p.Pref)
+
+egg.survival <- egg.vs.egg_df %>%
+  group_by(Foodweb, Plant_Position) %>%
+  summarise_at(vars(gall_survival, egg_parasitoid, ectos), funs(sum, n())) %>%
+  ungroup() %>%
+  mutate(ptoids_sum = egg_parasitoid_sum + ectos_sum)
+
+egg.test_glm <- glm(gall_survival_sum/gall_survival_n ~ Foodweb*(sc.log1p.Pref + I(sc.log1p.Pref^2)), left_join(egg.densities, egg.survival), family="quasibinomial")
+visreg::visreg(egg.test_glm, xvar="sc.log1p.Pref", by="Foodweb", scale="response")
+summary(egg.test_glm)
+
+egg.wt_test_glm <- glm(gall_survival_sum/gall_survival_n ~ Foodweb*(sc.log1p.Pref + I(sc.log1p.Pref^2)), left_join(egg.densities, egg.survival), family="quasibinomial", weights = gall_survival_n)
+visreg::visreg(egg.wt_test_glm, xvar="sc.log1p.Pref", by="Foodweb", scale="response")
+summary(egg.wt_test_glm)
+
+## now use raw densities
+sqrt.raw_complex <- left_join(densities, survival) %>%
+  filter(Foodweb=="Complex") %>%
+  #filter(Density_per_100_shoots>0 & sqrt(Density_per_100_shoots)<9.5) %>%
+  ggplot(., aes(x=sqrt(Density_per_100_shoots))) +
+  #geom_point(aes(size=ptoids_sum), shape=21) +
+  geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=gall_survival_sum/gall_survival_n), color="red", method.args = list(family="binomial")) +
+  geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=egg_parasitoid_sum/gall_survival_n), color="black", method.args = list(family="binomial")) +
+  geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=ectos_sum/gall_survival_n), color="green", method.args = list(family="binomial")) +
+  scale_y_continuous(limits=c(0,1)) + scale_x_continuous(limits=c(0,10)) +
+      geom_vline(xintercept=mean(sqrt(densities$Density_per_100_shoots))) +
+    geom_vline(xintercept=mean(sqrt(densities$Density_per_100_shoots)) + sd(sqrt(densities$Density_per_100_shoots)), linetype="dotted") +
+    geom_vline(xintercept=mean(sqrt(densities$Density_per_100_shoots)) - sd(sqrt(densities$Density_per_100_shoots)), linetype="dotted") 
+  #facet_wrap(~Genotype, ncol=2, nrow=4)
+
+sqrt.raw_simple <- left_join(densities, survival) %>%
+    filter(Foodweb=="Simple") %>%
+    #filter(Density_per_100_shoots>0 & sqrt(Density_per_100_shoots)<9.5) %>%
+    ggplot(., aes(x=sqrt(Density_per_100_shoots))) +
+    #geom_point(aes(size=ptoids_sum), shape=21) +
+    geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=gall_survival_sum/gall_survival_n), color="red", method.args = list(family="binomial")) +
+    geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=egg_parasitoid_sum/gall_survival_n), color="black", method.args = list(family="binomial")) +
+    scale_y_continuous(limits=c(0,1)) + scale_x_continuous(limits=c(0,10)) +
+    geom_vline(xintercept=mean(sqrt(densities$Density_per_100_shoots))) +
+    geom_vline(xintercept=mean(sqrt(densities$Density_per_100_shoots)) + sd(sqrt(densities$Density_per_100_shoots)), linetype="dotted") +
+    geom_vline(xintercept=mean(sqrt(densities$Density_per_100_shoots)) - sd(sqrt(densities$Density_per_100_shoots)), linetype="dotted") 
+   # facet_wrap(~Genotype, ncol=2, nrow=4)
+
+plot_grid(sqrt.raw_complex, sqrt.raw_simple, ncol=2)
+
+raw_complex <- left_join(densities, survival) %>%
+  filter(Foodweb=="Complex") %>%
+  #filter(Density_per_100_shoots>0 & sqrt(Density_per_100_shoots)<9.5) %>%
+  ggplot(., aes(x=(Density_per_100_shoots))) +
+  #geom_point(aes(size=ptoids_sum), shape=21) +
+  geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=gall_survival_sum/gall_survival_n), color="red", method.args = list(family="binomial")) +
+  geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=egg_parasitoid_sum/gall_survival_n), color="black", method.args = list(family="binomial")) +
+  geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=ectos_sum/gall_survival_n), color="green", method.args = list(family="binomial")) +
+  scale_y_continuous(limits=c(0,1)) + scale_x_continuous(limits=c(0,100)) +
+      geom_vline(xintercept=mean((densities$Density_per_100_shoots))) +
+    geom_vline(xintercept=mean((densities$Density_per_100_shoots)) + sd((densities$Density_per_100_shoots)), linetype="dotted") +
+    geom_vline(xintercept=mean((densities$Density_per_100_shoots)) - sd((densities$Density_per_100_shoots)), linetype="dotted") 
+  #facet_wrap(~Genotype, ncol=2, nrow=4)
+
+  raw_simple <- left_join(densities, survival) %>%
+    filter(Foodweb=="Simple") %>%
+    #filter(Density_per_100_shoots>0 & sqrt(Density_per_100_shoots)<9.5) %>%
+    ggplot(., aes(x=(Density_per_100_shoots))) +
+    #geom_point(aes(size=ptoids_sum), shape=21) +
+    geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=gall_survival_sum/gall_survival_n), color="red", method.args = list(family="binomial")) +
+    geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=egg_parasitoid_sum/gall_survival_n), color="black", method.args = list(family="binomial")) +
+    scale_y_continuous(limits=c(0,1)) + scale_x_continuous(limits=c(0,100)) +
+    geom_vline(xintercept=mean((densities$Density_per_100_shoots))) +
+    geom_vline(xintercept=mean((densities$Density_per_100_shoots)) + sd((densities$Density_per_100_shoots)), linetype="dotted") +
+    geom_vline(xintercept=mean((densities$Density_per_100_shoots)) - sd((densities$Density_per_100_shoots)), linetype="dotted") 
+   # facet_wrap(~Genotype, ncol=2, nrow=4)
+
+plot_grid(raw_complex, raw_simple, ncol=2)
+
+log1p.raw_complex <- left_join(densities, survival) %>%
+  filter(Foodweb=="Complex") %>%
+  #filter(Density_per_100_shoots>0 & sqrt(Density_per_100_shoots)<9.5) %>%
+  ggplot(., aes(x=log1p(Density_per_100_shoots))) +
+  #geom_point(aes(size=ptoids_sum), shape=21) +
+  geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=gall_survival_sum/gall_survival_n), color="red", method.args = list(family="binomial")) +
+  geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=egg_parasitoid_sum/gall_survival_n), color="black", method.args = list(family="binomial")) +
+  geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=ectos_sum/gall_survival_n), color="green", method.args = list(family="binomial")) +
+  scale_y_continuous(limits=c(0,1)) + #scale_x_continuous(limits=c(0,100)) +
+      geom_vline(xintercept=mean(log1p(densities$Density_per_100_shoots))) +
+    geom_vline(xintercept=mean(log1p(densities$Density_per_100_shoots)) + sd(log1p(densities$Density_per_100_shoots)), linetype="dotted") +
+    geom_vline(xintercept=mean(log1p(densities$Density_per_100_shoots)) - sd(log1p(densities$Density_per_100_shoots)), linetype="dotted") 
+  #facet_wrap(~Genotype, ncol=2, nrow=4)
+
+log1p.raw_simple <- left_join(densities, survival) %>%
+    filter(Foodweb=="Simple") %>%
+    #filter(Density_per_100_shoots>0 & sqrt(Density_per_100_shoots)<9.5) %>%
+    ggplot(., aes(x=log1p(Density_per_100_shoots))) +
+    #geom_point(aes(size=ptoids_sum), shape=21) +
+    geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=gall_survival_sum/gall_survival_n), color="red", method.args = list(family="binomial")) +
+    geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=egg_parasitoid_sum/gall_survival_n), color="black", method.args = list(family="binomial")) +
+    scale_y_continuous(limits=c(0,1)) +# scale_x_continuous(limits=c(0,100)) +
+    geom_vline(xintercept=mean(log1p(densities$Density_per_100_shoots))) +
+    geom_vline(xintercept=mean(log1p(densities$Density_per_100_shoots)) + sd(log1p(densities$Density_per_100_shoots)), linetype="dotted") +
+    geom_vline(xintercept=mean(log1p(densities$Density_per_100_shoots)) - sd(log1p(densities$Density_per_100_shoots)), linetype="dotted") 
+   # facet_wrap(~Genotype, ncol=2, nrow=4)
+
+plot_grid(log1p.raw_complex, log1p.raw_simple, ncol=2)
+
+left_join(densities, survival) %>%
+  ggplot(., aes(x=sqrt(Density_per_100_shoots))) +
+    #geom_point(aes(size=ptoids_sum), shape=21) +
+    geom_smooth(method = "glm", formula = y ~ x + I(x^2), aes(weight=gall_survival_n, y=gall_survival_sum/gall_survival_n, color=Foodweb), method.args = list(family="binomial")) +
+  scale_y_continuous(limits=c(0,1)) + scale_x_continuous(limits=c(0,10)) +
+    geom_vline(xintercept=mean(sqrt(densities$Density_per_100_shoots))) +
+    geom_vline(xintercept=mean(sqrt(densities$Density_per_100_shoots)) + sd(sqrt(densities$Density_per_100_shoots)), linetype="dotted") +
+    geom_vline(xintercept=mean(sqrt(densities$Density_per_100_shoots)) - sd(sqrt(densities$Density_per_100_shoots)), linetype="dotted") 
+
+ggplot(densities, aes(x=Genotype, y=Density_per_100_shoots, fill=Foodweb)) + geom_boxplot()
+ggplot(densities, aes(x=Genotype, y=sc.log1p.Pref, fill=Foodweb)) + geom_boxplot()
+
+summary(lm(Density_per_100_shoots ~ Foodweb, filter(densities, Density_per_100_shoots>0)))
+summary(lm(sqrt(Density_per_100_shoots) ~ Foodweb, filter(densities, Density_per_100_shoots>0)))
+car::Anova(lmer(sqrt(Density_per_100_shoots) ~ Foodweb + (1|Genotype), filter(densities, Density_per_100_shoots>0)), test="F")
+summary(lm(sc.log1p.Pref ~ Foodweb, densities))
+
+with(densities, table(Foodweb, Density_per_100_shoots))
+
+ggplot(densities, aes(x=Density_per_100_shoots, fill=Foodweb)) + geom_density(alpha=0.5)
+ggplot(densities, aes(x=sqrt(Density_per_100_shoots), fill=Foodweb)) + geom_density(alpha=0.5)
+ggplot(densities, aes(x=sc.log1p.Pref, fill=Foodweb)) + geom_density(alpha=0.5)
+
+shapiro.test(densities$Density_per_100_shoots)
+shapiro.test(sqrt(densities$Density_per_100_shoots))
+shapiro.test(log1p(densities$Density_per_100_shoots))
+
+clutches <- gall_selection.df %>%
+  distinct(Foodweb, Genotype, Plant_Position, sc.log.Clutch, gall_individuals)
+shapiro.test((clutches$gall_individuals))
+shapiro.test(sqrt(clutches$gall_individuals))
+shapiro.test(log(clutches$gall_individuals))
+
+shapiro.test((gall_selection.df$Gall_Height_mm))
+shapiro.test(sqrt(gall_selection.df$Gall_Height_mm))
+shapiro.test(log(gall_selection.df$Gall_Height_mm))
+```
+
+
+```{r Egg vs. Egg Bootstrap Model 1, include=FALSE, cache=TRUE}
+egg.egg_boot_model_1 <- bootMer(egg.egg_model_1, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+
+egg.egg_tidy_model_1 <- tidy(egg.egg_boot_model_1, conf.int=T) %>% 
+  # filter terms that only matter for this analysis
+  filter(term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.log1p.Pref^2)",
+                     "sc.Diam:sc.log.Clutch","sc.Diam:sc.log1p.Pref","sc.log.Clutch:sc.log1p.Pref",
+                     "FoodwebComplex:I(sc.Diam^2)","FoodwebComplex:I(sc.log.Clutch^2)","FoodwebComplex:I(sc.log1p.Pref^2)",
+                     "FoodwebComplex:sc.Diam:sc.log.Clutch","FoodwebComplex:sc.Diam:sc.log1p.Pref","FoodwebComplex:sc.log.Clutch:sc.log1p.Pref"))
+```
+
+There is no strong evidence that egg parasitism differs for nonlinear terms between complex and simple food webs. Although close perhaps for sc.Diam.
+
+```{r Egg vs. Egg Plot Effect of Food-web on Nonlinear Terms in Model 1, echo=FALSE}
+knitr::kable(egg.egg_tidy_model_1)
+
+egg.egg_plot_model_1 <- egg.egg_tidy_model_1 %>%
+  mutate(Food_web = ifelse(grepl("FoodwebComplex", .$term)==TRUE,"Complex","Simple")) %>%
+  filter(Food_web == "Complex")
+
+egg.egg_plot_model_1$term_plot <- factor(egg.egg_plot_model_1$term,
+                                levels=c("FoodwebComplex:I(sc.Diam^2)","FoodwebComplex:I(sc.log.Clutch^2)","FoodwebComplex:I(sc.log1p.Pref^2)","FoodwebComplex:sc.Diam:sc.log.Clutch","FoodwebComplex:sc.Diam:sc.log1p.Pref","FoodwebComplex:sc.log.Clutch:sc.log1p.Pref"),
+                                ordered=TRUE)
+
+egg.egg_plot_model_1 %>%
+  ggplot(., aes(x=term_plot)) +
+  geom_linerange(aes(ymin=conf.low, ymax=conf.high)) +
+  geom_point(aes(y=statistic), shape=21, size=3, fill="grey") +
+  coord_flip() +
+  geom_hline(yintercept=0, linetype="dotted") +
+  scale_x_discrete(name="", limits = rev(levels(egg.egg_plot_model_1$term_plot))) +
+  ylab("Coefficient (logit scale)")
+
+visreg::visreg(egg.egg_model_1, xvar="sc.log1p.Pref", by="Foodweb", scale = "response")
+```
+
+Now we assess their contribution to the effect of food-web treatment on the linear terms.
+
+```{r Fit Egg vs. egg Parasitoid Model 3, cache=TRUE}
+egg.egg_model_3 <- update(model_3, data=egg.vs.egg_df) 
+```
+
+
+```{r Bootstrap Egg vs. egg Parasitoid Model 4, cache=TRUE, include=FALSE}
+boot_egg.egg_model_3 <- bootMer(egg.egg_model_3, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+
+tidy_egg.egg_model_3 <- tidy(boot_egg.egg_model_3, conf.int=T) 
+```
+
+Here, we observe clear evidence of conflicting selection pressures on clutch size. This results in net zero selection gradient acting on clutch size in the complex food web.
+```{r Plot Egg vs. egg Parasitoid Model 4, echo=FALSE}
+egg.egg_plot_model_3 <- tidy_egg.egg_model_3 %>%
+  mutate(Food_web = ifelse(grepl("FoodwebComplex:", .$term)==TRUE,"Complex","Simple")) %>%
+  filter(Food_web == "Complex")
+
+egg.egg_plot_model_3$term_plot <- factor(egg.egg_plot_model_3$term,
+                                levels=c("FoodwebComplex:sc.Diam","FoodwebComplex:sc.log.Clutch","FoodwebComplex:sc.log1p.Pref"),
+                                ordered=TRUE)
+
+egg.egg_plot_model_3 %>%
+  ggplot(., aes(x=term_plot)) +
+  geom_linerange(aes(ymin=conf.low, ymax=conf.high)) +
+  geom_point(aes(y=statistic), shape=21, size=3, fill="grey") +
+  coord_flip() +
+  geom_hline(yintercept=0, linetype="dotted") +
+  scale_x_discrete(name="", limits = rev(levels(egg.egg_plot_model_3$term_plot))) +
+  ylab("Coefficient (logit scale)")
+```
+
+```{r Fit Egg vs. egg Parasitoid adjusted Model 4, cache=TRUE, eval=FALSE}
+egg.egg_model_4_adj <- update(model_4_adj, data=egg.vs.egg_df)
+```
+
+This reduced model returns the same qualitative result as before. Specifically, that the linear effect of clutch size depends on food-web treatment. Note also that egg survival is significantly higher in the simple food web compared to the complex food web (dotted line). These are the regression coefficients we will use when calculating directional selection gradients ($\beta$).
+
+```{r Bootstrap Egg vs. egg Parasitoid adjuted Model 4, cache=TRUE, include=FALSE, eval=FALSE}
+boot_egg.egg_model_4_adj <- bootMer(egg.egg_model_4_adj, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+
+tidy_egg.egg_model_4_adj <- tidy(boot_egg.egg_model_4_adj, conf.int=T) 
+```
+
+Here, we observe clear evidence of conflicting selection pressures on clutch size. This results in net zero selection gradient acting on clutch size in the complex food web.
+```{r Plot Egg vs. egg Parasitoid adjusted Model 4, echo=FALSE, eval=FALSE}
+tidy_egg.egg_model_4_adj$term_ord <- factor(tidy_egg.egg_model_4_adj$term, 
+                                levels = c("(Intercept)","FoodwebSimple","sc.Diam","FoodwebSimple:sc.log.Clutch","FoodwebSimple:sc.log.Clutch","sc.log1p.Pref"),
+                                ordered = TRUE)
+
+plot_egg.egg_model_4_adj <- tidy_egg.egg_model_4_adj %>%
+  filter(term != "(Intercept)") %>%
+  droplevels() 
+
+plot_egg.egg_model_4_adj %>%
+  ggplot(., aes(x=term_ord)) +
+  geom_linerange(aes(ymin=conf.low, ymax=conf.high)) +
+  geom_point(aes(y=statistic), size=3, shape=21, fill="grey") +
+  coord_flip() +
+  geom_hline(yintercept=0, linetype="dotted") +
+  scale_x_discrete(name="", limits = rev(levels(plot_egg.egg_model_4_adj$term_ord))) +
+  ylab("Coefficient (logit scale)")
+```
+
+## CALCULATE SELECTION GRADIENTS FOR EGG VS. egg PARASITOIDS
+
+```{r Organize and Transform egg vs. egg parasitoid Coefficients, include=FALSE, eval=FALSE}
+tidy_egg.egg_coefs <- bind_rows(
+  select(tidy_egg.egg_model_2_adj, term, estimate, conf.low, conf.high), 
+  select(tidy_egg.egg_model_4_adj, term, estimate=statistic, conf.low, conf.high)) %>%
+  filter(term != "(Intercept)", term != "FoodwebLarval") # remove main effects
+
+# Tidy common coefficients
+tidy_egg.egg_common_coefs <- tidy_egg.egg_coefs %>%
+  filter(term!="FoodwebEgg:I(sc.log1p.Pref^2)", term!="Foodwebegg:I(sc.log1p.Pref^2)",
+         term!="FoodwebEgg:sc.log.Clutch",term!="FoodwebLarval:sc.log.Clutch")
+
+# Tidy unique coefficients to each food-web
+egg_quad_pref <- filter(tidy_egg.egg_coefs, term %in% "FoodwebEgg:I(sc.log1p.Pref^2)")
+egg_quad_pref$term <- "I(sc.log1p.Pref^2)"
+egg_quad_pref <- filter(tidy_egg.egg_coefs, term %in% "FoodwebLarval:I(sc.log1p.Pref^2)")
+egg_quad_pref$term <- "I(sc.log1p.Pref^2)"
+
+egg_clutch <- filter(tidy_egg.egg_coefs, term %in% "FoodwebEgg:sc.log.Clutch")
+egg_clutch$term <- "sc.log.Clutch"
+egg_clutch <- filter(tidy_egg.egg_coefs, term %in% "FoodwebLarval:sc.log.Clutch")
+egg_clutch$term <- "sc.log.Clutch"
+```
+
+
+```{r Calculate Egg vs. egg parasitoid Selection Gradients, include=FALSE, eval=FALSE}
+
+# Estimate mean fitness and mean "brackets" for each food-web treatment (see Janzen and Stern 1998 equation 4 for details about "brackets")
+egg_predict <- predict(egg.egg_model_2, newdata=filter(egg.vs.egg_df, Foodweb=="egg"), type="response")
+egg_mean_brackets <- mean(egg_predict * (1 - egg_predict))
+egg_mean_fitness <- mean(egg_predict)
+
+egg_predict <- predict(egg.egg_model_2, newdata=filter(egg.vs.egg_df, Foodweb=="Egg"), type="response")
+egg_mean_brackets <- mean(egg_predict * (1 - egg_predict))
+egg_mean_fitness <- mean(egg_predict)
+
+# Double-check that using a different model (e.g. egg.egg_model_4) doesn't influence estimes of mean "brackets" and mean fitness. Using "Complex" food-web treatment as an example, but it doesn't matter 
+alt_egg.egg_predict <- predict(egg.egg_model_4, newdata=filter(egg.vs.larval_df, Foodweb=="Larval"), type="response")
+alt_egg.larval_mean_brackets <- mean(alt_egg.larval_predict * (1 - alt_egg.larval_predict))
+alt_egg.larval_mean_fitness <- mean(alt_egg.larval_predict)
+test_egg.larval_mean_brackets <- larval_mean_brackets
+test_egg.larval_mean_fitness <- larval_mean_fitness
+test_egg.larval_mean_brackets - alt_egg.larval_mean_brackets # virtually the same
+test_egg.larval_mean_fitness - alt_egg.larval_mean_fitness # virtually the same
+
+tidy_egg_grads <- bind_rows(tidy_egg.larval_common_coefs, egg_quad_pref, egg_clutch) %>%
+  mutate(Multiplier = ifelse(grepl("\\^2", .$term)==TRUE, 2, 1)) %>% # double all quadratic gradients so they are on the same scale as other directional and correlational selection gradients (detailed explanation in Stinchcombe et al. 2008)
+  transmute(term=term,
+            gradient = egg_mean_brackets * estimate / egg_mean_fitness * Multiplier,
+            `2.5%` = egg_mean_brackets * conf.low / egg_mean_fitness * Multiplier,
+            `97.5%` = egg_mean_brackets * conf.high / egg_mean_fitness * Multiplier)
+
+tidy_larval_grads <- bind_rows(tidy_egg.larval_common_coefs, larval_quad_pref, larval_clutch) %>%
+    mutate(Multiplier = ifelse(grepl("\\^2", .$term)==TRUE, 2, 1)) %>% # double all quadratic gradients so they are on the same scale as other directional and correlational selection gradients (detailed explanation in Stinchcombe et al. 2008)
+  transmute(term=term,
+            gradient = larval_mean_brackets * estimate / larval_mean_fitness * Multiplier,
+            `2.5%` = larval_mean_brackets * conf.low / larval_mean_fitness * Multiplier,
+            `97.5%` = larval_mean_brackets * conf.high / larval_mean_fitness * Multiplier)
+
+egg.larval_selection_gradients <- bind_rows(
+  mutate(tidy_egg_grads, `Food web`="Egg"),
+  mutate(tidy_larval_grads, `Food web`="Larval")) #%>%
+  #mutate(Type = ifelse(grepl("\\^2", .$term)==TRUE, "Quadratic", ifelse(grepl(":", .$term)==TRUE, "Correlational", "Directional")))
+```
+
+
+```{r Table of Egg vs. Egg Parasitoid Selection Gradients, echo=FALSE, eval=FALSE}
+egg.larval_selection_gradients$term_ord <- factor(egg.larval_selection_gradients$term, 
+                                   levels=c("sc.Diam","sc.log.Clutch","sc.log1p.Pref","I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.log1p.Pref^2)","sc.Diam:sc.log.Clutch","sc.Diam:sc.log1p.Pref","sc.log.Clutch:sc.log1p.Pref"),
+                                   labels=c("Diam","Clutch","Pref","Diam^2","Clutch^2","Pref^2","Diam:Clutch","Diam:Pref","Clutch:Pref"),
+                                   ordered = TRUE)
+
+egg.larval_selection_gradients_table <- egg.larval_selection_gradients %>%
+  transmute(Term=term_ord, Parasitoid=`Food web`, Gradient=round(gradient,2), `2.5%`=round(`2.5%`,2), `97.5%`=round(`97.5%`,2)) %>% 
+  arrange(Term)
+
+knitr::kable(egg.larval_selection_gradients_table, caption = "Table of Egg vs. Larval Parasitoid Selection Gradients")
+```
+
+```{r Plot of Egg vs. Egg Parasitoid Selection Gradients, echo=FALSE, eval=FALSE}
+egg.larval_selection_gradients %>%
+  ggplot(., aes(x=term_ord)) +
+  geom_linerange(aes(ymin=`2.5%`, ymax=`97.5%`, color=`Food web`), position=position_dodge(width=0.3)) +
+  geom_point(aes(y=gradient, fill=`Food web`), color="black", shape=21, size=3, position=position_dodge(width=0.3)) +
+  coord_flip() +
+  geom_hline(yintercept=0, linetype="dotted") +
+  scale_x_discrete(name="", limits = rev(levels(egg.larval_selection_gradients$term_ord))) +
+  ylab("Selection Gradient") +
+  scale_fill_manual(name="Parasitoid", values=treatment_colors[c(2,1)]) +
+  scale_color_manual(name="Parasitoid", values=treatment_colors[c(2,1)]) 
+```
