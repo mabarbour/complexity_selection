@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/Debian) (preloaded format=pdflatex 2017.9.1)  16 OCT 2018 12:11
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/Debian) (preloaded format=pdflatex 2017.9.1)  18 OCT 2018 11:28
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -716,42 +716,7 @@ misspelled it (e.g., `\hobx'), type `I' and the correct
 spelling (e.g., `I\hbox'). Otherwise just continue,
 and I'll forget about whatever was undefined.
 
-[4] [5] [6] [7]
-! Misplaced alignment tab character &.
-l.188 ...s landscape of the population (Phillips &
-                                                   Arnold 1998, Arnold 2003)...
-I can't figure out why you would want to use a tab mark
-here. If you just want an ampersand, the remedy is
-simple: Just type `I\&' now. But if some right brace
-up above has ended a previous alignment prematurely,
-you're probably due for more error messages, and you
-might try typing `S' now just to see what is salvageable.
-
-[8]
-! Missing $ inserted.
-<inserted text> 
-                $
-l.193 where \gamma
-                   represents the matrix of nonlinear and correlational sele...
-I've inserted a begin-math/end-math symbol since I think
-you left one out. Proceed, with fingers crossed.
-
-! Missing $ inserted.
-<inserted text> 
-                $
-l.195 
-      
-I've inserted a begin-math/end-math symbol since I think
-you left one out. Proceed, with fingers crossed.
-
-
-Overfull \hbox (114.30473pt too wide) in paragraph at lines 192--195
-\T1/lmr/m/n/10.95 where $\OML/lmm/m/it/10.95 ^^Mrepresentsthematrixofnonlineara
-ndcorrelationalselectiongradients \OT1/zplm/m/n/10.95 :$$\OML/lmm/m/it/10.95 ^^
-M \OT1/zplm/m/n/10.95 = []$$$ 
- []
-
-[9] [10] [11] [12] [13] (./manuscript.bbl) [14]
+[4] [5] [6] [7] [8] [9] [10] [11] [12] [13] (./manuscript.bbl) [14]
 
 ! LaTeX Error: There's no line here to end.
 
@@ -759,7 +724,7 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.367 ...                                \\ \hline
+l.351 ...                                \\ \hline
                                                   
 Your command was ignored.
 Type  I <command> <return>  to replace it with another command,
@@ -768,40 +733,55 @@ or  <return>  to continue without it.
 ! Misplaced \noalign.
 \hline ->\noalign 
                   {\ifnum 0=`}\fi \hrule \@height \arrayrulewidth \futurelet...
-l.367 ...                                \\ \hline
+l.351 ...                                \\ \hline
                                                   
 I expect to see \noalign only after the \cr of
 an alignment. Proceed, and I'll ignore this case.
 
+<../analyses/complex_simple_foodwebs.jpeg, id=70, 1027.84pt x 770.88pt>
+File: ../analyses/complex_simple_foodwebs.jpeg Graphic file (type jpg)
+
+<use ../analyses/complex_simple_foodwebs.jpeg>
+Package pdftex.def Info: ../analyses/complex_simple_foodwebs.jpeg used on input
+ line 373.
+(pdftex.def)             Requested size: 513.91875pt x 385.43906pt.
+
+Overfull \hbox (44.16373pt too wide) in paragraph at lines 373--374
+[][] 
+ []
+
 
 <../analyses/reproduce_analyses_files/figure-html/Selection-Gradients-1.png, id
-=69, 505.89pt x 361.35pt>
+=71, 505.89pt x 361.35pt>
 File: ../analyses/reproduce_analyses_files/figure-html/Selection-Gradients-1.pn
 g Graphic file (type png)
 
 <use ../analyses/reproduce_analyses_files/figure-html/Selection-Gradients-1.png
 >
 Package pdftex.def Info: ../analyses/reproduce_analyses_files/figure-html/Selec
-tion-Gradients-1.png used on input line 389.
+tion-Gradients-1.png used on input line 379.
 (pdftex.def)             Requested size: 505.88875pt x 361.34912pt.
 
-Overfull \hbox (36.13373pt too wide) in paragraph at lines 389--390
+Overfull \hbox (36.13373pt too wide) in paragraph at lines 379--380
 [][] 
  []
 
 
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
 <../analyses/reproduce_analyses_files/figure-html/Univariate-Fitness-Landscapes
--1.png, id=70, 505.89pt x 361.35pt>
+-1.png, id=72, 505.89pt x 361.35pt>
 File: ../analyses/reproduce_analyses_files/figure-html/Univariate-Fitness-Lands
 capes-1.png Graphic file (type png)
 
 <use ../analyses/reproduce_analyses_files/figure-html/Univariate-Fitness-Landsc
 apes-1.png>
 Package pdftex.def Info: ../analyses/reproduce_analyses_files/figure-html/Univa
-riate-Fitness-Landscapes-1.png used on input line 395.
+riate-Fitness-Landscapes-1.png used on input line 385.
 (pdftex.def)             Requested size: 505.88875pt x 361.34912pt.
 
-Overfull \hbox (36.13373pt too wide) in paragraph at lines 395--396
+Overfull \hbox (36.13373pt too wide) in paragraph at lines 385--386
 [][] 
  []
 
@@ -810,57 +790,58 @@ LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
 <../analyses/reproduce_analyses_files/figure-html/Multivariate-Fitness-Landscap
-es-1.png, id=71, 505.89pt x 361.35pt>
+es-1.png, id=73, 505.89pt x 361.35pt>
 File: ../analyses/reproduce_analyses_files/figure-html/Multivariate-Fitness-Lan
 dscapes-1.png Graphic file (type png)
 
 <use ../analyses/reproduce_analyses_files/figure-html/Multivariate-Fitness-Land
 scapes-1.png>
 Package pdftex.def Info: ../analyses/reproduce_analyses_files/figure-html/Multi
-variate-Fitness-Landscapes-1.png used on input line 401.
+variate-Fitness-Landscapes-1.png used on input line 391.
 (pdftex.def)             Requested size: 505.88875pt x 361.34912pt.
 
-Overfull \hbox (36.13373pt too wide) in paragraph at lines 401--402
+Overfull \hbox (36.13373pt too wide) in paragraph at lines 391--392
 [][] 
  []
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[15 <../analyses/reproduce_analyses_files/figure-html/Selection-Gradients-1.png
- (PNG copy)>] [16 <../analyses/reproduce_analyses_files/figure-html/Univariate-
-Fitness-Landscapes-1.png (PNG copy)>] [17 <../analyses/reproduce_analyses_files
-/figure-html/Multivariate-Fitness-Landscapes-1.png (PNG copy)>]
-(./manuscript.aux) ) 
+[15 <../analyses/complex_simple_foodwebs.jpeg>] [16 <../analyses/reproduce_anal
+yses_files/figure-html/Selection-Gradients-1.png (PNG copy)>] [17 <../analyses/
+reproduce_analyses_files/figure-html/Univariate-Fitness-Landscapes-1.png (PNG c
+opy)>] [18 <../analyses/reproduce_analyses_files/figure-html/Multivariate-Fitne
+ss-Landscapes-1.png (PNG copy)>] (./manuscript.aux) ) 
 Here is how much of TeX's memory you used:
- 3681 strings out of 493029
- 48214 string characters out of 6136235
- 110462 words of memory out of 5000000
- 7112 multiletter control sequences out of 15000+600000
- 74131 words of font info for 60 fonts, out of 8000000 for 9000
+ 3695 strings out of 493029
+ 48529 string characters out of 6136235
+ 111471 words of memory out of 5000000
+ 7118 multiletter control sequences out of 15000+600000
+ 78342 words of font info for 64 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 37i,8n,32p,2205b,223s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/share/texmf/fonts/enc/dvips/lm/lm-ec.enc}{/usr/share/
-texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}{/usr/share/texmf/fonts/enc/dvip
-s/lm/lm-mathex.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-rm.enc}{/usr/share/t
-exmf/fonts/enc/dvips/lm/lm-mathit.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-m
-athsy.enc}</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.p
-fb></usr/share/texlive/texmf-dist/fonts/type1/public/mathpazo/fplmr.pfb></usr/s
-hare/texmf/fonts/type1/public/lm/lmbx12.pfb></usr/share/texmf/fonts/type1/publi
-c/lm/lmex10.pfb></usr/share/texmf/fonts/type1/public/lm/lmmi10.pfb></usr/share/
-texmf/fonts/type1/public/lm/lmmi6.pfb></usr/share/texmf/fonts/type1/public/lm/l
-mmi8.pfb></usr/share/texmf/fonts/type1/public/lm/lmr10.pfb></usr/share/texmf/fo
-nts/type1/public/lm/lmr12.pfb></usr/share/texmf/fonts/type1/public/lm/lmr17.pfb
-></usr/share/texmf/fonts/type1/public/lm/lmr7.pfb></usr/share/texmf/fonts/type1
-/public/lm/lmr8.pfb></usr/share/texmf/fonts/type1/public/lm/lmr9.pfb></usr/shar
-e/texmf/fonts/type1/public/lm/lmri10.pfb></usr/share/texmf/fonts/type1/public/l
-m/lmri12.pfb></usr/share/texmf/fonts/type1/public/lm/lmri9.pfb></usr/share/texm
-f/fonts/type1/public/lm/lmsy10.pfb></usr/share/texmf/fonts/type1/public/lm/lmsy
-9.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb>
-Output written on manuscript.pdf (17 pages, 550230 bytes).
+ 37i,10n,32p,2053b,230s stack positions out of 5000i,500n,10000p,200000b,80000s
+{/usr/share/texmf/fonts/en
+c/dvips/lm/lm-rm.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-mathex.enc}{/usr/s
+hare/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}{/usr/share/texmf/fonts/enc
+/dvips/lm/lm-mathit.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-ec.enc}{/usr/sh
+are/texmf/fonts/enc/dvips/lm/lm-mathsy.enc}</usr/share/texlive/texmf-dist/fonts
+/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/
+public/mathpazo/fplmr.pfb></usr/share/texmf/fonts/type1/public/lm/lmbx10.pfb></
+usr/share/texmf/fonts/type1/public/lm/lmbx12.pfb></usr/share/texmf/fonts/type1/
+public/lm/lmex10.pfb></usr/share/texmf/fonts/type1/public/lm/lmmi10.pfb></usr/s
+hare/texmf/fonts/type1/public/lm/lmmi6.pfb></usr/share/texmf/fonts/type1/public
+/lm/lmmi8.pfb></usr/share/texmf/fonts/type1/public/lm/lmr10.pfb></usr/share/tex
+mf/fonts/type1/public/lm/lmr12.pfb></usr/share/texmf/fonts/type1/public/lm/lmr1
+7.pfb></usr/share/texmf/fonts/type1/public/lm/lmr7.pfb></usr/share/texmf/fonts/
+type1/public/lm/lmr8.pfb></usr/share/texmf/fonts/type1/public/lm/lmr9.pfb></usr
+/share/texmf/fonts/type1/public/lm/lmri10.pfb></usr/share/texmf/fonts/type1/pub
+lic/lm/lmri12.pfb></usr/share/texmf/fonts/type1/public/lm/lmri9.pfb></usr/share
+/texmf/fonts/type1/public/lm/lmsy10.pfb></usr/share/texmf/fonts/type1/public/lm
+/lmsy9.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb>
+Output written on manuscript.pdf (18 pages, 793048 bytes).
 PDF statistics:
- 151 PDF objects out of 1000 (max. 8388607)
- 108 compressed objects within 2 object streams
+ 159 PDF objects out of 1000 (max. 8388607)
+ 113 compressed objects within 2 object streams
  0 named destinations out of 1000 (max. 500000)
- 16 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 21 words of extra memory for PDF output out of 10000 (max. 10000000)
 
