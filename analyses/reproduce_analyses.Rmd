@@ -134,6 +134,10 @@ tidy_evo_sims <- function(evo_sims) {
   return(tidy_sim)
 }
 
+## Get confidence intervals from bootstrapped samples
+conf.high <- function(x) quantile(x, probs = 0.975)
+conf.low <- function(x) quantile(x, probs = 0.025)
+
 ## Color palette
 
 # order -> orange, light blue, green, yellow, dark blue, red, pink
@@ -155,6 +159,871 @@ mvn_assumption <- mvn(select(gall_selection.df, sc.Diam, sc.log.Clutch, sc.sqrt.
 # mvn(select(gall_selection.df, sc.Diam, sc.log.Clutch, sc.sqrt.Pref), multivariatePlot = "qq")
 
 mvn_assumption$univariateNormality[1, ]
+```
+
+# Quantifying biased selection on chamber diameter
+
+We quantified biased selection on chamber diameter in the following way. First, we focus on multi-chambered galls where there is evidence of both survival and parasitism. The idea is that galls from the same clutch should be similar in size; therefore, any selection on diameter would be apparent. If we assume that this is all due to the effect of parasitism on larval development, truncating gall diameter, then we can consider this new selection differential to be the result of confounding factors. Note that this method likely overestimates the confounding effect of parasitism, since we are assuming that any heterogeneity in chamber diameter (for this subset) is due to parasitism. 
+
+We calculated the bias in selection differential on chamber diameter by calculating the difference in mean chamber diameter before (i.e. all larva within the same gall) and after selection (only surviving larva). We then used a one-sample t-test to determine whether the selection differential was significantly different from zero. We conducted separate t-tests for each food-web treatment.
+
+We can then subtract this "biased selection differential" from the observed directional selection gradient on chamber diameter to adjust for the confounding effects of parasitism. 
+
+
+We write the model in a way that independently estimates the effect of food-web treatment, each trait, and all two-way and three-way statistical interactions, on larva survival. 
+
+```{r Food-web model, cache=TRUE}
+foodweb_model <- glmer(
+  gall_survival ~ -1 + Foodweb + #sc.Diam + sc.log.Clutch + sc.sqrt.Pref +
+    Foodweb:(sc.Diam + sc.log.Clutch + sc.sqrt.Pref) +
+    #I(sc.Diam^2) + I(sc.log.Clutch^2) + I(sc.sqrt.Pref^2) +
+    Foodweb:(I(sc.Diam^2) + I(sc.log.Clutch^2) + I(sc.sqrt.Pref^2)) +
+    #sc.Diam:sc.log.Clutch + sc.Diam:sc.sqrt.Pref + sc.log.Clutch:sc.sqrt.Pref +
+    Foodweb:(sc.Diam:sc.log.Clutch + sc.Diam:sc.sqrt.Pref + sc.log.Clutch:sc.sqrt.Pref) +
+    (1|Genotype/Plant_Position/Gall_Number),
+  data = gall_selection.df,
+  family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
+
+biased_foodweb_df <- gall_selection.df %>%
+  group_by(Foodweb, Gall_Number) %>%
+  mutate(mean_survival = mean(gall_survival)) %>%
+  filter(mean_survival > 0, mean_survival < 1) %>%
+  ungroup()
+
+biased_foodweb_model <- glmer(gall_survival ~ -1 + Foodweb + Foodweb:sc.Diam + (1|Genotype/Plant_Position/Gall_Number),
+                              data = biased_foodweb_df,
+                              family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
+```
+
+Note that the resulting estimates and confidence intervals are useful for determining whether trait-fitness relationships differ from zero, but not whether they differ between food-web treatments. For the later, we calculate the differences between each food-web treatment from the bootstrapped samples.
+
+```{r Bootstrap food-web model, cache=TRUE, include=FALSE}
+boot_foodweb_model <- bootMer(foodweb_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+```
+
+```{r Food-web alpha coefficients, include=FALSE}
+
+# Adjust coefficients with chamber diameter
+foodweb_adj_Diam <- as_tibble(boot_foodweb_model$t) %>%
+  mutate(`FoodwebComplex:sc.Diam` = `FoodwebComplex:sc.Diam` - fixef(biased_foodweb_model)["FoodwebComplex:sc.Diam"],
+         `FoodwebSimple:sc.Diam` = `FoodwebSimple:sc.Diam` - fixef(biased_foodweb_model)["FoodwebSimple:sc.Diam"])#,
+         #`FoodwebComplex:I(sc.Diam^2)` = `FoodwebComplex:I(sc.Diam^2)` - fixef(biased_foodweb_model)["FoodwebComplex:I(sc.Diam^2)"],
+         #`FoodwebSimple:I(sc.Diam^2)` = `FoodwebSimple:I(sc.Diam^2)` - fixef(biased_foodweb_model)["FoodwebSimple:I(sc.Diam^2)"],
+         #`FoodwebComplex:sc.Diam:sc.log.Clutch` = `FoodwebComplex:sc.Diam:sc.log.Clutch` - fixef(biased_foodweb_model)["FoodwebComplex:sc.Diam:sc.log.Clutch"],
+         #`FoodwebSimple:sc.Diam:sc.log.Clutch` = `FoodwebSimple:sc.Diam:sc.log.Clutch` - fixef(biased_foodweb_model)["FoodwebSimple:sc.Diam:sc.log.Clutch"],
+         #`FoodwebComplex:sc.Diam:sc.sqrt.Pref` = `FoodwebComplex:sc.Diam:sc.sqrt.Pref` - fixef(biased_foodweb_model)["FoodwebComplex:sc.Diam:sc.sqrt.Pref"],
+         #`FoodwebSimple:sc.Diam:sc.sqrt.Pref` = `FoodwebSimple:sc.Diam:sc.sqrt.Pref` - fixef(biased_foodweb_model)["FoodwebSimple:sc.Diam:sc.sqrt.Pref"])
+
+# Calculate differences between food-web treatments, then estimate means and confidence intervals
+foodweb_alphas <- foodweb_adj_Diam %>%
+  rename(`FoodwebSimple:(Intercept)`=FoodwebSimple, `FoodwebComplex:(Intercept)`=FoodwebComplex) %>%
+  mutate(`FoodwebDiff:(Intercept)` = `FoodwebSimple:(Intercept)` - `FoodwebComplex:(Intercept)`,
+         `FoodwebDiff:sc.Diam` = `FoodwebSimple:sc.Diam` - `FoodwebComplex:sc.Diam`,
+         `FoodwebDiff:sc.log.Clutch` = `FoodwebSimple:sc.log.Clutch` - `FoodwebComplex:sc.log.Clutch`,
+         `FoodwebDiff:sc.sqrt.Pref` = `FoodwebSimple:sc.sqrt.Pref` - `FoodwebComplex:sc.sqrt.Pref`,
+         `FoodwebDiff:I(sc.Diam^2)` = `FoodwebSimple:I(sc.Diam^2)` - `FoodwebComplex:I(sc.Diam^2)`,
+         `FoodwebDiff:I(sc.log.Clutch^2)` = `FoodwebSimple:I(sc.log.Clutch^2)` - `FoodwebComplex:I(sc.log.Clutch^2)`,
+         `FoodwebDiff:I(sc.sqrt.Pref^2)` = `FoodwebSimple:I(sc.sqrt.Pref^2)` - `FoodwebComplex:I(sc.sqrt.Pref^2)`,
+         `FoodwebDiff:sc.Diam:sc.log.Clutch` = `FoodwebSimple:sc.Diam:sc.log.Clutch` - `FoodwebComplex:sc.Diam:sc.log.Clutch`,
+         `FoodwebDiff:sc.Diam:sc.sqrt.Pref` = `FoodwebSimple:sc.Diam:sc.sqrt.Pref` - `FoodwebComplex:sc.Diam:sc.sqrt.Pref`,
+         `FoodwebDiff:sc.log.Clutch:sc.sqrt.Pref` = `FoodwebSimple:sc.log.Clutch:sc.sqrt.Pref` - `FoodwebComplex:sc.log.Clutch:sc.sqrt.Pref`) %>%
+  summarise_all(funs(mean, conf.high, conf.low))
+
+# Tidy up estimates
+tidy_foodweb_alphas <- foodweb_alphas %>%
+  t() %>%
+  as.data.frame() %>%
+  transmute(rows = rownames(.), value=V1) %>%
+  separate(col = rows, into = c("term","estimate"), sep="_") %>%
+  separate(col = term, into = c("type","term_1","term_2"), sep=":", extra="drop") %>%
+  mutate(term = ifelse(is.na(term_2), term_1, paste(term_1,term_2,sep=":"))) %>%
+  separate(col = type, into = c("extra","type"), sep = 7) %>%
+  select(type, term, estimate, value) %>%
+  spread(estimate, value) %>%
+  mutate(P_cutoff = ifelse(conf.high*conf.low < 0, "","*"),
+         coefficient_type = ifelse(term=="(Intercept)","Mean fitness",
+                                   ifelse(grepl("\\^2", .$term)==TRUE, "Quadratic",
+                                          ifelse(grepl(":", .$term)==TRUE, "Correlational","Linear"))))
+```
+
+```{r Plot food-web coefficients, echo=FALSE}
+
+# Plot helpers
+dodge_width <- position_dodge(width=0.5)
+y_limits_foodweb_coefs <- c(min(filter(tidy_foodweb_alphas, type!="Diff")$conf.low), 
+                            max(filter(tidy_foodweb_alphas, type!="Diff")$conf.high))
+P_asterisk_foodweb_coefs <- 1.5
+P_size <- 8
+legend_foodweb_labels <- c("Complex","Simple")
+point.size <- 3
+
+# Plot mean fitness
+plot_foodweb_mean_fitness <- tidy_foodweb_alphas %>%
+  filter(type!="Diff", term=="(Intercept)") %>%
+  ggplot(., aes(x=type)) +
+  geom_linerange(aes(ymax=inverse_logit(conf.high), ymin=inverse_logit(conf.low), color=type), position=dodge_width) +
+  geom_point(aes(y=inverse_logit(mean), fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)"), aes(y=0.8, x=1.5, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Larva survival", limits=c(0,1), breaks=c(0,0.2,0.4,0.6,0.8,1)) +
+  xlab("Food web") +
+  facet_wrap(~coefficient_type) +
+  scale_fill_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_labels) +
+  scale_color_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_labels) 
+
+# Plot linear trait-fitness relationaships
+plot_foodweb_linear_coefs <- tidy_foodweb_alphas %>%
+  filter(type!="Diff", term %in% c("sc.Diam","sc.log.Clutch","sc.sqrt.Pref")) %>%
+  ggplot(., aes(x=term)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_foodweb_alphas, type=="Diff", term %in% c("sc.Diam","sc.log.Clutch","sc.sqrt.Pref")), 
+            aes(y=P_asterisk_foodweb_coefs, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Coefficient", limits=y_limits_foodweb_coefs) +
+  scale_x_discrete(name="", labels=parse(text=c("alpha[Diam]","alpha[Clutch]","alpha[Pref]"))) +
+  facet_wrap(~coefficient_type) +
+  scale_fill_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_labels) +
+  scale_color_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_labels)
+
+# Plot quadratic trait-fitness relationships
+plot_foodweb_quadratic_coefs <- tidy_foodweb_alphas %>%
+  filter(type!="Diff", term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.sqrt.Pref^2)")) %>%
+  ggplot(., aes(x=term, color=type)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_foodweb_alphas, type=="Diff", term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.sqrt.Pref^2)")), 
+            aes(y=P_asterisk_foodweb_coefs, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Coefficient", limits=y_limits_foodweb_coefs) +
+  scale_x_discrete(name="", labels=parse(text=c("alpha[Diam:Diam]","alpha[Clutch:Clutch]","alpha[Pref:Pref]"))) +
+  facet_wrap(~coefficient_type) +
+  scale_fill_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_labels) +
+  scale_color_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_labels)
+
+# Plot correlational trait-fitness relationaships
+plot_foodweb_correlational_coefs <- tidy_foodweb_alphas %>%
+  filter(type!="Diff", term %in% c("sc.Diam:sc.log.Clutch","sc.Diam:sc.sqrt.Pref","sc.log.Clutch:sc.sqrt.Pref")) %>%
+  ggplot(., aes(x=term, color=type)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_foodweb_alphas, type=="Diff", term %in% c("sc.Diam:sc.log.Clutch","sc.Diam:sc.sqrt.Pref","sc.log.Clutch:sc.sqrt.Pref")), 
+            aes(y=P_asterisk_foodweb_coefs, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Coefficient", limits=y_limits_foodweb_coefs) +
+  scale_x_discrete(name="", labels=parse(text=c("alpha[Diam:Clutch]","alpha[Diam:Pref]","alpha[Clutch:Pref]"))) +
+  facet_wrap(~coefficient_type) +
+  scale_fill_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_labels) +
+  scale_color_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_labels) 
+
+# Format plots for manuscript
+plot_foodweb_coefs <- plot_grid(
+  plot_foodweb_mean_fitness + theme(legend.position = "none"),
+  plot_foodweb_linear_coefs + theme(legend.position = "none"),
+  plot_foodweb_quadratic_coefs + theme(legend.position = "none"),
+  plot_foodweb_correlational_coefs + theme(legend.position = "none"), 
+  nrow=2, align="hv", labels = "")
+
+figure_foodweb_coefs <- plot_foodweb_coefs 
+figure_foodweb_coefs
+```
+
+```{r Food-web selection gradients, include=FALSE}
+
+# Estimate mean fitness and mean "brackets" for each food-web treatment (see Janzen and Stern 1998 equation 4 for details about "brackets")
+foodweb_complex_predict <- predict(foodweb_model, newdata=filter(gall_selection.df, Foodweb=="Complex"), type="response")
+foodweb_complex_mean_brackets <- mean(foodweb_complex_predict * (1 - foodweb_complex_predict))
+foodweb_complex_mean_fitness <- mean(foodweb_complex_predict)
+
+foodweb_simple_predict <- predict(foodweb_model, newdata=filter(gall_selection.df, Foodweb=="Simple"), type="response")
+foodweb_simple_mean_brackets <- mean(foodweb_simple_predict * (1 - foodweb_simple_predict))
+foodweb_simple_mean_fitness <- mean(foodweb_simple_predict)
+
+foodweb_complex_gradient <- function(x) foodweb_complex_mean_brackets * x / foodweb_complex_mean_fitness
+foodweb_simple_gradient <- function(x) foodweb_simple_mean_brackets * x / foodweb_simple_mean_fitness
+
+foodweb_complex_raw_gradients <- select(foodweb_adj_Diam, starts_with("FoodwebComplex:")) %>%
+  transmute_all(funs(foodweb_complex_gradient))
+
+foodweb_simple_raw_gradients <- select(foodweb_adj_Diam, starts_with("FoodwebSimple:")) %>%
+  transmute_all(funs(foodweb_simple_gradient))
+
+# Calculate differences between food-web treatments, then estimate means and confidence intervals
+foodweb_grads <- bind_cols(foodweb_complex_raw_gradients, foodweb_simple_raw_gradients) %>%
+  mutate(`FoodwebDiff:sc.Diam` = `FoodwebSimple:sc.Diam` - `FoodwebComplex:sc.Diam`,
+         `FoodwebDiff:sc.log.Clutch` = `FoodwebSimple:sc.log.Clutch` - `FoodwebComplex:sc.log.Clutch`,
+         `FoodwebDiff:sc.sqrt.Pref` = `FoodwebSimple:sc.sqrt.Pref` - `FoodwebComplex:sc.sqrt.Pref`,
+         `FoodwebDiff:I(sc.Diam^2)` = `FoodwebSimple:I(sc.Diam^2)` - `FoodwebComplex:I(sc.Diam^2)`,
+         `FoodwebDiff:I(sc.log.Clutch^2)` = `FoodwebSimple:I(sc.log.Clutch^2)` - `FoodwebComplex:I(sc.log.Clutch^2)`,
+         `FoodwebDiff:I(sc.sqrt.Pref^2)` = `FoodwebSimple:I(sc.sqrt.Pref^2)` - `FoodwebComplex:I(sc.sqrt.Pref^2)`,
+         `FoodwebDiff:sc.Diam:sc.log.Clutch` = `FoodwebSimple:sc.Diam:sc.log.Clutch` - `FoodwebComplex:sc.Diam:sc.log.Clutch`,
+         `FoodwebDiff:sc.Diam:sc.sqrt.Pref` = `FoodwebSimple:sc.Diam:sc.sqrt.Pref` - `FoodwebComplex:sc.Diam:sc.sqrt.Pref`,
+         `FoodwebDiff:sc.log.Clutch:sc.sqrt.Pref` = `FoodwebSimple:sc.log.Clutch:sc.sqrt.Pref` - `FoodwebComplex:sc.log.Clutch:sc.sqrt.Pref`) %>%
+  summarise_all(funs(mean, conf.high, conf.low))
+
+# Tidy up estimates
+tidy_foodweb_grads <- foodweb_grads %>%
+  t() %>%
+  as.data.frame() %>%
+  transmute(rows = rownames(.), value=V1) %>%
+  separate(col = rows, into = c("term","estimate"), sep="_") %>%
+  separate(col = term, into = c("type","term_1","term_2"), sep=":", extra="drop") %>%
+  mutate(term = ifelse(is.na(term_2), term_1, paste(term_1,term_2,sep=":"))) %>%
+  separate(col = type, into = c("extra","type"), sep = 7) %>%
+  select(type, term, estimate, value) %>%
+  spread(estimate, value) %>%
+  mutate(P_cutoff = ifelse(conf.high*conf.low < 0, "","*"),
+         gradient_type = ifelse(grepl("\\^2", .$term)==TRUE, "Quadratic",
+                                ifelse(grepl(":", .$term)==TRUE, "Correlational","Directional")),
+         mean = ifelse(gradient_type=="Quadratic", 2*mean, mean),
+         conf.low = ifelse(gradient_type=="Quadratic", 2*conf.low, conf.low),
+         conf.high = ifelse(gradient_type=="Quadratic", 2*conf.high, conf.high))
+```
+
+```{r Plot food-web gradients, echo=FALSE}
+
+# Plot helpers
+dodge_width <- position_dodge(width=0.5)
+y_limits_foodweb_grads <- c(min(filter(tidy_foodweb_grads, type!="Diff")$conf.low), 
+                            max(filter(tidy_foodweb_grads, type!="Diff")$conf.high))
+P_asterisk_foodweb_grads <- 0.5
+P_size <- 8
+legend_foodweb_labels <- c("Complex","Simple")
+legend_foodweb_title <- "Food web"
+point.size <- 3
+
+# Plot directional selection gradients
+plot_foodweb_directional_grads <- tidy_foodweb_grads %>%
+  filter(type!="Diff", term %in% c("sc.Diam","sc.log.Clutch","sc.sqrt.Pref")) %>%
+  ggplot(., aes(x=term)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_foodweb_grads, type=="Diff", term %in% c("sc.Diam","sc.log.Clutch","sc.sqrt.Pref")), 
+            aes(y=P_asterisk_foodweb_grads, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Gradient", limits=y_limits_foodweb_grads) +
+  scale_x_discrete(name="", labels=parse(text=c("beta[Diam]","beta[Clutch]","beta[Pref]"))) +
+  facet_wrap(~gradient_type) +
+  scale_fill_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_labels, name=legend_foodweb_title) +
+  scale_color_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_labels, name=legend_foodweb_title)
+
+# Plot quadratic selection gradients
+plot_foodweb_quadratic_grads <- tidy_foodweb_grads %>%
+  filter(type!="Diff", term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.sqrt.Pref^2)")) %>%
+  ggplot(., aes(x=term, color=type)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_foodweb_grads, type=="Diff", term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.sqrt.Pref^2)")), 
+            aes(y=P_asterisk_foodweb_grads, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Gradient", limits=y_limits_foodweb_grads) +
+  scale_x_discrete(name="", labels=parse(text=c("gamma[Diam:Diam]","gamma[Clutch:Clutch]","gamma[Pref:Pref]"))) +
+  facet_wrap(~gradient_type) +
+  scale_fill_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_labels, name=legend_foodweb_title) +
+  scale_color_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_labels, name=legend_foodweb_title)
+
+# Plot correlational selection gradients
+plot_foodweb_correlational_grads <- tidy_foodweb_grads %>%
+  filter(type!="Diff", term %in% c("sc.Diam:sc.log.Clutch","sc.Diam:sc.sqrt.Pref","sc.log.Clutch:sc.sqrt.Pref")) %>%
+  ggplot(., aes(x=term, color=type)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_foodweb_grads, type=="Diff", term %in% c("sc.Diam:sc.log.Clutch","sc.Diam:sc.sqrt.Pref","sc.log.Clutch:sc.sqrt.Pref")), 
+            aes(y=P_asterisk_foodweb_grads, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Gradient", limits=y_limits_foodweb_grads) +
+  scale_x_discrete(name="", labels=parse(text=c("gamma[Diam:Clutch]","gamma[Diam:Pref]","gamma[Clutch:Pref]"))) +
+  facet_wrap(~gradient_type) +
+  scale_fill_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_labels, name=legend_foodweb_title) +
+  scale_color_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_labels, name=legend_foodweb_title) 
+
+# Get legend
+legend_foodweb_grads <- get_legend(plot_foodweb_directional_grads)
+
+# Format plots for manuscript
+plot_foodweb_grads <- plot_grid(
+  plot_foodweb_directional_grads + theme(legend.position = "none", axis.title = element_blank()),
+  plot_foodweb_quadratic_grads + theme(legend.position = "none", axis.title = element_blank()),
+  plot_foodweb_correlational_grads + theme(legend.position = "none", axis.title = element_blank()), 
+  nrow=2, align="hv", labels = "")
+plot_legend_foodweb_grads <- ggdraw(plot_foodweb_grads) + draw_grob(legend_foodweb_grads, x = 0.7, y=-0.2)
+y_title_foodweb_grads <- ggdraw() + draw_label("Selection gradient (SDs)", angle = 90)
+
+figure_foodweb_grads <- plot_grid(y_title_foodweb_grads, plot_legend_foodweb_grads, ncol=2, rel_widths = c(0.05,1)) 
+figure_foodweb_grads
+```
+
+```{r Egg vs. larval ptoid model, cache=TRUE}
+# excludes cases of egg-parasitism from Complex food web
+egglarval_df <- filter(gall_selection.df, Foodweb == "Simple" | Foodweb == "Complex" & platy < 1) 
+
+egglarval_model <- update(foodweb_model, data=egglarval_df)
+
+biased_egglarval_df <- egglarval_df %>%
+  group_by(Foodweb, Gall_Number) %>%
+  mutate(mean_survival = mean(gall_survival)) %>%
+  filter(mean_survival > 0, mean_survival < 1) %>%
+  ungroup()
+
+biased_egglarval_model <- update(biased_foodweb_model, data=biased_egglarval_df)
+```
+
+Note that the resulting estimates and confidence intervals are useful for determining whether trait-fitness relationships differ from zero, but not whether they differ between food-web treatments. For the later, we calculate the differences between each food-web treatment from the bootstrapped samples.
+
+```{r Bootstrap egg vs. larval ptoid model, cache=TRUE, include=FALSE}
+boot_egglarval_model <- bootMer(egglarval_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+```
+
+```{r Egg vs. larval ptoid alpha coefficients, include=FALSE}
+
+# Adjust coefficients with chamber diameter
+egglarval_adj_Diam <- as_tibble(boot_egglarval_model$t) %>%
+  mutate(`FoodwebComplex:sc.Diam` = `FoodwebComplex:sc.Diam` - fixef(biased_egglarval_model)["FoodwebComplex:sc.Diam"],
+         `FoodwebSimple:sc.Diam` = `FoodwebSimple:sc.Diam` - fixef(biased_egglarval_model)["FoodwebSimple:sc.Diam"])#,
+         #`FoodwebComplex:I(sc.Diam^2)` = `FoodwebComplex:I(sc.Diam^2)` - fixef(biased_egglarval_model)["FoodwebComplex:I(sc.Diam^2)"],
+         #`FoodwebSimple:I(sc.Diam^2)` = `FoodwebSimple:I(sc.Diam^2)` - fixef(biased_egglarval_model)["FoodwebSimple:I(sc.Diam^2)"],
+         #`FoodwebComplex:sc.Diam:sc.log.Clutch` = `FoodwebComplex:sc.Diam:sc.log.Clutch` - fixef(biased_egglarval_model)["FoodwebComplex:sc.Diam:sc.log.Clutch"],
+         #`FoodwebSimple:sc.Diam:sc.log.Clutch` = `FoodwebSimple:sc.Diam:sc.log.Clutch` - fixef(biased_egglarval_model)["FoodwebSimple:sc.Diam:sc.log.Clutch"],
+         #`FoodwebComplex:sc.Diam:sc.sqrt.Pref` = `FoodwebComplex:sc.Diam:sc.sqrt.Pref` - fixef(biased_egglarval_model)["FoodwebComplex:sc.Diam:sc.sqrt.Pref"],
+         #`FoodwebSimple:sc.Diam:sc.sqrt.Pref` = `FoodwebSimple:sc.Diam:sc.sqrt.Pref` - fixef(biased_egglarval_model)["FoodwebSimple:sc.Diam:sc.sqrt.Pref"])
+
+# Calculate differences between food-web treatments, then estimate means and confidence intervals
+egglarval_alphas <- egglarval_adj_Diam %>%
+  rename(`FoodwebSimple:(Intercept)`=FoodwebSimple, `FoodwebComplex:(Intercept)`=FoodwebComplex) %>%
+  mutate(`FoodwebDiff:(Intercept)` = `FoodwebSimple:(Intercept)` - `FoodwebComplex:(Intercept)`,
+         `FoodwebDiff:sc.Diam` = `FoodwebSimple:sc.Diam` - `FoodwebComplex:sc.Diam`,
+         `FoodwebDiff:sc.log.Clutch` = `FoodwebSimple:sc.log.Clutch` - `FoodwebComplex:sc.log.Clutch`,
+         `FoodwebDiff:sc.sqrt.Pref` = `FoodwebSimple:sc.sqrt.Pref` - `FoodwebComplex:sc.sqrt.Pref`,
+         `FoodwebDiff:I(sc.Diam^2)` = `FoodwebSimple:I(sc.Diam^2)` - `FoodwebComplex:I(sc.Diam^2)`,
+         `FoodwebDiff:I(sc.log.Clutch^2)` = `FoodwebSimple:I(sc.log.Clutch^2)` - `FoodwebComplex:I(sc.log.Clutch^2)`,
+         `FoodwebDiff:I(sc.sqrt.Pref^2)` = `FoodwebSimple:I(sc.sqrt.Pref^2)` - `FoodwebComplex:I(sc.sqrt.Pref^2)`,
+         `FoodwebDiff:sc.Diam:sc.log.Clutch` = `FoodwebSimple:sc.Diam:sc.log.Clutch` - `FoodwebComplex:sc.Diam:sc.log.Clutch`,
+         `FoodwebDiff:sc.Diam:sc.sqrt.Pref` = `FoodwebSimple:sc.Diam:sc.sqrt.Pref` - `FoodwebComplex:sc.Diam:sc.sqrt.Pref`,
+         `FoodwebDiff:sc.log.Clutch:sc.sqrt.Pref` = `FoodwebSimple:sc.log.Clutch:sc.sqrt.Pref` - `FoodwebComplex:sc.log.Clutch:sc.sqrt.Pref`) %>%
+  summarise_all(funs(mean, conf.high, conf.low))
+
+# Tidy up estimates
+tidy_egglarval_alphas <- egglarval_alphas %>%
+  t() %>%
+  as.data.frame() %>%
+  transmute(rows = rownames(.), value=V1) %>%
+  separate(col = rows, into = c("term","estimate"), sep="_") %>%
+  separate(col = term, into = c("type","term_1","term_2"), sep=":", extra="drop") %>%
+  mutate(term = ifelse(is.na(term_2), term_1, paste(term_1,term_2,sep=":"))) %>%
+  separate(col = type, into = c("extra","type"), sep = 7) %>%
+  select(type, term, estimate, value) %>%
+  spread(estimate, value) %>%
+  mutate(P_cutoff = ifelse(conf.high*conf.low < 0, "","*"),
+         coefficient_type = ifelse(term=="(Intercept)","Mean fitness",
+                                   ifelse(grepl("\\^2", .$term)==TRUE, "Quadratic",
+                                          ifelse(grepl(":", .$term)==TRUE, "Correlational","Linear"))))
+```
+
+```{r Plot egglarval coefficients, echo=FALSE}
+
+# Plot helpers
+dodge_width <- position_dodge(width=0.5)
+y_limits_egglarval_coefs <- c(min(filter(tidy_egglarval_alphas, type!="Diff")$conf.low), 
+                            max(filter(tidy_egglarval_alphas, type!="Diff")$conf.high))
+P_asterisk_egglarval_coefs <- 1.3
+P_size <- 8
+legend_egglarval_labels <- c("Larval","Egg")
+point.size <- 3
+
+# Plot mean fitness
+plot_egglarval_mean_fitness <- tidy_egglarval_alphas %>%
+  filter(type!="Diff", term=="(Intercept)") %>%
+  ggplot(., aes(x=type)) +
+  geom_linerange(aes(ymax=inverse_logit(conf.high), ymin=inverse_logit(conf.low), color=type), position=dodge_width) +
+  geom_point(aes(y=inverse_logit(mean), fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_egglarval_alphas, type=="Diff", term=="(Intercept)"), aes(y=0.9, x=1.5, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Larva survival", limits=c(0,1), breaks=c(0,0.2,0.4,0.6,0.8,1)) +
+  scale_x_discrete(name="Parasitoid", breaks=c("Complex","Simple"), labels=c("Larval","Egg")) +
+  facet_wrap(~coefficient_type) +
+  scale_fill_manual(values=cbPalette[c(4,5)], labels=legend_egglarval_labels) +
+  scale_color_manual(values=cbPalette[c(4,5)], labels=legend_egglarval_labels) 
+
+# Plot linear trait-fitness relationaships
+plot_egglarval_linear_coefs <- tidy_egglarval_alphas %>%
+  filter(type!="Diff", term %in% c("sc.Diam","sc.log.Clutch","sc.sqrt.Pref")) %>%
+  ggplot(., aes(x=term)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_egglarval_alphas, type=="Diff", term %in% c("sc.Diam","sc.log.Clutch","sc.sqrt.Pref")), 
+            aes(y=P_asterisk_egglarval_coefs, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Coefficient", limits=y_limits_egglarval_coefs) +
+  scale_x_discrete(name="", labels=parse(text=c("alpha[Diam]","alpha[Clutch]","alpha[Pref]"))) +
+  facet_wrap(~coefficient_type) +
+  scale_fill_manual(values=cbPalette[c(4,5)], labels=legend_egglarval_labels) +
+  scale_color_manual(values=cbPalette[c(4,5)], labels=legend_egglarval_labels)
+
+# Plot quadratic trait-fitness relationships
+plot_egglarval_quadratic_coefs <- tidy_egglarval_alphas %>%
+  filter(type!="Diff", term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.sqrt.Pref^2)")) %>%
+  ggplot(., aes(x=term, color=type)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_egglarval_alphas, type=="Diff", term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.sqrt.Pref^2)")), 
+            aes(y=P_asterisk_egglarval_coefs, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Coefficient", limits=y_limits_egglarval_coefs) +
+  scale_x_discrete(name="", labels=parse(text=c("alpha[Diam:Diam]","alpha[Clutch:Clutch]","alpha[Pref:Pref]"))) +
+  facet_wrap(~coefficient_type) +
+  scale_fill_manual(values=cbPalette[c(4,5)], labels=legend_egglarval_labels) +
+  scale_color_manual(values=cbPalette[c(4,5)], labels=legend_egglarval_labels)
+
+# Plot correlational trait-fitness relationaships
+plot_egglarval_correlational_coefs <- tidy_egglarval_alphas %>%
+  filter(type!="Diff", term %in% c("sc.Diam:sc.log.Clutch","sc.Diam:sc.sqrt.Pref","sc.log.Clutch:sc.sqrt.Pref")) %>%
+  ggplot(., aes(x=term, color=type)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_egglarval_alphas, type=="Diff", term %in% c("sc.Diam:sc.log.Clutch","sc.Diam:sc.sqrt.Pref","sc.log.Clutch:sc.sqrt.Pref")), 
+            aes(y=P_asterisk_egglarval_coefs, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Coefficient", limits=y_limits_egglarval_coefs) +
+  scale_x_discrete(name="", labels=parse(text=c("alpha[Diam:Clutch]","alpha[Diam:Pref]","alpha[Clutch:Pref]"))) +
+  facet_wrap(~coefficient_type) +
+  scale_fill_manual(values=cbPalette[c(4,5)], labels=legend_egglarval_labels) +
+  scale_color_manual(values=cbPalette[c(4,5)], labels=legend_egglarval_labels) 
+
+# Format plots for manuscript
+plot_egglarval_coefs <- plot_grid(
+  plot_egglarval_mean_fitness + theme(legend.position = "none"),
+  plot_egglarval_linear_coefs + theme(legend.position = "none"),
+  plot_egglarval_quadratic_coefs + theme(legend.position = "none"),
+  plot_egglarval_correlational_coefs + theme(legend.position = "none"), 
+  nrow=2, align="hv", labels = "")
+
+figure_egglarval_coefs <- plot_egglarval_coefs 
+figure_egglarval_coefs
+```
+
+```{r Egg vs. larval ptoid selection gradients, include=FALSE}
+
+# Estimate mean fitness and mean "brackets" for each food-web treatment (see Janzen and Stern 1998 equation 4 for details about "brackets")
+egglarval_complex_predict <- predict(egglarval_model, newdata=filter(egglarval_df, Foodweb=="Complex"), type="response")
+egglarval_complex_mean_brackets <- mean(egglarval_complex_predict * (1 - egglarval_complex_predict))
+egglarval_complex_mean_fitness <- mean(egglarval_complex_predict)
+
+egglarval_simple_predict <- predict(egglarval_model, newdata=filter(egglarval_df, Foodweb=="Simple"), type="response")
+egglarval_simple_mean_brackets <- mean(egglarval_simple_predict * (1 - egglarval_simple_predict))
+egglarval_simple_mean_fitness <- mean(egglarval_simple_predict)
+
+egglarval_complex_gradient <- function(x) egglarval_complex_mean_brackets * x / egglarval_complex_mean_fitness
+egglarval_simple_gradient <- function(x) egglarval_simple_mean_brackets * x / egglarval_simple_mean_fitness
+
+egglarval_complex_raw_gradients <- select(egglarval_adj_Diam, starts_with("FoodwebComplex:")) %>%
+  transmute_all(funs(egglarval_complex_gradient))
+
+egglarval_simple_raw_gradients <- select(egglarval_adj_Diam, starts_with("FoodwebSimple:")) %>%
+  transmute_all(funs(egglarval_simple_gradient))
+
+# Calculate differences between food-web treatments, then estimate means and confidence intervals
+egglarval_grads <- bind_cols(egglarval_complex_raw_gradients, egglarval_simple_raw_gradients) %>%
+  mutate(`FoodwebDiff:sc.Diam` = `FoodwebSimple:sc.Diam` - `FoodwebComplex:sc.Diam`,
+         `FoodwebDiff:sc.log.Clutch` = `FoodwebSimple:sc.log.Clutch` - `FoodwebComplex:sc.log.Clutch`,
+         `FoodwebDiff:sc.sqrt.Pref` = `FoodwebSimple:sc.sqrt.Pref` - `FoodwebComplex:sc.sqrt.Pref`,
+         `FoodwebDiff:I(sc.Diam^2)` = `FoodwebSimple:I(sc.Diam^2)` - `FoodwebComplex:I(sc.Diam^2)`,
+         `FoodwebDiff:I(sc.log.Clutch^2)` = `FoodwebSimple:I(sc.log.Clutch^2)` - `FoodwebComplex:I(sc.log.Clutch^2)`,
+         `FoodwebDiff:I(sc.sqrt.Pref^2)` = `FoodwebSimple:I(sc.sqrt.Pref^2)` - `FoodwebComplex:I(sc.sqrt.Pref^2)`,
+         `FoodwebDiff:sc.Diam:sc.log.Clutch` = `FoodwebSimple:sc.Diam:sc.log.Clutch` - `FoodwebComplex:sc.Diam:sc.log.Clutch`,
+         `FoodwebDiff:sc.Diam:sc.sqrt.Pref` = `FoodwebSimple:sc.Diam:sc.sqrt.Pref` - `FoodwebComplex:sc.Diam:sc.sqrt.Pref`,
+         `FoodwebDiff:sc.log.Clutch:sc.sqrt.Pref` = `FoodwebSimple:sc.log.Clutch:sc.sqrt.Pref` - `FoodwebComplex:sc.log.Clutch:sc.sqrt.Pref`) %>%
+  summarise_all(funs(mean, conf.high, conf.low))
+
+# Tidy up estimates
+tidy_egglarval_grads <- egglarval_grads %>%
+  t() %>%
+  as.data.frame() %>%
+  transmute(rows = rownames(.), value=V1) %>%
+  separate(col = rows, into = c("term","estimate"), sep="_") %>%
+  separate(col = term, into = c("type","term_1","term_2"), sep=":", extra="drop") %>%
+  mutate(term = ifelse(is.na(term_2), term_1, paste(term_1,term_2,sep=":"))) %>%
+  separate(col = type, into = c("extra","type"), sep = 7) %>%
+  select(type, term, estimate, value) %>%
+  spread(estimate, value) %>%
+  mutate(P_cutoff = ifelse(conf.high*conf.low < 0, "","*"),
+         gradient_type = ifelse(grepl("\\^2", .$term)==TRUE, "Quadratic",
+                                ifelse(grepl(":", .$term)==TRUE, "Correlational","Directional")),
+         mean = ifelse(gradient_type=="Quadratic", 2*mean, mean),
+         conf.low = ifelse(gradient_type=="Quadratic", 2*conf.low, conf.low),
+         conf.high = ifelse(gradient_type=="Quadratic", 2*conf.high, conf.high))
+```
+
+```{r Plot egg vs. larval ptoid gradients, echo=FALSE}
+
+# Plot helpers
+dodge_width <- position_dodge(width=0.5)
+y_limits_egglarval_grads <- c(min(filter(tidy_egglarval_grads, type!="Diff")$conf.low), 
+                            max(filter(tidy_egglarval_grads, type!="Diff")$conf.high))
+P_asterisk_egglarval_grads <- 0.25
+P_size <- 8
+legend_egglarval_labels <- c("Larval","Egg")
+legend_egglarval_title <- "Parasitoid"
+point.size <- 3
+
+# Plot directional selection gradients
+plot_egglarval_directional_grads <- tidy_egglarval_grads %>%
+  filter(type!="Diff", term %in% c("sc.Diam","sc.log.Clutch","sc.sqrt.Pref")) %>%
+  ggplot(., aes(x=term)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_egglarval_grads, type=="Diff", term %in% c("sc.Diam","sc.log.Clutch","sc.sqrt.Pref")), 
+            aes(y=P_asterisk_egglarval_grads, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Gradient", limits=y_limits_egglarval_grads) +
+  scale_x_discrete(name="", labels=parse(text=c("beta[Diam]","beta[Clutch]","beta[Pref]"))) +
+  facet_wrap(~gradient_type) +
+  scale_fill_manual(values=cbPalette[c(4,5)], labels=legend_egglarval_labels, name=legend_egglarval_title) +
+  scale_color_manual(values=cbPalette[c(4,5)], labels=legend_egglarval_labels, name=legend_egglarval_title)
+
+# Plot quadratic selection gradients
+plot_egglarval_quadratic_grads <- tidy_egglarval_grads %>%
+  filter(type!="Diff", term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.sqrt.Pref^2)")) %>%
+  ggplot(., aes(x=term, color=type)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_egglarval_grads, type=="Diff", term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.sqrt.Pref^2)")), 
+            aes(y=P_asterisk_egglarval_grads, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Gradient", limits=y_limits_egglarval_grads) +
+  scale_x_discrete(name="", labels=parse(text=c("gamma[Diam:Diam]","gamma[Clutch:Clutch]","gamma[Pref:Pref]"))) +
+  facet_wrap(~gradient_type) +
+  scale_fill_manual(values=cbPalette[c(4,5)], labels=legend_egglarval_labels, name=legend_egglarval_title) +
+  scale_color_manual(values=cbPalette[c(4,5)], labels=legend_egglarval_labels, name=legend_egglarval_title)
+
+# Plot correlational selection gradients
+plot_egglarval_correlational_grads <- tidy_egglarval_grads %>%
+  filter(type!="Diff", term %in% c("sc.Diam:sc.log.Clutch","sc.Diam:sc.sqrt.Pref","sc.log.Clutch:sc.sqrt.Pref")) %>%
+  ggplot(., aes(x=term, color=type)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_egglarval_grads, type=="Diff", term %in% c("sc.Diam:sc.log.Clutch","sc.Diam:sc.sqrt.Pref","sc.log.Clutch:sc.sqrt.Pref")), 
+            aes(y=P_asterisk_egglarval_grads, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Gradient", limits=y_limits_egglarval_grads) +
+  scale_x_discrete(name="", labels=parse(text=c("gamma[Diam:Clutch]","gamma[Diam:Pref]","gamma[Clutch:Pref]"))) +
+  facet_wrap(~gradient_type) +
+  scale_fill_manual(values=cbPalette[c(4,5)], labels=legend_egglarval_labels, name=legend_egglarval_title) +
+  scale_color_manual(values=cbPalette[c(4,5)], labels=legend_egglarval_labels, name=legend_egglarval_title) 
+
+# Get legend
+legend_egglarval_grads <- get_legend(plot_egglarval_directional_grads)
+
+# Format plots for manuscript
+plot_egglarval_grads <- plot_grid(
+  plot_egglarval_directional_grads + theme(legend.position = "none", axis.title = element_blank()),
+  plot_egglarval_quadratic_grads + theme(legend.position = "none", axis.title = element_blank()),
+  plot_egglarval_correlational_grads + theme(legend.position = "none", axis.title = element_blank()), 
+  nrow=2, align="hv", labels = "")
+plot_legend_egglarval_grads <- ggdraw(plot_egglarval_grads) + draw_grob(legend_egglarval_grads, x = 0.7, y=-0.2)
+y_title_egglarval_grads <- ggdraw() + draw_label("Selection gradient (SDs)", angle = 90)
+
+figure_egglarval_grads <- plot_grid(y_title_egglarval_grads, plot_legend_egglarval_grads, ncol=2, rel_widths = c(0.05,1)) 
+figure_egglarval_grads
+```
+
+```{r Egg vs. egg ptoid model, cache=TRUE}
+# excludes cases of larval-parasitism from Complex food web
+#eggegg_df <- #filter(gall_selection.df, Foodweb == "Simple" | Foodweb == "Complex" & ectos < 1) %>%
+  #mutate(gall_survival = ifelse(gall_survival==1,0,1)) # attempt to look at survival of egg parasitoid
+
+# convert "gall_survival" to egg parasitoid survival. Note that both Iteomyia pupa and larva parasitoids result in 0.
+eggegg_df <- mutate(gall_selection.df, gall_survival = ifelse(egg_parasitoid==1,1,0))
+
+eggegg_model <- update(foodweb_model, data=eggegg_df)
+
+biased_eggegg_df <- eggegg_df %>%
+  group_by(Foodweb, Gall_Number) %>%
+  mutate(mean_survival = mean(gall_survival)) %>%
+  filter(mean_survival > 0, mean_survival < 1) %>%
+  ungroup()
+
+biased_eggegg_model <- update(biased_foodweb_model, data=biased_eggegg_df)
+```
+
+Note that the resulting estimates and confidence intervals are useful for determining whether trait-fitness relationships differ from zero, but not whether they differ between food-web treatments. For the later, we calculate the differences between each food-web treatment from the bootstrapped samples.
+
+```{r Bootstrap egg vs. egg ptoid model, cache=TRUE, include=FALSE}
+boot_eggegg_model <- bootMer(eggegg_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+```
+
+```{r Egg vs. egg ptoid alpha coefficients, include=FALSE}
+
+# Adjust coefficients with chamber diameter
+eggegg_adj_Diam <- as_tibble(boot_eggegg_model$t) %>%
+  mutate(`FoodwebComplex:sc.Diam` = `FoodwebComplex:sc.Diam` - fixef(biased_eggegg_model)["FoodwebComplex:sc.Diam"],
+         `FoodwebSimple:sc.Diam` = `FoodwebSimple:sc.Diam` - fixef(biased_eggegg_model)["FoodwebSimple:sc.Diam"])#,
+         #`FoodwebComplex:I(sc.Diam^2)` = `FoodwebComplex:I(sc.Diam^2)` - fixef(biased_eggegg_model)["FoodwebComplex:I(sc.Diam^2)"],
+         #`FoodwebSimple:I(sc.Diam^2)` = `FoodwebSimple:I(sc.Diam^2)` - fixef(biased_eggegg_model)["FoodwebSimple:I(sc.Diam^2)"],
+         #`FoodwebComplex:sc.Diam:sc.log.Clutch` = `FoodwebComplex:sc.Diam:sc.log.Clutch` - fixef(biased_eggegg_model)["FoodwebComplex:sc.Diam:sc.log.Clutch"],
+         #`FoodwebSimple:sc.Diam:sc.log.Clutch` = `FoodwebSimple:sc.Diam:sc.log.Clutch` - fixef(biased_eggegg_model)["FoodwebSimple:sc.Diam:sc.log.Clutch"],
+         #`FoodwebComplex:sc.Diam:sc.sqrt.Pref` = `FoodwebComplex:sc.Diam:sc.sqrt.Pref` - fixef(biased_eggegg_model)["FoodwebComplex:sc.Diam:sc.sqrt.Pref"],
+         #`FoodwebSimple:sc.Diam:sc.sqrt.Pref` = `FoodwebSimple:sc.Diam:sc.sqrt.Pref` - fixef(biased_eggegg_model)["FoodwebSimple:sc.Diam:sc.sqrt.Pref"])
+
+# Calculate differences between food-web treatments, then estimate means and confidence intervals
+eggegg_alphas <- eggegg_adj_Diam %>%
+  rename(`FoodwebSimple:(Intercept)`=FoodwebSimple, `FoodwebComplex:(Intercept)`=FoodwebComplex) %>%
+  mutate(`FoodwebDiff:(Intercept)` = `FoodwebSimple:(Intercept)` - `FoodwebComplex:(Intercept)`,
+         `FoodwebDiff:sc.Diam` = `FoodwebSimple:sc.Diam` - `FoodwebComplex:sc.Diam`,
+         `FoodwebDiff:sc.log.Clutch` = `FoodwebSimple:sc.log.Clutch` - `FoodwebComplex:sc.log.Clutch`,
+         `FoodwebDiff:sc.sqrt.Pref` = `FoodwebSimple:sc.sqrt.Pref` - `FoodwebComplex:sc.sqrt.Pref`,
+         `FoodwebDiff:I(sc.Diam^2)` = `FoodwebSimple:I(sc.Diam^2)` - `FoodwebComplex:I(sc.Diam^2)`,
+         `FoodwebDiff:I(sc.log.Clutch^2)` = `FoodwebSimple:I(sc.log.Clutch^2)` - `FoodwebComplex:I(sc.log.Clutch^2)`,
+         `FoodwebDiff:I(sc.sqrt.Pref^2)` = `FoodwebSimple:I(sc.sqrt.Pref^2)` - `FoodwebComplex:I(sc.sqrt.Pref^2)`,
+         `FoodwebDiff:sc.Diam:sc.log.Clutch` = `FoodwebSimple:sc.Diam:sc.log.Clutch` - `FoodwebComplex:sc.Diam:sc.log.Clutch`,
+         `FoodwebDiff:sc.Diam:sc.sqrt.Pref` = `FoodwebSimple:sc.Diam:sc.sqrt.Pref` - `FoodwebComplex:sc.Diam:sc.sqrt.Pref`,
+         `FoodwebDiff:sc.log.Clutch:sc.sqrt.Pref` = `FoodwebSimple:sc.log.Clutch:sc.sqrt.Pref` - `FoodwebComplex:sc.log.Clutch:sc.sqrt.Pref`) %>%
+  summarise_all(funs(mean, conf.high, conf.low))
+
+# Tidy up estimates
+tidy_eggegg_alphas <- eggegg_alphas %>%
+  t() %>%
+  as.data.frame() %>%
+  transmute(rows = rownames(.), value=V1) %>%
+  separate(col = rows, into = c("term","estimate"), sep="_") %>%
+  separate(col = term, into = c("type","term_1","term_2"), sep=":", extra="drop") %>%
+  mutate(term = ifelse(is.na(term_2), term_1, paste(term_1,term_2,sep=":"))) %>%
+  separate(col = type, into = c("extra","type"), sep = 7) %>%
+  select(type, term, estimate, value) %>%
+  spread(estimate, value) %>%
+  mutate(P_cutoff = ifelse(conf.high*conf.low < 0, "","*"),
+         coefficient_type = ifelse(term=="(Intercept)","Mean fitness",
+                                   ifelse(grepl("\\^2", .$term)==TRUE, "Quadratic",
+                                          ifelse(grepl(":", .$term)==TRUE, "Correlational","Linear"))))
+```
+
+```{r Plot egg vs. egg ptoid coefficients, echo=FALSE}
+
+# Plot helpers
+dodge_width <- position_dodge(width=0.5)
+y_limits_eggegg_coefs <- c(min(filter(tidy_eggegg_alphas, type!="Diff")$conf.low), 
+                            max(filter(tidy_eggegg_alphas, type!="Diff")$conf.high))
+P_asterisk_eggegg_coefs <- 1.7
+P_size <- 8
+legend_eggegg_labels <- c("Complex","Simple")
+point.size <- 3
+
+# Plot mean fitness
+plot_eggegg_mean_fitness <- tidy_eggegg_alphas %>%
+  filter(type!="Diff", term=="(Intercept)") %>%
+  ggplot(., aes(x=type)) +
+  geom_linerange(aes(ymax=inverse_logit(conf.high), ymin=inverse_logit(conf.low), color=type), position=dodge_width) +
+  geom_point(aes(y=inverse_logit(mean), fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_eggegg_alphas, type=="Diff", term=="(Intercept)"), aes(y=0.9, x=1.5, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Probability of observing egg parasitoid", limits=c(0,1), breaks=c(0,0.2,0.4,0.6,0.8,1)) +
+  scale_x_discrete(name="") +
+  facet_wrap(~coefficient_type) +
+  scale_fill_manual(values=cbPalette[c(2,5)], labels=legend_eggegg_labels) +
+  scale_color_manual(values=cbPalette[c(2,5)], labels=legend_eggegg_labels) 
+
+# Plot linear trait-fitness relationaships
+plot_eggegg_linear_coefs <- tidy_eggegg_alphas %>%
+  filter(type!="Diff", term %in% c("sc.Diam","sc.log.Clutch","sc.sqrt.Pref")) %>%
+  ggplot(., aes(x=term)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_eggegg_alphas, type=="Diff", term %in% c("sc.Diam","sc.log.Clutch","sc.sqrt.Pref")), 
+            aes(y=P_asterisk_eggegg_coefs, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Coefficient", limits=y_limits_eggegg_coefs) +
+  scale_x_discrete(name="", labels=parse(text=c("alpha[Diam]","alpha[Clutch]","alpha[Pref]"))) +
+  facet_wrap(~coefficient_type) +
+  scale_fill_manual(values=cbPalette[c(2,5)], labels=legend_eggegg_labels) +
+  scale_color_manual(values=cbPalette[c(2,5)], labels=legend_eggegg_labels)
+
+# Plot quadratic trait-fitness relationships
+plot_eggegg_quadratic_coefs <- tidy_eggegg_alphas %>%
+  filter(type!="Diff", term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.sqrt.Pref^2)")) %>%
+  ggplot(., aes(x=term, color=type)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_eggegg_alphas, type=="Diff", term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.sqrt.Pref^2)")), 
+            aes(y=P_asterisk_eggegg_coefs, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Coefficient", limits=y_limits_eggegg_coefs) +
+  scale_x_discrete(name="", labels=parse(text=c("alpha[Diam:Diam]","alpha[Clutch:Clutch]","alpha[Pref:Pref]"))) +
+  facet_wrap(~coefficient_type) +
+  scale_fill_manual(values=cbPalette[c(2,5)], labels=legend_eggegg_labels) +
+  scale_color_manual(values=cbPalette[c(2,5)], labels=legend_eggegg_labels)
+
+# Plot correlational trait-fitness relationaships
+plot_eggegg_correlational_coefs <- tidy_eggegg_alphas %>%
+  filter(type!="Diff", term %in% c("sc.Diam:sc.log.Clutch","sc.Diam:sc.sqrt.Pref","sc.log.Clutch:sc.sqrt.Pref")) %>%
+  ggplot(., aes(x=term, color=type)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_eggegg_alphas, type=="Diff", term %in% c("sc.Diam:sc.log.Clutch","sc.Diam:sc.sqrt.Pref","sc.log.Clutch:sc.sqrt.Pref")), 
+            aes(y=P_asterisk_eggegg_coefs, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Coefficient", limits=y_limits_eggegg_coefs) +
+  scale_x_discrete(name="", labels=parse(text=c("alpha[Diam:Clutch]","alpha[Diam:Pref]","alpha[Clutch:Pref]"))) +
+  facet_wrap(~coefficient_type) +
+  scale_fill_manual(values=cbPalette[c(2,5)], labels=legend_eggegg_labels) +
+  scale_color_manual(values=cbPalette[c(2,5)], labels=legend_eggegg_labels) 
+
+# Format plots for manuscript
+plot_eggegg_coefs <- plot_grid(
+  plot_eggegg_mean_fitness + theme(legend.position = "none"),
+  plot_eggegg_linear_coefs + theme(legend.position = "none"),
+  plot_eggegg_quadratic_coefs + theme(legend.position = "none"),
+  plot_eggegg_correlational_coefs + theme(legend.position = "none"), 
+  nrow=2, align="hv", labels = "")
+
+figure_eggegg_coefs <- plot_eggegg_coefs 
+figure_eggegg_coefs
+```
+
+```{r Egg vs. egg ptoid selection gradients, include=FALSE}
+
+# Estimate mean fitness and mean "brackets" for each food-web treatment (see Janzen and Stern 1998 equation 4 for details about "brackets")
+eggegg_complex_predict <- predict(eggegg_model, newdata=filter(eggegg_df, Foodweb=="Complex"), type="response")
+eggegg_complex_mean_brackets <- mean(eggegg_complex_predict * (1 - eggegg_complex_predict))
+eggegg_complex_mean_fitness <- mean(eggegg_complex_predict)
+
+eggegg_simple_predict <- predict(eggegg_model, newdata=filter(eggegg_df, Foodweb=="Simple"), type="response")
+eggegg_simple_mean_brackets <- mean(eggegg_simple_predict * (1 - eggegg_simple_predict))
+eggegg_simple_mean_fitness <- mean(eggegg_simple_predict)
+
+eggegg_complex_gradient <- function(x) eggegg_complex_mean_brackets * x / eggegg_complex_mean_fitness
+eggegg_simple_gradient <- function(x) eggegg_simple_mean_brackets * x / eggegg_simple_mean_fitness
+
+eggegg_complex_raw_gradients <- select(eggegg_adj_Diam, starts_with("FoodwebComplex:")) %>%
+  transmute_all(funs(eggegg_complex_gradient))
+
+eggegg_simple_raw_gradients <- select(eggegg_adj_Diam, starts_with("FoodwebSimple:")) %>%
+  transmute_all(funs(eggegg_simple_gradient))
+
+# Calculate differences between food-web treatments, then estimate means and confidence intervals
+eggegg_grads <- bind_cols(eggegg_complex_raw_gradients, eggegg_simple_raw_gradients) %>%
+  mutate(`FoodwebDiff:sc.Diam` = `FoodwebSimple:sc.Diam` - `FoodwebComplex:sc.Diam`,
+         `FoodwebDiff:sc.log.Clutch` = `FoodwebSimple:sc.log.Clutch` - `FoodwebComplex:sc.log.Clutch`,
+         `FoodwebDiff:sc.sqrt.Pref` = `FoodwebSimple:sc.sqrt.Pref` - `FoodwebComplex:sc.sqrt.Pref`,
+         `FoodwebDiff:I(sc.Diam^2)` = `FoodwebSimple:I(sc.Diam^2)` - `FoodwebComplex:I(sc.Diam^2)`,
+         `FoodwebDiff:I(sc.log.Clutch^2)` = `FoodwebSimple:I(sc.log.Clutch^2)` - `FoodwebComplex:I(sc.log.Clutch^2)`,
+         `FoodwebDiff:I(sc.sqrt.Pref^2)` = `FoodwebSimple:I(sc.sqrt.Pref^2)` - `FoodwebComplex:I(sc.sqrt.Pref^2)`,
+         `FoodwebDiff:sc.Diam:sc.log.Clutch` = `FoodwebSimple:sc.Diam:sc.log.Clutch` - `FoodwebComplex:sc.Diam:sc.log.Clutch`,
+         `FoodwebDiff:sc.Diam:sc.sqrt.Pref` = `FoodwebSimple:sc.Diam:sc.sqrt.Pref` - `FoodwebComplex:sc.Diam:sc.sqrt.Pref`,
+         `FoodwebDiff:sc.log.Clutch:sc.sqrt.Pref` = `FoodwebSimple:sc.log.Clutch:sc.sqrt.Pref` - `FoodwebComplex:sc.log.Clutch:sc.sqrt.Pref`) %>%
+  summarise_all(funs(mean, conf.high, conf.low))
+
+# Tidy up estimates
+tidy_eggegg_grads <- eggegg_grads %>%
+  t() %>%
+  as.data.frame() %>%
+  transmute(rows = rownames(.), value=V1) %>%
+  separate(col = rows, into = c("term","estimate"), sep="_") %>%
+  separate(col = term, into = c("type","term_1","term_2"), sep=":", extra="drop") %>%
+  mutate(term = ifelse(is.na(term_2), term_1, paste(term_1,term_2,sep=":"))) %>%
+  separate(col = type, into = c("extra","type"), sep = 7) %>%
+  select(type, term, estimate, value) %>%
+  spread(estimate, value) %>%
+  mutate(P_cutoff = ifelse(conf.high*conf.low < 0, "","*"),
+         gradient_type = ifelse(grepl("\\^2", .$term)==TRUE, "Quadratic",
+                                ifelse(grepl(":", .$term)==TRUE, "Correlational","Directional")),
+         mean = ifelse(gradient_type=="Quadratic", 2*mean, mean),
+         conf.low = ifelse(gradient_type=="Quadratic", 2*conf.low, conf.low),
+         conf.high = ifelse(gradient_type=="Quadratic", 2*conf.high, conf.high))
+```
+
+```{r Plot egg vs. egg ptoid gradients, echo=FALSE}
+
+# Plot helpers
+dodge_width <- position_dodge(width=0.5)
+y_limits_eggegg_grads <- c(min(filter(tidy_eggegg_grads, type!="Diff")$conf.low), 
+                            max(filter(tidy_eggegg_grads, type!="Diff")$conf.high))
+P_asterisk_eggegg_grads <- 0.45
+P_size <- 8
+legend_eggegg_labels <- c("Complex","Simple")
+legend_eggegg_title <- "Food web"
+point.size <- 3
+
+# Plot directional selection gradients
+plot_eggegg_directional_grads <- tidy_eggegg_grads %>%
+  filter(type!="Diff", term %in% c("sc.Diam","sc.log.Clutch","sc.sqrt.Pref")) %>%
+  ggplot(., aes(x=term)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_eggegg_grads, type=="Diff", term %in% c("sc.Diam","sc.log.Clutch","sc.sqrt.Pref")), 
+            aes(y=P_asterisk_eggegg_grads, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Gradient", limits=y_limits_eggegg_grads) +
+  scale_x_discrete(name="", labels=parse(text=c("beta[Diam]","beta[Clutch]","beta[Pref]"))) +
+  facet_wrap(~gradient_type) +
+  scale_fill_manual(values=cbPalette[c(2,5)], labels=legend_eggegg_labels, name=legend_eggegg_title) +
+  scale_color_manual(values=cbPalette[c(2,5)], labels=legend_eggegg_labels, name=legend_eggegg_title)
+
+# Plot quadratic selection gradients
+plot_eggegg_quadratic_grads <- tidy_eggegg_grads %>%
+  filter(type!="Diff", term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.sqrt.Pref^2)")) %>%
+  ggplot(., aes(x=term, color=type)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_eggegg_grads, type=="Diff", term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.sqrt.Pref^2)")), 
+            aes(y=P_asterisk_eggegg_grads, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Gradient", limits=y_limits_eggegg_grads) +
+  scale_x_discrete(name="", labels=parse(text=c("gamma[Diam:Diam]","gamma[Clutch:Clutch]","gamma[Pref:Pref]"))) +
+  facet_wrap(~gradient_type) +
+  scale_fill_manual(values=cbPalette[c(2,5)], labels=legend_eggegg_labels, name=legend_eggegg_title) +
+  scale_color_manual(values=cbPalette[c(2,5)], labels=legend_eggegg_labels, name=legend_eggegg_title)
+
+# Plot correlational selection gradients
+plot_eggegg_correlational_grads <- tidy_eggegg_grads %>%
+  filter(type!="Diff", term %in% c("sc.Diam:sc.log.Clutch","sc.Diam:sc.sqrt.Pref","sc.log.Clutch:sc.sqrt.Pref")) %>%
+  ggplot(., aes(x=term, color=type)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  geom_text(data=filter(tidy_eggegg_grads, type=="Diff", term %in% c("sc.Diam:sc.log.Clutch","sc.Diam:sc.sqrt.Pref","sc.log.Clutch:sc.sqrt.Pref")), 
+            aes(y=P_asterisk_eggegg_grads, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Gradient", limits=y_limits_eggegg_grads) +
+  scale_x_discrete(name="", labels=parse(text=c("gamma[Diam:Clutch]","gamma[Diam:Pref]","gamma[Clutch:Pref]"))) +
+  facet_wrap(~gradient_type) +
+  scale_fill_manual(values=cbPalette[c(2,5)], labels=legend_eggegg_labels, name=legend_eggegg_title) +
+  scale_color_manual(values=cbPalette[c(2,5)], labels=legend_eggegg_labels, name=legend_eggegg_title) 
+
+# Get legend
+legend_eggegg_grads <- get_legend(plot_eggegg_directional_grads)
+
+# Format plots for manuscript
+plot_eggegg_grads <- plot_grid(
+  plot_eggegg_directional_grads + theme(legend.position = "none", axis.title = element_blank()),
+  plot_eggegg_quadratic_grads + theme(legend.position = "none", axis.title = element_blank()),
+  plot_eggegg_correlational_grads + theme(legend.position = "none", axis.title = element_blank()), 
+  nrow=2, align="hv", labels = "")
+plot_legend_eggegg_grads <- ggdraw(plot_eggegg_grads) + draw_grob(legend_eggegg_grads, x = 0.7, y=-0.2)
+y_title_eggegg_grads <- ggdraw() + draw_label("Selection gradient (SDs)", angle = 90)
+
+figure_eggegg_grads <- plot_grid(y_title_eggegg_grads, plot_legend_eggegg_grads, ncol=2, rel_widths = c(0.05,1)) 
+figure_eggegg_grads
+```
+
+To determine whether I should adjust any coefficients associated with chamber diameter, e.g. quadratic and correlation terms, I conducted a quick simulation. In the simulation, I assumed that if the larva survive, then the chamber diameter was the corrent one. However, if the larva did not survive, its size could be due to both its size and parasitism. I assumed a constant value of parasitism effect on gall size.
+```{r simulate bias in chamber diameter}
+n <- 10000
+diam <- rnorm(n, mean=0, sd=1) # simulate 1,000 chamber diameters from a normal distribution with mean=0 and sd=1
+pref <- rnorm(n, mean=0, sd=1)               # simulate 1,000 female preferences from a normal distribution with mean=0 and sd=1
+bias.adj <- 0.34                  # this value corresponds to actual estimates from my bias analyses.
+mean_survival <- 0.5              # approximate survival across food-web treatments
+logit_survival <- mean_survival + 1.5*diam + 0.1*diam*diam -0.2*pref + 0*pref*pref -0.2*diam*pref # using coefficients that closely match empirical estimates
+link_survival <- exp(logit_survival)/(1 + exp(logit_survival))
+survival <- (runif(n) < link_survival) 
+
+sim_df <- data.frame(survival=survival, diam=diam, pref=pref) %>%
+  mutate(diam_adj = ifelse(survival==FALSE, diam + bias.adj, diam)) # adjust bias only if larva did not survive
+
+## Fit non-adjusted model
+nonadj_model <- glm(survival ~ diam + I(diam^2) + pref + I(pref^2) + diam*pref, data=sim_df, family=binomial) 
+summary(nonadj_model)
+
+adj_model <- glm(survival ~ diam_adj  + I(diam_adj^2) + pref + I(pref^2) + diam_adj*pref, data=sim_df, family=binomial) 
+summary(adj_model)
+
+## Interesting, it seems that my simulation design affects the intercept term; however, its clear that my biological hypothesis for how chamber diameter is influenced by parasitism (simply decreasing size of non-surviving larva), would not affect the quadratic or nonlinear terms.
+data.frame(terms = names(coef(nonadj_model)), nonadj_coefs = coef(nonadj_model), adj_coefs = coef(adj_model)) %>%
+  mutate(diff_coefs = nonadj_coefs - adj_coefs)
 ```
 
 
