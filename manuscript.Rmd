@@ -1,5 +1,5 @@
 ---
-title: Phenotypic evolution is more constrained in simple food webs
+title: Phenotypic evolution is more constrained in simpler food webs
 #  | Food-web complexity simplifies the adaptive landscape of an insect herbivore
 #  | Phenotypic evolution is less constrained in complex food webs
 #  | 
