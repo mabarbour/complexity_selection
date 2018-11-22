@@ -231,6 +231,7 @@ biased_foodweb_confint <- tidy(biased_foodweb_model, conf.int=TRUE) %>% filter(g
 knitr::kable(biased_foodweb_confint)
 ```
 
+
 ```{r Food-web alpha coefficients, include=FALSE}
 foodweb_bind <- bind_cols(
   as_tibble(boot_linear_foodweb_model$t),
@@ -245,6 +246,7 @@ foodweb_adj_Diam <- foodweb_bind %>%
 # Calculate differences between food-web treatments, then estimate means and confidence intervals
 foodweb_alphas <- foodweb_adj_Diam %>%
   mutate(`FoodwebSimple:(Intercept)`=inverse_logit(FoodwebSimple), `FoodwebComplex:(Intercept)`=inverse_logit(FoodwebComplex)) %>% # logit transform to make intercept interpretable as a probability
+  select(-FoodwebSimple, -FoodwebComplex) %>% # translated into (Intercept) terms
   mutate(`FoodwebDiff:(Intercept)` = `FoodwebSimple:(Intercept)` - `FoodwebComplex:(Intercept)`,
          `FoodwebDiff:sc.Diam` = `FoodwebSimple:sc.Diam` - `FoodwebComplex:sc.Diam`,
          `FoodwebDiff:sc.log.Clutch` = `FoodwebSimple:sc.log.Clutch` - `FoodwebComplex:sc.log.Clutch`,
@@ -272,9 +274,12 @@ tidy_foodweb_alphas <- foodweb_alphas %>%
          coefficient_type = ifelse(term=="(Intercept)","Mean fitness",
                                    ifelse(grepl("\\^2", .$term)==TRUE, "Quadratic",
                                           ifelse(grepl(":", .$term)==TRUE, "Correlational","Linear"))))
+```
 
+```{r Table of food web coefficients, echo=F}
 knitr::kable(tidy_foodweb_alphas)
 ```
+
 
 ```{r Plot food-web coefficients, echo=FALSE}
 
@@ -408,9 +413,12 @@ tidy_foodweb_grads <- foodweb_grads %>%
          mean = ifelse(gradient_type=="Quadratic", 2*mean, mean),
          conf.low = ifelse(gradient_type=="Quadratic", 2*conf.low, conf.low),
          conf.high = ifelse(gradient_type=="Quadratic", 2*conf.high, conf.high))
+```
 
+```{r Table of food web selection gradients, echo=F}
 knitr::kable(tidy_foodweb_grads)
 ```
+
 
 ```{r Plot food-web gradients, echo=FALSE}
 
@@ -530,6 +538,7 @@ egglarval_adj_Diam <- as_tibble(boot_egglarval_model$t) %>%
 # Calculate differences between food-web treatments, then estimate means and confidence intervals
 egglarval_alphas <- egglarval_adj_Diam %>%
   mutate(`FoodwebSimple:(Intercept)`=inverse_logit(FoodwebSimple), `FoodwebComplex:(Intercept)`=inverse_logit(FoodwebComplex)) %>% # logit transform to make intercept interpretable as a probability
+  select(-FoodwebSimple, -FoodwebComplex) %>% # translated into (Intercept) terms
   mutate(`FoodwebDiff:(Intercept)` = `FoodwebSimple:(Intercept)` - `FoodwebComplex:(Intercept)`,
          `FoodwebDiff:sc.Diam` = `FoodwebSimple:sc.Diam` - `FoodwebComplex:sc.Diam`,
          `FoodwebDiff:sc.log.Clutch` = `FoodwebSimple:sc.log.Clutch` - `FoodwebComplex:sc.log.Clutch`,
@@ -557,9 +566,12 @@ tidy_egglarval_alphas <- egglarval_alphas %>%
          coefficient_type = ifelse(term=="(Intercept)","Mean fitness",
                                    ifelse(grepl("\\^2", .$term)==TRUE, "Quadratic",
                                           ifelse(grepl(":", .$term)==TRUE, "Correlational","Linear"))))
+```
 
+```{r Tabel of egg vs. larval coefficients, echo=FALSE}
 knitr::kable(tidy_egglarval_alphas)
 ```
+
 
 ```{r Plot egglarval coefficients, echo=FALSE}
 
@@ -692,7 +704,9 @@ tidy_egglarval_grads <- egglarval_grads %>%
          mean = ifelse(gradient_type=="Quadratic", 2*mean, mean),
          conf.low = ifelse(gradient_type=="Quadratic", 2*conf.low, conf.low),
          conf.high = ifelse(gradient_type=="Quadratic", 2*conf.high, conf.high))
+```
 
+```{r Egg vs. larval selection gradients, echo=F}
 knitr::kable(tidy_egglarval_grads)
 ```
 
@@ -974,6 +988,11 @@ biased_eggegg_df <- eggegg_df %>%
   ungroup()
 
 biased_eggegg_model <- update(biased_foodweb_model, data=biased_eggegg_df)
+
+visreg::visreg(eggegg_model, xvar="sc.sqrt.Pref", by="sc.Diam", scale="response", cond = list(Foodweb="Simple"))
+visreg::visreg(eggegg_model, xvar="sc.sqrt.Pref", by="sc.Diam", scale="response", cond = list(Foodweb="Complex"))
+visreg::visreg(eggegg_model, xvar="sc.Diam", by="sc.sqrt.Pref", scale="response", cond = list(Foodweb="Simple"))
+visreg::visreg(eggegg_model, xvar="sc.Diam", by="sc.sqrt.Pref", scale="response", cond = list(Foodweb="Complex"))
 ```
 
 ```{r Bootstrap egg vs. egg ptoid model, cache=TRUE, include=FALSE}
@@ -1002,6 +1021,7 @@ eggegg_adj_Diam <- as_tibble(boot_eggegg_model$t) %>%
 # Calculate differences between food-web treatments, then estimate means and confidence intervals
 eggegg_alphas <- eggegg_adj_Diam %>%
   mutate(`FoodwebSimple:(Intercept)`=inverse_logit(FoodwebSimple), `FoodwebComplex:(Intercept)`=inverse_logit(FoodwebComplex)) %>% # logit transform to make intercept interpretable as a probability
+  select(-FoodwebSimple, -FoodwebComplex) %>% # translated into (Intercept) terms
   mutate(`FoodwebDiff:(Intercept)` = `FoodwebSimple:(Intercept)` - `FoodwebComplex:(Intercept)`,
          `FoodwebDiff:sc.Diam` = `FoodwebSimple:sc.Diam` - `FoodwebComplex:sc.Diam`,
          `FoodwebDiff:sc.log.Clutch` = `FoodwebSimple:sc.log.Clutch` - `FoodwebComplex:sc.log.Clutch`,
@@ -1029,9 +1049,12 @@ tidy_eggegg_alphas <- eggegg_alphas %>%
          coefficient_type = ifelse(term=="(Intercept)","Mean fitness",
                                    ifelse(grepl("\\^2", .$term)==TRUE, "Quadratic",
                                           ifelse(grepl(":", .$term)==TRUE, "Correlational","Linear"))))
+```
 
+```{r Egg vs. egg ptoid coefficients, echo=F}
 knitr::kable(tidy_eggegg_alphas)
 ```
+
 
 ```{r Plot egg vs. egg ptoid coefficients, echo=FALSE}
 
@@ -1164,9 +1187,12 @@ tidy_eggegg_grads <- eggegg_grads %>%
          mean = ifelse(gradient_type=="Quadratic", 2*mean, mean),
          conf.low = ifelse(gradient_type=="Quadratic", 2*conf.low, conf.low),
          conf.high = ifelse(gradient_type=="Quadratic", 2*conf.high, conf.high))
+```
 
+```{r Table of egg vs. egg ptoid gradients, echo=F}
 knitr::kable(tidy_eggegg_grads)
 ```
+
 
 ```{r Plot egg vs. egg ptoid gradients, echo=FALSE}
 
@@ -1617,7 +1643,7 @@ save_plot(filename = "selection_on_Platygaster.pdf", plot = eggptoid_selection_p
 ```
 
 ```{r Egg-Parasitoid-Selection-linear, echo=F}
-linear_eggptoid_plot_df <- eggegg_RF_Pref$absolute_fitness %>% 
+linear_eggptoid_plot_df <- linear_eggegg_RF_Pref$absolute_fitness %>% 
   select(-sc.Diam, -sc.log.Clutch) %>%
   gather(ID, absolute_fitness, -sc.sqrt.Pref, -Foodweb) %>%
   mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
@@ -1625,7 +1651,7 @@ linear_eggptoid_plot_df <- eggegg_RF_Pref$absolute_fitness %>%
   #filter(ID_group=="average") %>%
   mutate(fitness_difference = Complex-Simple)
 
-linear_eggptoid_selection_plot <- eggptoid_plot_df %>%
+linear_eggptoid_selection_plot <- linear_eggptoid_plot_df %>%
   ggplot(., aes(x=sc.sqrt.Pref, y=fitness_difference, group=ID, alpha=ID_group, size=ID_group)) +
   geom_line(color=cbPalette[5]) +
   scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
