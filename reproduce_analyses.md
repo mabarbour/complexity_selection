@@ -1,7 +1,7 @@
 ---
 title: "Supplementary Material"
 author: "Matthew A. Barbour"
-date: "2018-11-14"
+date: "2018-11-22"
 output:
   prettydoc::html_pretty:
     theme: architect
@@ -640,9 +640,9 @@ Simple & sc.sqrt.Pref & 0.5826938 & 0.1873179 & 0.3533776 & * & Directional\\
 
 
 
+![Selection gradients acting on gall traits in complex vs. simple food webs. Each panel corresponds to a different gall trait: gall diameter (A); clutch size (B); and Oviposition preference (C). Solid lines represent the estimated gradients in complex (orange) and simple (blue) food webs. Transparent lines represent bootstrapped replicates (n=100) to show the uncertainty in estimated gradients. Note that only 100 bootstraps are displayed here, but that inferences are based on 1,000 bootstrapped samples.](manuscript_files/figure-latex/Univariate-Fitness-Landscapes-1.pdf) 
 
 
-![](manuscript_files/figure-latex/Figure-Univariate-Landscapes-1.pdf)<!-- --> 
 
 
 

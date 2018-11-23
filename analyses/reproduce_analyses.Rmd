@@ -1534,34 +1534,35 @@ Diam_legend_only <- bind_rows(plot_foodweb_Diam_df, plot_egglarval_Diam_df) %>%
   theme(strip.background=element_blank(), strip.text = element_blank())
 ```
 
-```{r Univariate-Fitness-Landscapes, echo=FALSE, eval=FALSE, fig.cap="Selection gradients acting on gall traits in complex vs. simple food webs. Each panel corresponds to a different gall trait: gall diameter (A); clutch size (B); and Oviposition preference (C). Solid lines represent the estimated gradients in complex (orange) and simple (blue) food webs. Transparent lines represent bootstrapped replicates (n=100) to show the uncertainty in estimated gradients. Note that only 100 bootstraps are displayed here, but that inferences are based on 1,000 bootstrapped samples.", eval=FALSE}
+```{r Univariate-Fitness-Landscapes, echo=FALSE, fig.cap="Selection gradients acting on gall traits in complex vs. simple food webs. Each panel corresponds to a different gall trait: gall diameter (A); clutch size (B); and Oviposition preference (C). Solid lines represent the estimated gradients in complex (orange) and simple (blue) food webs. Transparent lines represent bootstrapped replicates (n=100) to show the uncertainty in estimated gradients. Note that only 100 bootstraps are displayed here, but that inferences are based on 1,000 bootstrapped samples."}
 
 # Get legend
-AF_uni_legend <- get_legend(legend_only + theme(legend.title.align = 0.5)) #get_legend(AF_uni_Diam)
+AF_uni_legend <- get_legend(AF_uni_Diam + theme(legend.title.align = 0.5)) #get_legend(AF_uni_Diam)
 
 # Make plots
-AF_uni_plots <- plot_grid(AF_uni_Diam + theme(legend.position = "none", 
-                                              axis.text.x = element_text(size=10),
-                                              axis.title.x = element_text(size=11)), 
+AF_uni_plots <- plot_grid(AF_uni_Diam + theme(legend.position = "none"), 
+                                           #   axis.text.x = element_text(size=10),
+                                          #    axis.title.x = element_text(size=11)), 
                        AF_uni_Pref + theme(legend.position = "none", 
-                                           axis.title.y = element_blank(),
-                                           axis.text.x = element_text(size=10),
-                                           axis.title.x = element_text(size=11)),
+                                           axis.title.y = element_blank()) + xlab("Preference (SDs)"),
+                                           #axis.text.x = element_text(size=10),
+                                           #axis.title.x = element_text(size=11)),
                       AF_uni_Clutch + theme(legend.position = "none",
-                                             axis.title.y = element_blank(), 
-                                             axis.text.x = element_text(size=10),
-                                             axis.title.x = element_text(size=11)),
-                     legend_only + theme(legend.position = "none",                          
-                                             axis.title.y = element_blank(), 
-                                             axis.text.x = element_text(size=10),
-                                             axis.title.x = element_text(size=11)),
-                       labels = "AUTO", ncol = 2, align='hv')
+                                             axis.title.y = element_blank()), 
+                                            # axis.text.x = element_text(size=10),
+                                            # axis.title.x = element_text(size=11)),
+                    # legend_only + theme(legend.position = "none",                          
+                    #                         axis.title.y = element_blank(), 
+                    #                         axis.text.x = element_text(size=10),
+                    #                         axis.title.x = element_text(size=11)),
+                       labels = "AUTO", nrow = 1, align='hv')
 
-AF_gradients <- plot_grid(AF_uni_legend, AF_uni_plots, nrow = 2, rel_heights = c(0.2,0.8)) 
+AF_gradients <- plot_grid(AF_uni_plots, AF_uni_legend, ncol = 2, rel_widths = c(0.8,0.2)) 
 AF_gradients
+save_plot(filename = "UV_landscapes.pdf", plot = AF_gradients, base_height = 5, base_width = 8.5)
 ```
 
-```{r Figure-Univariate-Landscapes, echo=FALSE}
+```{r Figure-Univariate-Landscapes, echo=FALSE, eval=FALSE}
 # Get legend
 AF_uni_legend <- get_legend(legend_only + theme(legend.position="top", legend.title.align = 0.5) + guides(color=guide_legend(title.position="top")))
 
@@ -1857,7 +1858,9 @@ AF_plot_Diam.Clutch <- RF_Diam.Clutch$absolute_fitness %>%
   ylab("Clutch size (SDs)") +
   scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
   scale_y_continuous(labels = c(-1,-0.5,0,0.5,1)) +
-  scale_fill_viridis(name = "Mean larval\nsurvival", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(AF_range$min, AF_range$max))#, 
+  scale_fill_viridis(name = "Mean larval\nsurvival", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(AF_range$min, AF_range$max)) +
+  theme(strip.background = element_blank(),
+        strip.text.x=element_text(margin=margin(b=4))) 
 
 # Size x Preference
 AF_plot_Diam.Pref <- RF_Diam.Pref$absolute_fitness %>% 
@@ -1868,7 +1871,9 @@ AF_plot_Diam.Pref <- RF_Diam.Pref$absolute_fitness %>%
   ylab("Oviposition preference (SDs)") +
   scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
   scale_y_continuous(labels = c(-1,-0.5,0,0.5,1)) +
-  scale_fill_viridis(name = "Mean larval\nsurvival", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(AF_range$min, AF_range$max))#, 
+  scale_fill_viridis(name = "Mean larval\nsurvival", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(AF_range$min, AF_range$max)) +
+  theme(strip.background = element_blank(),
+        strip.text.x=element_text(margin=margin(b=4))) 
 
 # Clutch x Preference
 AF_plot_Clutch.Pref <- RF_Clutch.Pref$absolute_fitness %>%
@@ -1879,7 +1884,9 @@ AF_plot_Clutch.Pref <- RF_Clutch.Pref$absolute_fitness %>%
   ylab("Clutch size (SDs)") +
   scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
   scale_y_continuous(labels = c(-1,-0.5,0,0.5,1)) +
-  scale_fill_viridis(name = "Mean larval\nsurvival", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(AF_range$min, AF_range$max)) 
+  scale_fill_viridis(name = "Mean larval\nsurvival", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(AF_range$min, AF_range$max)) +
+  theme(strip.background = element_blank(),
+        strip.text.x=element_text(margin=margin(b=4)))
 
 ```
 

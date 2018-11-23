@@ -21,12 +21,15 @@ output:
     number_sections: false
     df_print: paged
     fig_caption: true
-    #citation_package: natbib
+    citation_package: natbib
     template: Rmd_AmNat_MS_template.tex
     includes:  
       in_header: Am-Nat-preamble-latex.tex
-bibliography: references.bib
-biblio-style: amnat.bst
+bibliography: references
+#references.bib
+#csl: the-american-naturalist.csl
+biblio-style: amnat
+#amnat.bst
 fontsize: 11pt
 fontfamily: mathpazo
 documentclass: article
@@ -138,7 +141,7 @@ We setup our food-web manipulation across 128 plants soon after galls began deve
 
 ## Measuring Phenotypic Traits
 
-We collected data on three different traits that we expected to influence larval survival based on our previous work [@Barbour2016] and others work with gall midges [@Weis1983; @Heath2018]. First, we measured gall diameter as the size of each gall chamber to the nearest 0.01 mm at its maximum diameter (perpendicular to the direction of plant tissue growth). Our previous work has shown that larger galls are associated with higher survival [@Barbour2016]. Second, we measured clutch size by counting the number of chambers in each gall [@Weis1983; @Heath2018]. All larvae collected from the same multi-chambered gall were scored with the same clutch size. Third, we measured oviposition (egg laying) preference as the density of larvae observed on a plant in an independent survey. We did this randomly sampling five branches per tree and counting the number of individual gall chambers (number of larvae). We then converted these counts to a measure of larval density per 100 shoots by counting the number of shoots on the last branch we sampled. All larvae collected from the same plant were scored with the same oviposition preference. Measuring larval densities on plants in the field is a common method for measuring oviposition preference [@Gripenberg2010]; however, caution must be taken in inferring 'preference' as larval densities can be influenced by processes other than preference [@Singer1986]. Fortunately, a couple of features of our study system suggest that larval densities may be a good proxy for oviposition preference. For example, since our data comes from a randomized placement of plant genotypes in a common garden, there is no consistent bias in which plant genotypes females are exposed to while searching for oviposition sites. Also, egg predation is a minor source of mortality for galling insects in general [@Hawkins1997]; therefore, we do not expect any prior egg predation to bias our estimates of observed larval densities. 
+We collected data on three different traits that we expected to influence larval survival based on our previous work [@Barbour2016] and others work with gall midges [@Weis1983; @Heath2018]. First, we measured gall diameter as the size of each gall chamber to the nearest 0.01 mm at its maximum diameter (perpendicular to the direction of plant tissue growth). Our previous work has shown that larger galls are associated with higher survival [@Barbour2016]. Second, we measured clutch size by counting the number of chambers in each gall [@Weis1983; @Heath2018]. All larvae collected from the same multi-chambered gall were scored with the same clutch size. Third, we measured oviposition preference as the density of larvae observed on a plant in an independent survey. We did this randomly sampling five branches per tree and counting the number of individual gall chambers (number of larvae). We then converted these counts to a measure of larval density per 100 shoots by counting the number of shoots on the last branch we sampled. All larvae collected from the same plant were scored with the same oviposition preference. Measuring larval densities on plants in the field is a common method for measuring oviposition preference [@Gripenberg2010]; however, caution must be taken in inferring 'preference' as larval densities can be influenced by processes other than preference [@Singer1986]. Fortunately, a couple of features of our study system suggest that larval densities may be a good proxy for oviposition preference. For example, since our data comes from a randomized placement of plant genotypes in a common garden, there is no consistent bias in which plant genotypes females are exposed to while searching for oviposition sites. Also, egg predation is a minor source of mortality for galling insects in general [@Hawkins1997]; therefore, we do not expect any prior egg predation to bias our estimates of oSimilar patterns in larval parasitoids has been observed for other a related gall midge species [@Weis1982]Similar patterns in larval parasitoids has been observed for other a related gall midge species [@Weis1982]bserved larval densities. 
 
 ## Quantifying the Adaptive Landscape
 
@@ -178,7 +181,7 @@ Rather than imposing selection, parasitoids may influence the expression of herb
 
 Once parasitized, the gall phenotype becomes the extended phenotype of the egg parasitoid. This extended phenotype may influence the egg parasitoid's survival in the face of larval parasitoids, and thus experiences selection. Our food-web manipulation allows us to measure selection imposed by larval parasitoids on the extended phenotype of egg parasitoids. Using the same models as described above, we substituted egg parasitism as our response variable to quantify trait-fitness relationships and selection gradients acting on the egg parasitoid. Note that we cannot test the effect of food-web complexity on the egg parasitoid's adaptive landscape ---we can only estimate the selection imposed by larval parasitoids. This comparison is still useful though in determining the extent to which the community context may have indirect evolutionary effects by altering selection on multiple interacting populations.
 
-All analyses and visualizations were conducted in R [@R2018]. Unless otherwise noted, we report mean estimates of trait-fitness relationships and selection gradients with 95% confidence intervals in brackets. Note that for visualizing the adaptive landscape we restrict trait axes to $\pm 1$ SD of the mean trait value. This emphasizes the fact that we can only reliably estimate the shape of the adaptive landscape near the mean phenotype of the population [@Arnold2001]. We also plot mean larval survival on a natural log scale to accurately reflect the shape of the adaptive landscape [@Arnold2003].
+All analyses and visualizations were conducted in R [@R2018]. Unless otherwise noted, we report mean estimates of trait-fitness relationships and selection gradients with 95% confidence intervals in brackets. Note that for visualizing the adaptive landscape weSimilar patterns in larval parasitoids has been observed for other a related gall midge species [@Weis1982] restrict trait axes to $\pm 1$ SD of the mean trait value. This emphasizes the fact that we can only reliably estimate the shape of the adaptive landscape near the mean phenotype of the population [@Arnold2001]. We also plot mean larval survival on a natural log scale to accurately reflect the shape of the adaptive landscape [@Arnold2003].
 
 # Results
 
@@ -319,46 +322,81 @@ Larval parasitoids altered nonlinear selection acting on the egg parasitoid's ex
 
 # Discussion
 
-\begin{enumerate}
+<!--
+Summary of key results
 
- \item Summary of key results
-    \begin{enumerate}
-    \item Gall midges experience more selective and constraints in simple food webs.
-    \end{enumerate}
+Gall midges experience more selective and constraints in simple food webs.
+-->
  
- \item Natural history and comparison to other studies of natural selection in galling insects.
-    \begin{enumerate}
-    \item \textbf{Important Studies for Comparison}: @Abrahamson1997; @Weis1983; @Heath2018; Start, Weis, and Gilbert In Press Am. Nat; @Start2016; @Start2018urbanization; Peter Price's work; Timothy Craig's work; Cheryl Briggs work.
-    \item \textbf{Topics to discuss}: Persistent pattern in selection for larger galls; Contrasting effects of egg and larval parasitoids on clutch size; Nonlinear selection at high gall densities is likely reflective of the poorer searching ability of larval vs. egg parasitoids (and thus it saturates more quickly).  
-    \end{enumerate}
-    
- \item Selective constraints:
-    \begin{enumerate}
-    \item \textbf{Key Result}: More traits under directional selection in simple (3 of 3) vs. complex (1 of 3) food webs. Need to be wary of interpreting no selection on oviposition preference in complex food webs though. Even if there is selection on oviposition preference, this does not change our qualitative result.
-    \item \textbf{Implications}: The trajectory of phenotypic evolution is less constrained in complex vs. simple food webs. In other words, there are more potential adaptive peaks in complex food webs. 
-    \end{enumerate}
-    
- \item Indirect effects of selection on genetic constraints: 
-    \begin{enumerate}
-    \item \textbf{Key Result}: More traits experience a decrease in additive genetic variance and more trait combinations experience selection for trait integration in simple food webs. 
-    \item \textbf{Implications}: The structure of the G-matrix is under less influence of selection in complex vs. simple food webs. Thus the trajectory of phenotypic evolution may be dictated more by genetic rather than selective constraints. This is in line with empirical evidence (from complex natural systems) that evolution tends to proceed along genetic lines of least resistance [@Schluter1996].
-    \end{enumerate}
-    
- \item Indirect evolutionary effects:
-    \begin{enumerate}
-    \item \textbf{Key Result}: Evidence of selection on the extended phenotype of egg parasitoids.
-    \item \textbf{Implications}: Hints at a dynamic adaptive landscape and potential indirect evolutionary effects in complex food webs.
-    \end{enumerate}
-    
- \item Caveats: 
-    \begin{enumerate} 
-    \item \textbf{Key Caveat}: Experimental artifact of lower larval survival in complex food-web treatment.
-    \item \textbf{Implications}: Artificially increased the magnitude of selection in complex food webs. Note however, that this does not qualitatively change any of our results. In fact, we are actually underestimating the constraints imposed by our simple food-web treatment. This is because the egg parasitoids would be released from their intraguild predator, and thus could increase in abundance over future generations and impose stronger selection on gall midges. 
-    \end{enumerate}
+<!-- 
+Natural history and comparison to other studies of natural selection in galling insects. 
 
-\item Conclusions
+Important Studies for Comparison: @Abrahamson1997; @Weis1983; @Heath2018; Start, Weis, and Gilbert In Press Am. Nat; @Start2016; @Start2018urbanization; Peter Price's work; Timothy Craig's work; Cheryl Briggs work.
 
-\end{enumerate}
+Topics to discuss: Persistent pattern in selection for larger galls; Contrasting effects of egg and larval parasitoids on clutch size; Nonlinear selection at high gall densities is likely reflective of the poorer searching ability of larval vs. egg parasitoids (and thus it saturates more quickly).  
+-->
+Our finding that phenotypic evolution was more constrained in simpler food webs corresponds to the natural history of this system. This particular gall-parasitoid community has only been studied one other time [@Barbour2016]. But a persistent pattern seen in others work is that parasitoids generally impose selection for larger galls [@Abrahamson1997; @Heath2018; @Start2016; @Start2018urbanization]. In many cases, there may be functional or development constraints acting on gall size that constrains phenotypic evolution. It is curious though that we still observed directional selection for larger chamber diameters in the simpler food web. This is because egg parasitoids attack before the gall is formed. Thus, the apparent selection on chamber diameter is likely due to selection with a correlated trait (e.g. ability to encapsulate endoparasitoid eggs). In terms of clutch size, we likely observe conflicting selection pressures for the following reason. First, egg parasitoids reduce the probability of larval survival in higher clutch sizes, because they cue in more to the local density when foraging. Indeed oviposition itself can induce plant volatiles that influence egg parasitoid foraging behavior [reviewed in @Hilker2006]. In contrast, clutch sizes can increase the probability of larval survival in the face of larval parasitoids by creating more of a refuge from parasitoids that have to oviposit through the gall tissue. Similar patterns in larval parasitoids has been observed for other a related gall midge species [@Weis1982]. Alternatively, in another gall midge, the same reduction in percent parasitism has been shown [@Weis1983]. This previous work did not explore a relationship with the egg parasitoid Platygaster because it was too low in abundance, which is in contrast to our community where this species is the dominant parasitoid. Counterintuitively, this may not be due to a greater refuge, but simple a result of the parasitoids using a fixed-time strategy to search for hosts. Thus, parasitoids actually have a lower success attacking small galls, but a good chance of attacking one host in large galls and then just moving on to the next. In regard to oviposition preference, our results correspond to biological differences between egg and larval parasitoids. For example, egg parasitoids, such as Platygaster are known to be efficient foragers, whereas larval parasitoids are less efficient. This may create a pattern where larval parasitoid attack saturates more quickly at high host densities, as we observed here. The fact that Platygaster attack rates increased with host density suggest that host densities were relatively low, so we actually may be in the lower part of a type 3 functional response. 
+
+A key question is whether our results would have changed if we had instead manipulated it so that only one of the larval parasitoid species could attack vs. the full complement. Based on the above biology, we may have expected two things. One we would may have seen no selection on oviposition preference in both food webs, since the larval parasitoid tends to have a nonlinear response that actually may enhance genetic variation in oviposition preference. However, we still would have seen selection reduced selection for clutch size, which would free this trait and covarying traits from selective constraints. Also, if we had just included one of the larval parasitoids, which were at lower densities, then the selection gradients would have been weaker simply due to the enhanced survival of gall midge larva. This highlights the importance of studies that manipulate community context in not only looking at the effects on the trait-fitness relationships, but also the effects on average survival. This is especially true in experimental contexts, such as ours, where density of consumers were artificially low, and thus we are only observing a transient dynamic in the strength of selection.
+
+
+<!--
+Selective constraints:
+
+Key Result: More traits under directional selection in simple (3 of 3) vs. complex (1 of 3) food webs. Need to be wary of interpreting no selection on oviposition preference in complex food webs though. Even if there is selection on oviposition preference, this does not change our qualitative result.
+
+Implications: The trajectory of phenotypic evolution is less constrained in complex vs. simple food webs. In other words, there are more potential adaptive peaks in complex food webs. 
+--> 
+
+The fact that more traits contributed to the slope of the adaptive landscape (number of traits under directional selection) in the simple food web suggests that the trajectory of evolution is more constrained. For the phenotypic traits we examine, it also implies that there is an optimal combination of phenotypes that maximizes larval survival (i.e. large chamber diameter, small clutch sizes, and avoid conspecifics) in simpler food webs. In contrast, there are no selective constrains on the evolution of clutch size and oviposition preference in the more complex food web. This suggests that there are multiple adaptive peaks, or in this case, a flat adaptive landscape across these phenotypic traits, such that there are no consequences to move across the adaptive landscape in these directions. Interestingly, this also implies that as selective constraints weaken in more complex food webs, then the trajectory of evolution becomes more influenced by genetic constraints, or the population's G-matrix. This is made clear if we inspect the 'Lande equation', $\Delta z = \text{G} \beta$, where G corresponds to the populations additive genetic variance and covariances between traits (G-matrix). As the components of $\beta$ go to zero, then $\Delta z$ is more influenced by the G-matrix. Interestingly, this corresponds to data on trait evolution in complex natural systems. Specifically, @Schluter1996 suggested that evolution often follows 'genetic lines of least resistance'. This data came from data on natural populations of threespine sticklebacks, three species of songbirds, and *Peromyscus* mice. This also implies that simplification of ecological communities may actually reduce the predictability of phenotypic evolution, because knowledge is required of both selective and genetic constraints, rather than potentially just genetic constraints in more complex systems. This insight also helps resolve the balance between neutral and adaptationist views of phenotypic evolution. In fact, the ability for neutral evolutionary theories to give insight to evolution may be due to the net neutral selection pressures in complex natural systems. However, this highlights that we will need further integration of these perspectives in the context of global change and concomittant changes in the selective environment.
+
+Moreover, current theoretical models of evolution in a community context often focus on the evolution of a single trait. Our results highlight though, that in the context of global change, we may begin to experience selection changing to cause change in multiple traits that influence fitness. 
+ 
+<!--    
+Indirect effects of selection on genetic constraints: 
+
+Key Result: More traits experience a decrease in additive genetic variance and more trait combinations experience selection for trait integration in simple food webs. 
+
+Implications: The structure of the G-matrix is under less influence of selection in complex vs. simple food webs. Thus the trajectory of phenotypic evolution may be dictated more by genetic rather than selective constraints. This is in line with empirical evidence (from complex natural systems) that evolution tends to proceed along genetic lines of least resistance [@Schluter1996].
+-->
+
+In addition, we also found that the indirect effects of selection on genetic constraints were fewer in complex vs. simpler food webs. Key components that contribute to the evolvability of populations are determined by the additive genetic variance in traits as well as patterns of additive genetic covariance (i.e. G-matrix structure). Specifically, weak covariances allow trait evolution to be independent, which gives more autonomy in trait evolutionary responses to changing environments. Similar, decreases in genetic variance contstrain potential for the trait itself to evolve. Together, this suggest the simpler food webs can actually act to decrease the evolutionary potential of populations by indirectly selecting for decrases in genetic variance in multiple traits and favoring trait integration [@Hansen2008]. At present, these indirect effects of selection imposed by the community context are often ignored in theoretical models, often assuming genetic variance is unchanging parameter in models. Our empirical results highlight the need to explore the evolutionary consequences of how not only the direct (current focus), but indirect effects of community context on phenotypic evolution. 
+
+<!--
+Indirect evolutionary effects:
+
+Key Result: Evidence of selection on the extended phenotype of egg parasitoids.
+
+Implications: Hints at a dynamic adaptive landscape and potential indirect evolutionary effects in complex food webs.
+-->
+
+Right now, most studies treat the selection gradients imposed by the adaptive landscape as static [but see @McPeek2017]. Our results suggest though that we also observe indirect evolutionary effects (cite Start, Weis, and Gilbert's new Am Nat paper). This suggests the adaptive landscape itself may be a more dynamic entity in more complex food webs. Where these dynamics end up cancelling each other out in their net selective effects over time, or allow phenotypic evolution to change direction is currently unclear, and we need more empirical work on this front.
+
+<!-- Community context in altering adaptation to environmental change
+
+Relevant review paragraph from @Osmond2017PredatorsHelpPrey about studies incorporating gradual, directional environmental change but also species interactions.
+
+There is a small but growing number of theoretical studies on adaptation to gradual, directional environmental change that incorporate interactions between species (de Mazancourt et al. 2008; Johansson 2008; Jones 2008; Norberg et al. 2012; Mellard et al. 2015). Only two of these studies assessed predator-prey interactions. Jones (2008) used simulations to study, among other things, a predator-prey system where the predator trait evolves to match the prey trait and the prey trait evolves both to match the changing environmental optimum and escape the predator. His main finding was that predation can sometimes increase the persistence time of the prey, presumably when the predator removes prey that are maladapted to the abiotic environment. Mellard et al. (2015) studied an explicit resource-plant-herbivore trophic chain using a primarily numerical approach to ask how the addition of an herbivore affects plant persistence in a warming environment. They analytically clarified the conditions required for the predator to hasten prey evolution but found in simulations that, regardless of the effect on evolutionary rates, herbivory almost never aided plant persistence. In addition, Northfield and Ives (2013), who did not explicitly model a gradually changing environment, analytically demonstrated that conflicting interactions, such as predation, tended to dampen the direct effect of small environmental changes on the equilibrium densities of interacting species, potentially facilitating persistence. In their model, coevolution facilitates persistence through negative feedback loops. For example, as the predator nears extinction, the prey invests less in defense, making it easier for the predator to consume prey and rebound in abundance. Thus, up to this point, while it is clear that predators can theoretically help prey adapt in changing environments, the effect of predators on prey persistence remains unresolved.
+
+-->
+
+The role of community context and diversity in shaping communities has been explored theoretically in terms of competitive communities [@De_Mazancourt2008; @Johansson2008]. Other work has also highlighted the role of competition in shaping evolutionary rescue [@Osmond2013]. Other studies have also explored the role of predators in helping prey adaptive to environmental change [@Osmond2017PredatorsHelpPrey]. This work has suggested that biodiversity may constrain phenotypic evolution, because more species occupy different niches, presenting the "movement" of species across the adaptive landscape into different ecological niches. This may be true for competitive communities, but in multitrophic communities our empirical results suggest the opposite. Still, in natural communities we are likely to see multiple interaction types that shape the survival of species. The role of different interaction types in shaping evolution in a community context remains both a theoretical and empirical frontier.
+
+<!--
+Caveats: 
+ 
+Key Caveat: Experimental artifact of lower larval survival in complex food-web treatment.
+
+Implications: Artificially increased the magnitude of selection in complex food webs. Note however, that this does not qualitatively change any of our results. In fact, we are actually underestimating the constraints imposed by our simple food-web treatment. This is because the egg parasitoids would be released from their intraguild predator, and thus could increase in abundance over future generations and impose stronger selection on gall midges. 
+-->
+
+One of the things that our study did was artificially reduce the mortality induced by parasitoids, in general, in the simpler food web. Importantly though, this would actually make it more difficult to observed selection due to the fact that reductions in mean fitness, all else equal, intensify the strength of selection [@Hunter2018]. Indeed, we are likely underestimating the constraints imposed by simpler food web, because over time, egg parasitoid abundances would increase, thus increasing selective constraints.
+
+
+## Conclusions
+
+Our study gives insight to how local extinctions, and concomitant decreases in food-web complexity, increases evolutionary constraints. This occurs because selection imposed by simpler food webs constrains optimal evolutionary trajectories and the ability for populations to reach those adaptive peaks (e.g. via genetic constraints). This implies has unexplored, but an insidious effect of local extinctions. Not only may it compromise community robustness and resilience to future change, but it may also cause this at the population level. We are in urgent need of future empirical and theoretical work that understands these rippling effects on the robustness of populations and communities to environmental change. 
+
 
 # Acknowledgements
 
@@ -646,7 +684,7 @@ $\alpha_{\text{Clutch,Pref}}$ &
 
 **Figure \ref{fig:Conceptual}**: Experimental manipulation of food-web complexity associated with a leaf-galling midge (*Iteomyia salicisverruca*) feeding on the willow *Salix hookeriana*. In the complex food-web treatment (A), we allowed the full suite of egg (blue rectangle) and larval (yellow rectangle) parasitoids to impose selection. In the simple food-web treatment (B), we used mesh bags to exclude the guild of larval parasitoids, only allowing the egg parasitoid (*Platygaster* sp.) to impose selection. Black arrows denote the flow of energy in this network of trophic interactions. Larval parasitoids include the following species (from left to right): *Mesopolobus* sp. (Family: Pteromalidae); *Tetrastichus* sp. (Family: Eulophidae); and *Torymus* sp. (Family: Torymidae).
 
-**Figure \ref{fig:UV_Landscape}**: Adaptive landscape of gall midge phenotypes in complex vs. simple food webs. Each panel corresponds to a different phenotypic trait: chamber diameter (A); oviposition preference (B); and clutch size (C). Solid lines represent selection experienced in complex (orange) and simple (blue) food webs. Transparent lines represent bootstrapped replicates to show the uncertainty in selection. For clarity, we only display 100 bootstraps even though inferences are based on 1,000 replicates. Solid yellow lines represent selection imposed by larval parasitoids in the complex food web. Note that mean larval survival is plotted on a natural log scale to reflect the mathematical defintion of the adaptive landscape.
+**Figure \ref{fig:UV_Landscape}**: Adaptive landscape of gall midge phenotypes in complex vs. simple food webs. Each panel corresponds to a different phenotypic trait: chamber diameter (A); oviposition preference (B); and clutch size (C). Solid lines represent selection experienced in complex (orange) and simple (blue) food webs. Transparent lines represent bootstrapped replicates to show the uncertainty in selection. For clarity, we only display 100 bootstraps even though inferences are based on 1,000 replicates.<!-- Solid yellow lines represent selection imposed by larval parasitoids in the complex food web. -->Note that mean larval survival is plotted on a natural log scale to reflect the mathematical defintion of the adaptive landscape.
 
 **Figure \ref{fig:MV_Landscape}**: Two dimensional view of adaptive landscapes of gall midge phenotypes in complex vs. simple food webs. Each panel corresponds to a different combination of phenotypic traits: clutch size and chamber diameter (A); clutch size and oviposition preference (B); oviposition preference and chamber diameter (C). Note the flat landscape in mean larval survival for clutch size and oviposition preference in more complex food webs, whereas all three traits shape the adaptive landscape in simpler food webs. This indicates that selection favors trait integration for each combination of traits in simpler food webs, whereas there is no strong evidence for trait integration in more complex food webs. Note that mean larval survival is plotted on a natural log scale to reflect the mathematical defintion of the adaptive landscape.
 
@@ -656,7 +694,7 @@ $\alpha_{\text{Clutch,Pref}}$ &
 knitr::include_graphics("analyses/complex_simple_foodwebs.jpeg")
 ```
 
-```{r UV_Landscape, echo=FALSE, fig.cap="\\label{fig:UV_Landscape}"}
+```{r UV_Landscape, echo=FALSE, fig.cap="\\label{fig:UV_Landscape}Adaptive landscape of gall midge phenotypes in complex vs. simple food webs. Each panel corresponds to a different phenotypic trait: chamber diameter (A); oviposition preference (B); and clutch size (C). Solid lines represent selection experienced in complex (orange) and simple (blue) food webs. Transparent lines represent bootstrapped replicates to show the uncertainty in selection. For clarity, we only display 100 bootstraps even though inferences are based on 1,000 replicates. Note that mean larval survival is plotted on a natural log scale to reflect the mathematical defintion of the adaptive landscape."}
 knitr::include_graphics("analyses/UV_landscapes.pdf")
 ```
 
