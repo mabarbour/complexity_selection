@@ -35,6 +35,7 @@ fontfamily: mathpazo
 documentclass: article
 linkcolor: black
 urlcolor: black
+citecolor: black
 ---
 
 ```{r setup ms, include=FALSE}
