@@ -1,7 +1,7 @@
 ---
 title: "Supplementary Material"
 author: "Matthew A. Barbour"
-date: "2018-11-22"
+date: "2019-01-09"
 output:
   prettydoc::html_pretty:
     theme: architect
