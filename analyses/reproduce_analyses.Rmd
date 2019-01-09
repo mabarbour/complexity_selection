@@ -67,6 +67,7 @@ bootstrap_fitness <- function(logistic_model, #fixed_effects,
   get_absolute_fitness <- function(.) predict(., newdata=newdata, type="response", re.form=~0) #inverse_logit(model_matrix %*% fixef(.))
   
   if(is.null(bootstraps) == FALSE){
+    set.seed(34) # make sure results are reproducible
     get_bootstraps_absolute_fitness <-bootMer(logistic_model, FUN = get_absolute_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
   
    get_intervals_absolute_fitness <- apply(get_bootstraps_absolute_fitness$t, 2, function(x) x[order(x)][c(round(bootstraps*intervals[1],0),round(bootstraps*intervals[2],0))])
