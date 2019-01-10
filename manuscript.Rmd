@@ -102,6 +102,10 @@ Ecological networks, such as food webs describing who-eats-whom in ecological co
 
 Global change is simplifying the structure of ecological communities, which may influence evolutionary constraints in a number of ways. For example, in a multitrophic community or food web, if different consumers impose directional selection on different traits of a shared resource, then more complex food webs may constrain evolution by increasing the number of traits under selection. Alternatively, if consumers impose selection on different values of a trait, then their selective effects would cancel each other out in more complex food webs. To examine these different possibilities, <!--To examine the effect of network structure on adaptive landscapes, -->we conducted a field experiment that manipulated the complexity of trophic interactions (hereafter food-web complexity) associated with an abundant insect herbivore (*Iteomyia salicisverruca*, Family Cecidomyiidae; fig. \ref{fig:Conceptual}). The larvae of this herbivore induce tooth-shaped galls when they feed on the developing leaves of willow trees [*Salix* sp., @Russo2006]. These galls protect larva from attack by generalist predators (e.g. ants, spiders), but they suffer high mortality from egg and larval parasitoids [@Barbour2016]. We manipulated food-web complexity by either excluding the guild of larval parasitoids (simple food web) or allowing both egg and larval parasitoids to impose selection on gall midge traits (complex food web; fig. \ref{fig:Conceptual}). <!--Food-web complexity may influence the adaptive landscape in a number of ways. For example, if each parasitoid imposes directional selection on a different trait, then more complex food webs may constrain evolution by increasing the number of traits under selection. Alternatively, if parasitoids impose selection on different values of a trait, then their selective effects would cancel each other out in more complex food webs. To examine these different possibilities (among others), -->We then applied modern statistical methods to quantify the effect of food-web complexity on the slope and curvature of the gall midge's adaptive landscape. Taken together, our study gives insight to how local extinctions, and concomitant decreases in food-web complexity, may constrain the evolution of interacting populations.
 
+```{r Conceptual, echo=FALSE, fig.pos="H", fig.cap="\\label{fig:Conceptual}Experimental manipulation of food-web complexity associated with a leaf-galling midge (*Iteomyia salicisverruca*) feeding on the willow *Salix hookeriana*. Black arrows denote the flow of energy in this network of trophic interactions. In the complex food-web treatment, we allowed the full suite of egg and larval parasitoids to impose selection. In the simple food-web treatment, we used mesh bags to exclude the guild of larval parasitoids, only allowing the egg parasitoid (*Platygaster* sp.) to impose selection. Larval parasitoids include the following species (from left to right): *Mesopolobus* sp. (Family: Pteromalidae); *Tetrastichus* sp. (Family: Eulophidae); and *Torymus* sp. (Family: Torymidae)."}
+knitr::include_graphics("analyses/complex_simple_foodwebs_v2.jpeg")
+```
+
 <!--
 Here, we integrate ecological networks and the adaptive landscape to understand how changes in network structure affect the dynamics of natural selection. In particular, we are interested in how network structure constrains or enables phenotypic evolution [@Arnold1992]. We can gain insight to the selective constraints imposed by network structure by examining its effect on the slope and curvature of the adaptive landscape. To illustrate this, let us examine the adaptive landscape of two hypothetical traits, $z_i$ and $z_j$. The slope of the adaptive landscape is described by a column vector of directional selection gradients acting on these traits (cite):
 
@@ -200,6 +204,147 @@ All analyses and visualizations were conducted in R [@R2018]. Unless otherwise n
 [`r round(filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$conf.low*-1, 2)`,
 `r round(filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$conf.high*-1, 2)`]). 
 
+\bigskip
+
+\begin{table}[h]
+\caption{Standardized selection gradients acting on gall midges in complex vs. simple food webs.}
+\label{Table:Gradients}
+\centering
+\begin{tabular}{lccc}
+\\ 
+\hline
+\textbf{Selection gradient} & \textbf{Complex} & \textbf{Simple} & \textbf{Contrast}  \\ 
+\hline
+$\beta_{\text{Diam}}$ & 
+\textbf{
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam")$conf.high,2)`] }& 
+\textbf{
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$conf.high,2)`] }& 
+
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam")$conf.high,2)`] \\
+
+$\beta_{\text{Clutch}}$ & 
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.log.Clutch")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.log.Clutch")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.log.Clutch")$conf.high,2)`] & 
+\textbf{
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.log.Clutch")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.log.Clutch")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.log.Clutch")$conf.high,2)`] }& 
+\textbf{
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch")$conf.high,2)`] }\\
+
+$\beta_{\text{Pref}}$ &
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.sqrt.Pref")$conf.high,2)`] & 
+\textbf{
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.sqrt.Pref")$conf.high,2)`] }& 
+
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.high,2)`] \\
+
+$\gamma_{\text{Diam,Diam}}$ &
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.Diam^2)")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.Diam^2)")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.Diam^2)")$conf.high,2)`] & 
+
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.Diam^2)")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.Diam^2)")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.Diam^2)")$conf.high,2)`] & 
+
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.Diam^2)")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.high,2)`] \\
+
+$\gamma_{\text{Clutch,Clutch}}$ & 
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.log.Clutch^2)")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.log.Clutch^2)")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.log.Clutch^2)")$conf.high,2)`] & 
+
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.log.Clutch^2)")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.log.Clutch^2)")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.log.Clutch^2)")$conf.high,2)`] & 
+
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.high,2)`] \\
+
+$\gamma_{\text{Pref,Pref}}$ & 
+\textbf{
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.sqrt.Pref^2)")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`] }& 
+
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.sqrt.Pref^2)")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`] & 
+\textbf{
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`] }\\
+
+$\gamma_{\text{Diam,Clutch}}$ & 
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam:sc.log.Clutch")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam:sc.log.Clutch")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam:sc.log.Clutch")$conf.high,2)`] & 
+
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam:sc.log.Clutch")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam:sc.log.Clutch")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam:sc.log.Clutch")$conf.high,2)`] & 
+
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.high,2)`] \\
+
+$\gamma_{\text{Diam,Pref}}$ & 
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`] & 
+
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`] & 
+
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`] \\
+
+$\gamma_{\text{Clutch,Pref}}$ & 
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.log.Clutch:sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.high,2)`] & 
+
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.log.Clutch:sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.high,2)`] & 
+
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.high,2)`] \\ 
+\hline
+\end{tabular}
+\bigskip{}
+\\
+{\footnotesize Note: Values in brackets represent 95\% confidence intervals. Bold values indicate that the 95\% CI does not overlap zero. $\beta_{\text{Diam}}$ has been adjusted for bias.}
+\end{table}
+
+
+```{r UV_Landscape, echo=FALSE, fig.pos="H", fig.cap="\\label{fig:UV_Landscape}Adaptive landscape of gall midge phenotypes in complex vs. simple food webs. Each panel corresponds to a different phenotypic trait: chamber diameter (A); oviposition preference (B); and clutch size (C). Bold lines represent selection experienced in complex (orange) and simple (blue) food webs. Thin lines represent bootstrapped replicates to show the uncertainty in selection. For clarity, we only display 100 bootstraps even though inferences are based on 1,000 replicates. Note that mean larval survival is plotted on a natural log scale to reflect the mathematical defintion of the adaptive landscape."}
+knitr::include_graphics("analyses/UV_landscapes.pdf")
+```
+
 ## Simpler food webs increase genetic constraints
 
 \indent The curvature of the adaptive landscape indirectly affects genetic constraints and is influenced by directional, quadratic, and correlational selection gradients. Our food-web treatment did not alter correlational selection for any combination of traits (table \ref{Table:Gradients}). Similarly, our food-web treatment did not influence quadratic selection on either chamber diameter or clutch size (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}A,C). In contrast, our food-web treatment did alter quadratic selection acting on oviposition preference (table \ref{Table:Gradients}). The negative relationship between oviposition preference and larval survival dampened at high densities in complex, but not simple food webs (fig. \ref{fig:UV_Landscape}B). This dampened relationship was partly due to a trend for nonlinear selection imposed by larval parasitoids ($\gamma_{\text{Pref:Pref}}$=
@@ -222,6 +367,11 @@ $$\textbf{C}_{\text{Simple}} = \begin{pmatrix}
 `r round(simple_curvature["Pref","Diam"],2)` & `r round(simple_curvature["Pref","Clutch"],2)` & `r round(simple_curvature["Pref","Pref"],2)` \end{pmatrix}$$
 
 Remember that we can infer the indirect effects of selection on genetic constraints by counting the number of negative signs along the diagonal (decrease in additive genetic variance) and the number of nonzero terms along the off-diagonal (trait integration) of the curvature matrix. The structure of these matrices indicates that there are more selective constraints imposed on the gall midge in the simpler (6 of 6) vs. more complex (1 of 6) food web. Simpler food webs acted to decrease genetic variance for all three phenotypic traits (negative diagonal terms), whereas only one trait (chamber diameter) experienced a decrease in additive genetic variance in the more complex food web. For genetic covariances, the simpler food web favored integration among all three phenotypic traits (nonzero off-diagonal terms), and thus constraints along all three axes of covariance (fig. \ref{fig:MV_Landscape}). In contrast, there was no strong evidence of trait integration in the more complex food web (fig. \ref{fig:MV_Landscape}).
+
+
+```{r MV_Landscape, echo=FALSE, fig.pos="H", fig.cap="\\label{fig:MV_Landscape}Two dimensional view of adaptive landscapes of gall midge phenotypes in complex vs. simple food webs. Each panel corresponds to a different combination of phenotypic traits: clutch size and chamber diameter (A); clutch size and oviposition preference (B); oviposition preference and chamber diameter (C). Arrows represent mean estimates of directional selection gradients, while contours represent predicted larval survival of the mean phenotype (i.e., all traits = 0) in each food-web treatment. Notice that arrows point more toward a corner of the adaptive landscape for each combination of traits in the simple vs. complex food-web treatment. This indicates that trait integration (covariance) is more strongly favored in simpler vs. more complex food webs. Note that mean larval survival is plotted on a natural log scale to reflect the mathematical definition of the adaptive landscape."}
+knitr::include_graphics("analyses/MV_landscapes.pdf")
+```
 
 ## Selection on the extended phenotype of egg parasitoids
 
@@ -251,6 +401,11 @@ Gall midge preference influenced the probability of observing egg parasitoids in
 `r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` 
 [`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
 `r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`]).
+
+
+```{r EggPtoid_Selection, echo=FALSE, fig.pos="H", fig.cap="\\label{fig:EggPtoid_Selection}Selection imposed by larval parasitoids on the extended phenotype of egg parasitoids (*Platygaster* sp.). The bold line represents the average difference in the probability of observing the egg parasitoid in complex vs. simple food webs as a function of gall midge oviposition preference. Thin lines represent bootstrapped replicates to show the uncertainty in selection. For clarity, we only display 100 bootstraps even though inferences are based on 1,000 replicates. The decrease in the probability of observing egg parasitoids at high gall-midge densities indicate that larval parasitoids impose nonlinear selection on the extended phenotype of egg parasitoids."}
+knitr::include_graphics("analyses/selection_on_Platygaster.pdf")
+```
 
 <!--
 (contrast $\gamma_{\text{Pref:Pref}}$=
@@ -538,149 +693,9 @@ We thank the staff of Humboldt Bay National Wildlife Refuge (U.S. Fish and Wildl
 
 <!-- <div id="references"></div> this code inserts references wherever you want rather than at the end of the document -->
 
-\newpage 
-
-# Tables
-
 <!-- CONSIDER ITALICIZING RELATIONSHIPS WHERE 90% CI DOES NOT OVERLAP ZERO -->
 
-\begin{table}[h]
-\caption{Standardized selection gradients acting on gall midges in complex vs. simple food webs.}
-\label{Table:Gradients}
-\centering
-\begin{tabular}{lccc}
-\\ 
-\hline
-\textbf{Selection gradient} & \textbf{Complex} & \textbf{Simple} & \textbf{Contrast}  \\ 
-\hline
-$\beta_{\text{Diam}}$ & 
-\textbf{
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam")$conf.high,2)`] }& 
-\textbf{
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$conf.high,2)`] }& 
-
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam")$conf.high,2)`] \\
-
-$\beta_{\text{Clutch}}$ & 
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.log.Clutch")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.log.Clutch")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.log.Clutch")$conf.high,2)`] & 
-\textbf{
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.log.Clutch")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.log.Clutch")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.log.Clutch")$conf.high,2)`] }& 
-\textbf{
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch")$conf.high,2)`] }\\
-
-$\beta_{\text{Pref}}$ &
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.sqrt.Pref")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.sqrt.Pref")$conf.high,2)`] & 
-\textbf{
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.sqrt.Pref")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.sqrt.Pref")$conf.high,2)`] }& 
-
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.sqrt.Pref")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.high,2)`] \\
-
-$\gamma_{\text{Diam,Diam}}$ &
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.Diam^2)")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.Diam^2)")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.Diam^2)")$conf.high,2)`] & 
-
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.Diam^2)")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.Diam^2)")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.Diam^2)")$conf.high,2)`] & 
-
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.Diam^2)")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.high,2)`] \\
-
-$\gamma_{\text{Clutch,Clutch}}$ & 
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.log.Clutch^2)")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.log.Clutch^2)")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.log.Clutch^2)")$conf.high,2)`] & 
-
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.log.Clutch^2)")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.log.Clutch^2)")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.log.Clutch^2)")$conf.high,2)`] & 
-
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.high,2)`] \\
-
-$\gamma_{\text{Pref,Pref}}$ & 
-\textbf{
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.sqrt.Pref^2)")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`] }& 
-
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.sqrt.Pref^2)")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`] & 
-\textbf{
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`] }\\
-
-$\gamma_{\text{Diam,Clutch}}$ & 
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam:sc.log.Clutch")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam:sc.log.Clutch")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam:sc.log.Clutch")$conf.high,2)`] & 
-
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam:sc.log.Clutch")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam:sc.log.Clutch")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam:sc.log.Clutch")$conf.high,2)`] & 
-
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.high,2)`] \\
-
-$\gamma_{\text{Diam,Pref}}$ & 
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`] & 
-
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`] & 
-
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`] \\
-
-$\gamma_{\text{Clutch,Pref}}$ & 
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.log.Clutch:sc.sqrt.Pref")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.high,2)`] & 
-
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.log.Clutch:sc.sqrt.Pref")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.high,2)`] & 
-
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.high,2)`] \\ 
-\hline
-\end{tabular}
-\bigskip{}
-\\
-{\footnotesize Note: Values in brackets represent 95\% confidence intervals. Bold values indicate that the 95\% CI does not overlap zero. $\beta_{\text{Diam}}$ has been adjusted for bias.}
-\end{table}
-
-\newpage 
-
-<!--TABLE NOT REFERENCED IN RESULTS-->
+<!--TABLE NOT REFERENCED IN RESULTS
 
 \begin{table}[h]
 \caption{Relationship between absolute fitness (larval survival) and phenotypic traits of gall midges in complex vs. simple food webs.}
@@ -828,28 +843,4 @@ $\alpha_{\text{Clutch,Pref}}$ &
 
 **Figure \ref{fig:EggPtoid_Selection}**: Selection imposed by larval parasitoids on the extended phenotype of egg parasitoids (*Platygaster* sp.). The solid line represents the average difference in the probability of observing the egg parasitoid in complex vs. simple food webs as a function of gall midge oviposition preference. Transparent lines represent bootstrapped replicates to show the uncertainty in selection. For clarity, we only display 100 bootstraps even though inferences are based on 1,000 replicates. The decrease in the probability of observing egg parasitoids at high gall-midge densities indicates the increasing impact of larval parasitoids. 
 -->
-# Figures
 
-```{r Conceptual, echo=FALSE, fig.cap="\\label{fig:Conceptual}Experimental manipulation of food-web complexity associated with a leaf-galling midge (*Iteomyia salicisverruca*) feeding on the willow *Salix hookeriana*. Black arrows denote the flow of energy in this network of trophic interactions. In the complex food-web treatment, we allowed the full suite of egg and larval parasitoids to impose selection. In the simple food-web treatment, we used mesh bags to exclude the guild of larval parasitoids, only allowing the egg parasitoid (*Platygaster* sp.) to impose selection. Larval parasitoids include the following species (from left to right): *Mesopolobus* sp. (Family: Pteromalidae); *Tetrastichus* sp. (Family: Eulophidae); and *Torymus* sp. (Family: Torymidae)."}
-knitr::include_graphics("analyses/complex_simple_foodwebs_v2.jpeg")
-```
-
-\newpage
-
-```{r UV_Landscape, echo=FALSE, fig.cap="\\label{fig:UV_Landscape}Adaptive landscape of gall midge phenotypes in complex vs. simple food webs. Each panel corresponds to a different phenotypic trait: chamber diameter (A); oviposition preference (B); and clutch size (C). Bold lines represent selection experienced in complex (orange) and simple (blue) food webs. Thin lines represent bootstrapped replicates to show the uncertainty in selection. For clarity, we only display 100 bootstraps even though inferences are based on 1,000 replicates. Note that mean larval survival is plotted on a natural log scale to reflect the mathematical defintion of the adaptive landscape."}
-knitr::include_graphics("analyses/UV_landscapes.pdf")
-```
-
-\newpage
-
-```{r MV_Landscape, echo=FALSE, fig.cap="\\label{fig:MV_Landscape}Two dimensional view of adaptive landscapes of gall midge phenotypes in complex vs. simple food webs. Each panel corresponds to a different combination of phenotypic traits: clutch size and chamber diameter (A); clutch size and oviposition preference (B); oviposition preference and chamber diameter (C). Arrows represent mean estimates of directional selection gradients, while contours represent predicted larval survival of the mean phenotype (i.e., all traits = 0) in each food-web treatment. Notice that arrows point more toward a corner of the adaptive landscape for each combination of traits in the simple vs. complex food-web treatment. This indicates that trait integration (covariance) is more strongly favored in simpler vs. more complex food webs. Note that mean larval survival is plotted on a natural log scale to reflect the mathematical definition of the adaptive landscape."}
-knitr::include_graphics("analyses/MV_landscapes.pdf")
-```
-
-\newpage
-
-```{r EggPtoid_Selection, echo=FALSE, fig.cap="\\label{fig:EggPtoid_Selection}Selection imposed by larval parasitoids on the extended phenotype of egg parasitoids (*Platygaster* sp.). The bold line represents the average difference in the probability of observing the egg parasitoid in complex vs. simple food webs as a function of gall midge oviposition preference. Thin lines represent bootstrapped replicates to show the uncertainty in selection. For clarity, we only display 100 bootstraps even though inferences are based on 1,000 replicates. The decrease in the probability of observing egg parasitoids at high gall-midge densities indicate that larval parasitoids impose nonlinear selection on the extended phenotype of egg parasitoids."}
-knitr::include_graphics("analyses/selection_on_Platygaster.pdf")
-```
-
-\newpage
