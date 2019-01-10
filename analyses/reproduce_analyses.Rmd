@@ -1638,10 +1638,11 @@ eggptoid_selection_plot <- eggptoid_plot_df %>%
   xlab("Gall midge preference (SDs)") + 
   ylab(expression(paste(Delta," egg parasitoid survival (complex - simple)"))) +
   scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
-  geom_hline(yintercept=0, linetype="dotted") 
+  geom_hline(yintercept=0, linetype="dotted") +
+  theme_cowplot(font_size = 12)
 
 eggptoid_selection_plot
-save_plot(filename = "selection_on_Platygaster.pdf", plot = eggptoid_selection_plot, base_height = 6)
+save_plot(filename = "selection_on_Platygaster.pdf", plot = eggptoid_selection_plot, base_height = 4) # base_height = 6
 ```
 
 ```{r Egg-Parasitoid-Selection-linear, echo=F}
@@ -1850,10 +1851,18 @@ AF_range <- bind_rows(RF_Clutch.Pref$absolute_fitness, RF_Diam.Clutch$absolute_f
 
 my_breaks <- c(0.2,0.4,0.6,0.8)
 
+# Set contour breaks
+breaks <- predict(foodweb_model, newdata=data.frame(sc.Diam = c(0,0), sc.log.Clutch = c(0,0), sc.sqrt.Pref = c(0,0), Foodweb = c("Complex","Simple")), type="response", re.form=~0)
+names(breaks) <- c("Complex","Simple")
+
 # Size x Clutch
 AF_plot_Diam.Clutch <- RF_Diam.Clutch$absolute_fitness %>% 
+  filter(Foodweb == "Complex") %>%
   ggplot(., aes(x=sc.Diam, y=sc.log.Clutch)) +
   geom_raster(aes(fill=average)) +
+  stat_contour(aes(z = average), breaks = breaks["Complex"], linetype = "dotted", color = "black") +
+  geom_raster(data = filter(RF_Diam.Clutch$absolute_fitness, Foodweb == "Simple"), aes(fill=average)) +
+  stat_contour(data = filter(RF_Diam.Clutch$absolute_fitness, Foodweb == "Simple"), aes(z = average), breaks = breaks["Simple"], linetype = "dotted", color = "black") +
   facet_wrap(~Foodweb) +
   xlab("Gall diameter (SDs)") +
   ylab("Clutch size (SDs)") +
@@ -1865,8 +1874,12 @@ AF_plot_Diam.Clutch <- RF_Diam.Clutch$absolute_fitness %>%
 
 # Size x Preference
 AF_plot_Diam.Pref <- RF_Diam.Pref$absolute_fitness %>% 
+  filter(Foodweb == "Complex") %>%
   ggplot(., aes(x=sc.Diam, y=sc.sqrt.Pref)) +
   geom_raster(aes(fill=average)) +
+  stat_contour(aes(z = average), breaks = breaks["Complex"], linetype = "dotted", color = "black") +
+  geom_raster(data = filter(RF_Diam.Pref$absolute_fitness, Foodweb == "Simple"), aes(fill=average)) +
+  stat_contour(data = filter(RF_Diam.Pref$absolute_fitness, Foodweb == "Simple"), aes(z = average), breaks = breaks["Simple"], linetype = "dotted", color = "black") +
   facet_wrap(~Foodweb) +
   xlab("Chamber diameter (SDs)") +
   ylab("Oviposition preference (SDs)") +
@@ -1878,8 +1891,12 @@ AF_plot_Diam.Pref <- RF_Diam.Pref$absolute_fitness %>%
 
 # Clutch x Preference
 AF_plot_Clutch.Pref <- RF_Clutch.Pref$absolute_fitness %>%
+  filter(Foodweb == "Complex") %>%
   ggplot(., aes(x=sc.sqrt.Pref, y=sc.log.Clutch)) +
   geom_raster(aes(fill=average)) +
+  stat_contour(aes(z = average), breaks = breaks["Complex"], linetype = "dotted", color = "black") +
+  geom_raster(data = filter(RF_Clutch.Pref$absolute_fitness, Foodweb == "Simple"), aes(fill=average)) +
+  stat_contour(data = filter(RF_Clutch.Pref$absolute_fitness, Foodweb == "Simple"), aes(z = average), breaks = breaks["Simple"], linetype = "dotted", color = "black") +
   facet_wrap(~Foodweb) +
   xlab("Oviposition preference (SDs)") +
   ylab("Clutch size (SDs)") +
@@ -1922,17 +1939,135 @@ gradients_Diam.Pref <- data.frame(Foodweb = c("Complex","Simple"),
                                              filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$mean), 
                                     yend = c(filter(tidy_foodweb_grads, type=="Complex", term=="sc.sqrt.Pref")$mean, 
                                              filter(tidy_foodweb_grads, type=="Simple", term=="sc.sqrt.Pref")$mean))
-                                       
-# Set contour breaks
-breaks <- predict(foodweb_model, newdata=data.frame(sc.Diam = c(0,0), sc.log.Clutch = c(0,0), sc.sqrt.Pref = c(0,0), Foodweb = c("Complex","Simple")), type="response", re.form=~0)
-
+                                    
 
 # Format plots
 AF_landscape_plots <- plot_grid(
   AF_plot_Diam.Clutch + theme(legend.position = "none", 
                               axis.title.x = element_blank(),
                              axis.text.x = element_blank()) +
-    stat_contour(aes(z = average), breaks = breaks, linetype = "dotted", color = "black") + # mean(RF_Diam.Pref$absolute_fitness$average)
+    #stat_contour(aes(z = average), breaks = breaks, linetype = "dotted", color = "black") + # mean(RF_Diam.Pref$absolute_fitness$average)
+    geom_segment(data = gradients_Diam.Clutch, 
+                 aes(x = sc.Diam, y = sc.log.Clutch, xend = xend, yend = yend), 
+                 arrow = arrow(length = unit(0.03, "npc"))),
+  AF_plot_Clutch.Pref + theme(legend.position = "none", 
+                              axis.title.y = element_blank(),
+                              axis.text.y = element_blank()) + xlab("Preference (SDs)") +
+    #stat_contour(aes(z = average), breaks = breaks, linetype = "dotted", color = "black") +
+    geom_segment(data = gradients_Clutch.Pref, 
+                 aes(x = sc.sqrt.Pref, y = sc.log.Clutch, xend = xend, yend = yend), 
+                 arrow = arrow(length = unit(0.03, "npc"))), 
+  AF_plot_Diam.Pref + theme(legend.position = "none") + ylab("Preference (SDs)") +
+    #stat_contour(aes(z = average), breaks = breaks, linetype = "dotted", color = "black") +
+    geom_segment(data = gradients_Diam.Pref, 
+                 aes(x = sc.Diam, y = sc.sqrt.Pref, xend = xend, yend = yend), 
+                 arrow = arrow(length = unit(0.03, "npc"))), 
+  nrow=2, align="hv", labels = "AUTO")
+
+AF_landscape_2d <- ggdraw(AF_landscape_plots) + draw_grob(AF_landscape_legend, x = 0.7, y=-0.2)
+AF_landscape_2d
+save_plot(filename = "MV_landscapes.pdf", plot = AF_landscape_2d, base_width=8, base_height = 6)
+```
+
+```{r }
+# Plot helpers
+AF_range <- bind_rows(RF_Clutch.Pref$absolute_fitness, RF_Diam.Clutch$absolute_fitness, RF_Diam.Pref$absolute_fitness) %>%
+  summarise(min = min(average), max = max(average))
+
+my_breaks <- c(0.2,0.4,0.6,0.8)
+
+# Set contour breaks
+breaks <- predict(foodweb_model, newdata=data.frame(sc.Diam = c(0,0), sc.log.Clutch = c(0,0), sc.sqrt.Pref = c(0,0), Foodweb = c("Complex","Simple")), type="response", re.form=~0)
+names(breaks) <- c("Complex","Simple")
+
+# Size x Clutch
+AF_plot_Diam.Clutch <- RF_Diam.Clutch$absolute_fitness %>%
+  filter(Foodweb == "Complex") %>%
+  ggplot(., aes(x=sc.Diam, y=sc.log.Clutch)) +
+  geom_raster(aes(fill=average)) +
+  stat_contour(aes(z = average), breaks = breaks["Complex"], linetype = "dotted", color = "black") +
+  geom_raster(data = filter(RF_Diam.Clutch$absolute_fitness, Foodweb == "Simple"), aes(fill=average)) +
+  stat_contour(data = filter(RF_Diam.Clutch$absolute_fitness, Foodweb == "Simple"), aes(z = average), breaks = breaks["Simple"], linetype = "dotted", color = "black") +
+  facet_wrap(~Foodweb) +
+  xlab("Gall diameter (SDs)") +
+  ylab("Clutch size (SDs)") +
+  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_y_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_fill_viridis(name = "Mean larval\nsurvival", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(AF_range$min, AF_range$max)) +
+  theme(strip.background = element_blank(),
+        strip.text.x=element_text(margin=margin(b=4))) 
+
+# Size x Preference
+AF_plot_Diam.Pref <- RF_Diam.Pref$absolute_fitness %>% 
+  #filter(Foodweb == "Complex") %>%
+  ggplot(., aes(x=sc.Diam, y=sc.sqrt.Pref)) +
+  geom_raster(aes(fill=average)) +
+  #stat_contour(aes(z = average), breaks = breaks["Complex"], linetype = "dotted", color = "black") +
+  #geom_raster(data = filter(RF_Diam.Pref$absolute_fitness, Foodweb == "Simple"), aes(fill=average)) +
+  #stat_contour(data = filter(RF_Diam.Pref$absolute_fitness, Foodweb == "Simple"), aes(z = average), breaks = breaks["Simple"], linetype = "dotted", color = "black") +
+  facet_wrap(~Foodweb) +
+  xlab("Chamber diameter (SDs)") +
+  ylab("Oviposition preference (SDs)") +
+  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_y_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_fill_viridis(name = "Mean larval\nsurvival", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(AF_range$min, AF_range$max)) +
+  theme(strip.background = element_blank(),
+        strip.text.x=element_text(margin=margin(b=4))) 
+
+# Clutch x Preference
+AF_plot_Clutch.Pref <- RF_Clutch.Pref$absolute_fitness %>%
+  ggplot(., aes(x=sc.sqrt.Pref, y=sc.log.Clutch)) +
+  geom_raster(aes(fill=average)) +
+  facet_wrap(~Foodweb) +
+  xlab("Oviposition preference (SDs)") +
+  ylab("Clutch size (SDs)") +
+  scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_y_continuous(labels = c(-1,-0.5,0,0.5,1)) +
+  scale_fill_viridis(name = "Mean larval\nsurvival", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(AF_range$min, AF_range$max)) +
+  theme(strip.background = element_blank(),
+        strip.text.x=element_text(margin=margin(b=4)))
+
+```
+
+
+Remove 2nd contour line
+
+```{r Figure-Multivariate-Landscapes-2, echo=FALSE, fig.cap="Fitness landscapes of gall traits in complex vs. simple food webs. Each panel corresponds to a different combination of traits: clutch size and gall diameter (A); clutch size and Oviposition preference (B); Oviposition preference and gall diameter (C). Note that traits for all plots range 1 SD below and above the mean (=0)."}
+
+# Get legend
+AF_landscape_legend <- get_legend(AF_plot_Diam.Pref + theme(legend.text = element_text(size=10)))
+
+# Arrow data
+gradients_Diam.Clutch <- data.frame(Foodweb = c("Complex","Simple"),
+                                    sc.Diam = c(0,0), 
+                                    sc.log.Clutch = c(0,0), 
+                                    xend = c(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam")$mean,
+                                             filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$mean), 
+                                    yend = c(filter(tidy_foodweb_grads, type=="Complex", term=="sc.log.Clutch")$mean, 
+                                             filter(tidy_foodweb_grads, type=="Simple", term=="sc.log.Clutch")$mean))
+
+gradients_Clutch.Pref <- data.frame(Foodweb = c("Complex","Simple"),
+                                    sc.sqrt.Pref = c(0,0), 
+                                    sc.log.Clutch = c(0,0), 
+                                    xend = c(filter(tidy_foodweb_grads, type=="Complex", term=="sc.sqrt.Pref")$mean, 
+                                             filter(tidy_foodweb_grads, type=="Simple", term=="sc.sqrt.Pref")$mean), 
+                                    yend = c(filter(tidy_foodweb_grads, type=="Complex", term=="sc.log.Clutch")$mean, 
+                                             filter(tidy_foodweb_grads, type=="Simple", term=="sc.log.Clutch")$mean))
+
+gradients_Diam.Pref <- data.frame(Foodweb = c("Complex","Simple"),
+                                    sc.Diam = c(0,0), 
+                                    sc.sqrt.Pref = c(0,0), 
+                                    xend = c(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam")$mean,
+                                             filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$mean), 
+                                    yend = c(filter(tidy_foodweb_grads, type=="Complex", term=="sc.sqrt.Pref")$mean, 
+                                             filter(tidy_foodweb_grads, type=="Simple", term=="sc.sqrt.Pref")$mean))
+                                       
+# Format plots
+AF_landscape_plots <- plot_grid(
+  AF_plot_Diam.Clutch + theme(legend.position = "none", 
+                              axis.title.x = element_blank(),
+                             axis.text.x = element_blank()) +
+   # stat_contour(aes(z = average), breaks = breaks, linetype = "dotted", color = "black") + # mean(RF_Diam.Pref$absolute_fitness$average)
     geom_segment(data = gradients_Diam.Clutch, 
                  aes(x = sc.Diam, y = sc.log.Clutch, xend = xend, yend = yend), 
                  arrow = arrow(length = unit(0.03, "npc"))),
@@ -1944,7 +2079,7 @@ AF_landscape_plots <- plot_grid(
                  aes(x = sc.sqrt.Pref, y = sc.log.Clutch, xend = xend, yend = yend), 
                  arrow = arrow(length = unit(0.03, "npc"))), 
   AF_plot_Diam.Pref + theme(legend.position = "none") + ylab("Preference (SDs)") +
-    stat_contour(aes(z = average), breaks = breaks, linetype = "dotted", color = "black") +
+    #stat_contour(aes(z = average), breaks = breaks, linetype = "dotted", color = "black") +
     geom_segment(data = gradients_Diam.Pref, 
                  aes(x = sc.Diam, y = sc.sqrt.Pref, xend = xend, yend = yend), 
                  arrow = arrow(length = unit(0.03, "npc"))), 
@@ -1952,7 +2087,7 @@ AF_landscape_plots <- plot_grid(
 
 AF_landscape_2d <- ggdraw(AF_landscape_plots) + draw_grob(AF_landscape_legend, x = 0.7, y=-0.2)
 AF_landscape_2d
-save_plot(filename = "MV_landscapes.pdf", plot = AF_landscape_2d, base_width=8, base_height = 6)
+save_plot(filename = "MV_landscapes_2.pdf", plot = AF_landscape_2d, base_width=8, base_height = 6)
 ```
 
 <!--
