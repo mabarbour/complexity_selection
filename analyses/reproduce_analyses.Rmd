@@ -1,5 +1,5 @@
 ---
-title: "Reproduce Analyses Reported in "Phenotypic evolution is more constrained in simpler food webs""
+title: "Reproduce analyses reported in: *Phenotypic evolution is more constrained in simpler food webs*"
 author: "Matthew A. Barbour"
 date: "`r Sys.Date()`"
 output: github_document
@@ -42,6 +42,7 @@ gall_selection.df <- read_csv("../data/gall_selection_data.csv") %>%
   mutate(Foodweb = ifelse(Treatment.focus=="Control","Complex","Simple"),
          gall_survival = as.numeric(ifelse(pupa > 0, 1, 0)),
          egg_parasitoid = as.numeric(ifelse(platy > 0, 1, 0)),
+         # transform and scale traits to approximate multivariate normal assumption
          sc.Diam = as.numeric(scale(Gall_Height_mm)), 
          sc.log.Clutch = as.numeric(scale(log(gall_individuals))), 
          sc.sqrt.Pref = as.numeric(scale(sqrt(Density_per_100_shoots)))) 
@@ -52,12 +53,10 @@ gall_selection.df <- read_csv("../data/gall_selection_data.csv") %>%
 inverse_logit <- function(x) exp(x)/(1+exp(x))
 
 ## Bootstrap fitness estimates
-bootstrap_fitness <- function(logistic_model, #fixed_effects, 
-                              newdata, bootstraps, intervals=c(0.025,0.975)){
-  #model_matrix <- model.matrix(formula(fixed_effects), newdata)
+bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0.025,0.975)){
   
   # Absolute fitness
-  get_absolute_fitness <- function(.) predict(., newdata=newdata, type="response", re.form=~0) #inverse_logit(model_matrix %*% fixef(.))
+  get_absolute_fitness <- function(.) predict(., newdata=newdata, type="response", re.form=~0) 
   
   if(is.null(bootstraps) == FALSE){
     set.seed(34) # make sure results are reproducible
@@ -80,6 +79,7 @@ bootstrap_fitness <- function(logistic_model, #fixed_effects,
   get_relative_fitness <- function(.) get_absolute_fitness(.)/mean(get_absolute_fitness(.))
   
   if(is.null(bootstraps) == FALSE){
+    set.seed(34) # make sure results are reproducible
     get_bootstraps_relative_fitness <-bootMer(logistic_model, FUN = get_relative_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
   
   get_intervals_relative_fitness <- apply(get_bootstraps_relative_fitness$t, 2, function(x) x[order(x)][c(round(bootstraps*intervals[1],0),round(bootstraps*intervals[2],0))])
@@ -104,43 +104,11 @@ n_boots_analysis <- 1000
 n_boots_plots <- 100
 
 
-## Predicting evolutionary dynamics 
-evolutionary_dynamics <- function (betas,    # one-column matrix of directional selection gradients
-                                   gammas,   # matrix of nonlinear selection gradients
-                                   G_0,      # initial G-matrix
-                                   z_0,      # one-column matrix of initial trait values
-                                   t) {       # evolutionary time steps 
-    # Equation 2 from Phillips and Arnold 1989, Evolution
-    G <- rep(list(G_0), t) 
-    for (i in 1:t) G[[i + 1]] <- {
-      G[[i]] + G[[i]] %*% (gammas - betas %*% t(betas)) %*% G[[i]] # may need to add mutation/recombination matrix (see Phillips and Arnold 1989)
-    }
-    
-    # Equation 1 from Phillips and Arnold 1989, Evolution
-    z <- rep(list(z_0), t) 
-    for (i in 1:t) z[[i + 1]] <- {
-        z[[i]] + G[[i]] %*% betas
-    }
-    return(list(z=z,G=G))
-}
-
-## Number of evolutionary time steps for simulation
-n_evo_sims <- 200 # 1000
-
-## Tidy up evolutionary simulations
-tidy_evo_sims <- function(evo_sims) {
-  tidy_sim <- data.frame(matrix(unlist(evo_sims$z), ncol=3, byrow=T)) %>% 
-    transmute(Time=1:length(evo_sims$z), Diam=round(X1,2), Clutch=round(X2,2), Pref=round(X3,2)) %>%
-    filter(Diam < 1, Diam > -1, Clutch < 1, Clutch > -1, Pref < 1, Pref > -1) 
-  
-  return(tidy_sim)
-}
-
 ## Get confidence intervals from bootstrapped samples
 conf.high <- function(x) quantile(x, probs = 0.975)
 conf.low <- function(x) quantile(x, probs = 0.025)
 
-## Color palette
+## Color-blind friendly palette: http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/
 
 # order -> orange, light blue, green, yellow, dark blue, red, pink
 cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#000000", "#999999")
@@ -192,8 +160,6 @@ linear_foodweb_model <- glmer(
     (1|Genotype/Plant_Position/Gall_Number),
   data = gall_selection.df,
   family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
-
-visreg::visreg(linear_foodweb_model, xvar="sc.sqrt.Pref", by="Foodweb", scale="response")
 ```
 
 ```{r Bootstrap linear food-web model, cache=TRUE, include=FALSE}
@@ -202,8 +168,6 @@ boot_linear_foodweb_model <- bootMer(linear_foodweb_model, FUN = fixef, nsim=n_b
 
 
 To estimate biased selection on chamber diameter, we subset our data to only include multi-chambered galls where there was variability in larval survival. We then fit a reduced model to estimate the bias in the logistic regression coefficient of chamber diameter in each food web.
-
-<!-- We quantified biased selection on chamber diameter in the following way. First, we focus on multi-chambered galls where there is evidence of both survival and parasitism. The idea is that galls from the same clutch should be similar in size; therefore, any selection on diameter would be apparent. If we assume that this is all due to the effect of parasitism on larval development, truncating gall diameter, then we can consider this new selection differential to be the result of confounding factors. Note that this method likely overestimates the confounding effect of parasitism, since we are assuming that any heterogeneity in chamber diameter (for this subset) is due to parasitism. -->
 
 ```{r Bias in food-web model, cache=TRUE}
 biased_foodweb_df <- gall_selection.df %>%
@@ -777,7 +741,6 @@ figure_egglarval_grads <- plot_grid(y_title_egglarval_grads, plot_legend_egglarv
 figure_egglarval_grads
 ```
 
-# Reproduce Figure 2 of main manuscript
 
 We combine our estimates of selection gradients for each food-web treatment as well as the contribution of larval parasitoids to selection in the complex food web.
 
@@ -842,21 +805,6 @@ plot_foodwebegglarval_correlational_grads <- tidy_foodwebegglarval_grads %>%
   scale_fill_manual(values=cbPalette[c(6,5,4)], labels=legend_foodwebegglarval_labels, name=legend_foodwebegglarval_title) +
   scale_color_manual(values=cbPalette[c(6,5,4)], labels=legend_foodwebegglarval_labels, name=legend_foodwebegglarval_title) 
 
-# Get legend
-#legend_foodwebegglarval_grads <- get_legend(plot_foodwebegglarval_directional_grads)
-
-# Format plots for manuscript
-#plot_foodwebegglarval_grads <- plot_grid(
-#  plot_foodwebegglarval_directional_grads + theme(legend.position = "none", axis.title = element_blank()),
-#  plot_foodwebegglarval_quadratic_grads + theme(legend.position = "none", axis.title = element_blank()),
-#  plot_foodwebegglarval_correlational_grads + theme(legend.position = "none", axis.title = element_blank()), 
-#  nrow=2, align="hv", labels = "")
-#plot_legend_foodwebegglarval_grads <- ggdraw(plot_foodwebegglarval_grads) + draw_grob(legend_foodwebegglarval_grads, x = 0.7, y=-0.2)
-#y_title_foodwebegglarval_grads <- ggdraw() + draw_label("Selection gradient (SDs)", angle = 90)
-
-#figure_foodwebegglarval_grads <- plot_grid(y_title_foodwebegglarval_grads, plot_legend_foodwebegglarval_grads, ncol=2, rel_widths = c(0.05,1)) 
-#figure_foodwebegglarval_grads
-
 # Alt format
 legend_foodwebegglarval_grads <- get_legend(plot_foodwebegglarval_directional_grads + theme(legend.title.align = 0.5))
 
@@ -899,7 +847,6 @@ plot_foodwebegglarval_mean_fitness <- tidy_foodwebegglarval_alphas %>%
   ggplot(., aes(x=type)) +
   geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
   geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
- # geom_text(data=filter(tidy_foodwebegglarval_alphas, type=="Diff", term=="(Intercept)"), aes(y=0.9, x=1.5, label=P_cutoff), size=P_size, color="black") +
   scale_y_continuous(name="larval survival", limits=c(0,1), breaks=c(0,0.2,0.4,0.6,0.8,1)) +
   scale_x_discrete(name="Parasitoids", breaks=c("Complex","Simple","Larval"), labels=c("Egg + Larval","Egg","Larval")) +
   facet_wrap(~coefficient_type) +
@@ -913,8 +860,6 @@ plot_foodwebegglarval_linear_coefs <- tidy_foodwebegglarval_alphas %>%
   geom_hline(yintercept=0, linetype="dotted") +
   geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
   geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
-  #geom_text(data=filter(tidy_foodwebegglarval_alphas, type=="Diff", term %in% c("sc.Diam","sc.log.Clutch","sc.sqrt.Pref")), 
-  #          aes(y=P_asterisk_foodwebegglarval_coefs, label=P_cutoff), size=P_size, color="black") +
   scale_y_continuous(name="Coefficient", limits=y_limits_foodwebegglarval_coefs) +
   scale_x_discrete(name="", labels=parse(text=c("alpha[Diam]","alpha[Clutch]","alpha[Pref]"))) +
   facet_wrap(~coefficient_type) +
@@ -928,8 +873,6 @@ plot_foodwebegglarval_quadratic_coefs <- tidy_foodwebegglarval_alphas %>%
   geom_hline(yintercept=0, linetype="dotted") +
   geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
   geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
-  #geom_text(data=filter(tidy_foodwebegglarval_alphas, type=="Diff", term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.sqrt.Pref^2)")), 
-  #          aes(y=P_asterisk_foodwebegglarval_coefs, label=P_cutoff), size=P_size, color="black") +
   scale_y_continuous(name="Coefficient", limits=y_limits_foodwebegglarval_coefs) +
   scale_x_discrete(name="", labels=parse(text=c("alpha[Diam:Diam]","alpha[Clutch:Clutch]","alpha[Pref:Pref]"))) +
   facet_wrap(~coefficient_type) +
@@ -943,8 +886,6 @@ plot_foodwebegglarval_correlational_coefs <- tidy_foodwebegglarval_alphas %>%
   geom_hline(yintercept=0, linetype="dotted") +
   geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
   geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
- # geom_text(data=filter(tidy_foodwebegglarval_alphas, type=="Diff", term %in% c("sc.Diam:sc.log.Clutch","sc.Diam:sc.sqrt.Pref","sc.log.Clutch:sc.sqrt.Pref")), 
-  #          aes(y=P_asterisk_foodwebegglarval_coefs, label=P_cutoff), size=P_size, color="black") +
   scale_y_continuous(name="Coefficient", limits=y_limits_foodwebegglarval_coefs) +
   scale_x_discrete(name="", labels=parse(text=c("alpha[Diam:Clutch]","alpha[Diam:Pref]","alpha[Clutch:Pref]"))) +
   facet_wrap(~coefficient_type) +
@@ -966,9 +907,6 @@ figure_foodwebegglarval_coefs
 # Estimating selection on the egg parasitoid *Platygaster*
 
 ```{r Egg vs. egg ptoid model, cache=TRUE}
-# excludes cases of larval-parasitism from Complex food web
-#eggegg_df <- #filter(gall_selection.df, Foodweb == "Simple" | Foodweb == "Complex" & ectos < 1) %>%
-  #mutate(gall_survival = ifelse(gall_survival==1,0,1)) # attempt to look at survival of egg parasitoid
 
 # convert "gall_survival" to egg parasitoid survival. Note that both Iteomyia pupa and larva parasitoids result in 0. We do not change the name of the response variable to make clear that we are using the same statistical models as for Iteomyia.
 eggegg_df <- mutate(gall_selection.df, gall_survival = ifelse(egg_parasitoid==1,1,0))
@@ -982,11 +920,6 @@ biased_eggegg_df <- eggegg_df %>%
   ungroup()
 
 biased_eggegg_model <- update(biased_foodweb_model, data=biased_eggegg_df)
-
-visreg::visreg(eggegg_model, xvar="sc.sqrt.Pref", by="sc.Diam", scale="response", cond = list(Foodweb="Simple"))
-visreg::visreg(eggegg_model, xvar="sc.sqrt.Pref", by="sc.Diam", scale="response", cond = list(Foodweb="Complex"))
-visreg::visreg(eggegg_model, xvar="sc.Diam", by="sc.sqrt.Pref", scale="response", cond = list(Foodweb="Simple"))
-visreg::visreg(eggegg_model, xvar="sc.Diam", by="sc.sqrt.Pref", scale="response", cond = list(Foodweb="Complex"))
 ```
 
 ```{r Bootstrap egg vs. egg ptoid model, cache=TRUE, include=FALSE}
@@ -1264,7 +1197,7 @@ figure_eggegg_grads
 
 ```{r simulate bias in chamber diameter, include=FALSE, eval=FALSE}
 
-# To determine whether I should adjust any coefficients associated with chamber diameter, e.g. quadratic and correlation terms, I conducted a quick simulation. In the simulation, I assumed that if the larva survive, then the chamber diameter was the corrent one. However, if the larva did not survive, its size could be due to both its size and parasitism. I assumed a constant value of parasitism effect on gall size.
+# To determine whether I should adjust any coefficients associated with chamber diameter, e.g. quadratic and correlation terms, I conducted a quick simulation. In the simulation, I assumed that if the larva survive, then the chamber diameter was the correct one. However, if the larva did not survive, its size could be due to both its size and parasitism. I assumed a constant value of parasitism effect on gall size.
 
 n <- 10000
 diam <- rnorm(n, mean=0, sd=1) # simulate 1,000 chamber diameters from a normal distribution with mean=0 and sd=1
@@ -1535,20 +1468,10 @@ AF_uni_legend <- get_legend(AF_uni_Diam + theme(legend.title.align = 0.5)) #get_
 
 # Make plots
 AF_uni_plots <- plot_grid(AF_uni_Diam + theme(legend.position = "none"), 
-                                           #   axis.text.x = element_text(size=10),
-                                          #    axis.title.x = element_text(size=11)), 
                        AF_uni_Pref + theme(legend.position = "none", 
                                            axis.title.y = element_blank()) + xlab("Preference (SDs)"),
-                                           #axis.text.x = element_text(size=10),
-                                           #axis.title.x = element_text(size=11)),
                       AF_uni_Clutch + theme(legend.position = "none",
                                              axis.title.y = element_blank()), 
-                                            # axis.text.x = element_text(size=10),
-                                            # axis.title.x = element_text(size=11)),
-                    # legend_only + theme(legend.position = "none",                          
-                    #                         axis.title.y = element_blank(), 
-                    #                         axis.text.x = element_text(size=10),
-                    #                         axis.title.x = element_text(size=11)),
                        labels = "AUTO", nrow = 1, align='hv')
 
 AF_gradients <- plot_grid(AF_uni_plots, AF_uni_legend, ncol = 2, rel_widths = c(0.8,0.2)) 
@@ -1635,7 +1558,7 @@ eggptoid_selection_plot <- eggptoid_plot_df %>%
   theme_cowplot(font_size = 12)
 
 eggptoid_selection_plot
-save_plot(filename = "selection_on_Platygaster.pdf", plot = eggptoid_selection_plot, base_height = 4) # base_height = 6
+save_plot(filename = "selection_on_Platygaster.pdf", plot = eggptoid_selection_plot, base_height = 4) # base_height = 6 is to large for PDF of manuscript
 ```
 
 ```{r Egg-Parasitoid-Selection-linear, echo=F}
@@ -1644,7 +1567,6 @@ linear_eggptoid_plot_df <- linear_eggegg_RF_Pref$absolute_fitness %>%
   gather(ID, absolute_fitness, -sc.sqrt.Pref, -Foodweb) %>%
   mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
   spread(Foodweb, absolute_fitness) %>%
-  #filter(ID_group=="average") %>%
   mutate(fitness_difference = Complex-Simple)
 
 linear_eggptoid_selection_plot <- linear_eggptoid_plot_df %>%
@@ -1762,32 +1684,27 @@ RF_Diam_legend_only <- bind_rows(RF_plot_foodweb_Diam_df, RF_plot_egglarval_Diam
   scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
   xlab("Chamber diameter (SDs)") +
   ylab("Relative fitness") +
-  scale_color_manual(values = cbPalette[c(6,5,4)], name = "Parasitoids") + # "Food web"
+  scale_color_manual(values = cbPalette[c(6,5,4)], name = "Parasitoids") + 
   scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
   coord_cartesian(ylim=c(0.2,2)) +
   theme(legend.title.align = 0.5) +
   geom_hline(yintercept=1, linetype="dotted")
 
 # Get legend
-RF_uni_legend <- get_legend(RF_legend_only) #  + theme(legend.position = "top") 
+RF_uni_legend <- get_legend(RF_legend_only)  
 
 # Make plots
-RF_uni_plots <- plot_grid(RF_Diam_legend_only + theme(legend.position = "none",                          # AF_uni_egglarval_Clutch
-                                             #axis.title.y = element_blank(), 
-                                             #axis.text.y = element_blank(),
+RF_uni_plots <- plot_grid(RF_Diam_legend_only + theme(legend.position = "none", 
                                              axis.text.x = element_text(size=10),
                                              axis.title.x = element_text(size=11)),
-                     RF_pref_legend_only + theme(legend.position = "none",                          # AF_uni_egglarval_Clutch
+                     RF_pref_legend_only + theme(legend.position = "none",                          
                                              axis.title.y = element_blank(), 
-                                             #axis.text.y = element_blank(),
                                              axis.text.x = element_text(size=10),
                                              axis.title.x = element_text(size=11)),
-                     RF_legend_only + theme(legend.position = "none",                          # AF_uni_egglarval_Clutch
+                     RF_legend_only + theme(legend.position = "none",                          
                                              axis.title.y = element_blank(), 
-                                             #axis.text.y = element_blank(),
                                              axis.text.x = element_text(size=10),
                                              axis.title.x = element_text(size=11)),
-                     #  labels = "AUTO", 
                      ncol = 3, align='hv')
 
 RF_gradients <- plot_grid(RF_uni_plots, RF_uni_legend, ncol = 2, rel_widths = c(0.8,0.2)) 
@@ -1939,19 +1856,16 @@ AF_landscape_plots <- plot_grid(
   AF_plot_Diam.Clutch + theme(legend.position = "none", 
                               axis.title.x = element_blank(),
                              axis.text.x = element_blank()) +
-    #stat_contour(aes(z = average), breaks = breaks, linetype = "dotted", color = "black") + # mean(RF_Diam.Pref$absolute_fitness$average)
     geom_segment(data = gradients_Diam.Clutch, 
                  aes(x = sc.Diam, y = sc.log.Clutch, xend = xend, yend = yend), 
                  arrow = arrow(length = unit(0.03, "npc"))),
   AF_plot_Clutch.Pref + theme(legend.position = "none", 
                               axis.title.y = element_blank(),
                               axis.text.y = element_blank()) + xlab("Preference (SDs)") +
-    #stat_contour(aes(z = average), breaks = breaks, linetype = "dotted", color = "black") +
     geom_segment(data = gradients_Clutch.Pref, 
                  aes(x = sc.sqrt.Pref, y = sc.log.Clutch, xend = xend, yend = yend), 
                  arrow = arrow(length = unit(0.03, "npc"))), 
   AF_plot_Diam.Pref + theme(legend.position = "none") + ylab("Preference (SDs)") +
-    #stat_contour(aes(z = average), breaks = breaks, linetype = "dotted", color = "black") +
     geom_segment(data = gradients_Diam.Pref, 
                  aes(x = sc.Diam, y = sc.sqrt.Pref, xend = xend, yend = yend), 
                  arrow = arrow(length = unit(0.03, "npc"))), 
