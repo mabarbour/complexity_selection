@@ -829,17 +829,3 @@ $\alpha_{\text{Clutch,Pref}}$ &
 \\
 {\footnotesize Note: Values in brackets represent 95\% confidence intervals. Bold values indicate that the 95\% CI does not overlap zero. $\alpha_{\text{Diam}}$ has been adjusted for bias.}
 \end{table}
-
-\newpage 
-<!--
-# Figure Legends
-
-**Figure \ref{fig:Conceptual}**: Experimental manipulation of food-web complexity associated with a leaf-galling midge (*Iteomyia salicisverruca*) feeding on the willow *Salix hookeriana*. In the complex food-web treatment (A), we allowed the full suite of egg (blue rectangle) and larval (yellow rectangle) parasitoids to impose selection. In the simple food-web treatment (B), we used mesh bags to exclude the guild of larval parasitoids, only allowing the egg parasitoid (*Platygaster* sp.) to impose selection. Black arrows denote the flow of energy in this network of trophic interactions. Larval parasitoids include the following species (from left to right): *Mesopolobus* sp. (Family: Pteromalidae); *Tetrastichus* sp. (Family: Eulophidae); and *Torymus* sp. (Family: Torymidae).
-
-**Figure \ref{fig:UV_Landscape}**: Adaptive landscape of gall midge phenotypes in complex vs. simple food webs. Each panel corresponds to a different phenotypic trait: chamber diameter (A); oviposition preference (B); and clutch size (C). Solid lines represent selection experienced in complex (orange) and simple (blue) food webs. Transparent lines represent bootstrapped replicates to show the uncertainty in selection. For clarity, we only display 100 bootstraps even though inferences are based on 1,000 replicates. Solid yellow lines represent selection imposed by larval parasitoids in the complex food web. Note that mean larval survival is plotted on a natural log scale to reflect the mathematical defintion of the adaptive landscape.
-
-**Figure \ref{fig:MV_Landscape}**: Two dimensional view of adaptive landscapes of gall midge phenotypes in complex vs. simple food webs. Each panel corresponds to a different combination of phenotypic traits: clutch size and chamber diameter (A); clutch size and oviposition preference (B); oviposition preference and chamber diameter (C). Note the flat landscape in mean larval survival for clutch size and oviposition preference in more complex food webs, whereas all three traits shape the adaptive landscape in simpler food webs. This indicates that selection favors trait integration for each combination of traits in simpler food webs, whereas there is no strong evidence for trait integration in more complex food webs. Note that mean larval survival is plotted on a natural log scale to reflect the mathematical defintion of the adaptive landscape.
-
-**Figure \ref{fig:EggPtoid_Selection}**: Selection imposed by larval parasitoids on the extended phenotype of egg parasitoids (*Platygaster* sp.). The solid line represents the average difference in the probability of observing the egg parasitoid in complex vs. simple food webs as a function of gall midge oviposition preference. Transparent lines represent bootstrapped replicates to show the uncertainty in selection. For clarity, we only display 100 bootstraps even though inferences are based on 1,000 replicates. The decrease in the probability of observing egg parasitoids at high gall-midge densities indicates the increasing impact of larval parasitoids. 
--->
-
