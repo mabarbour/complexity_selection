@@ -2,7 +2,7 @@
 title: Phenotypic evolution is more constrained in simpler food webs
 author: 
 - Matthew A. Barbour$^{1,2,\ast}$
-- Christopher J. Greyson-Gaito$^{1,3}$ 
+- Christopher J. Greyson-Gaito$^{2,3}$ 
 - Arezoo Sootodeh$^{2}$ 
 - Brendan Locke$^{4}$ 
 - Jordi Bascompte$^{1}$
@@ -60,6 +60,10 @@ $^\ast$ Corresponding author; e-mail: matthew.barbour@ieu.uzh.ch
 \bigskip
 
 *Keywords*: adaptive landscape, ecological networks, eco-evolutionary dynamics, natural selection, host-parasitoid.
+
+\bigskip
+
+*Number of words*: `r wordcountaddin::word_count("manuscript.Rmd")`
 
 \bigskip
 
