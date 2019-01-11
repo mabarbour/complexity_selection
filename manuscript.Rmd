@@ -18,7 +18,7 @@ output:
     df_print: paged
     fig_caption: true
     citation_package: natbib
-    template: Rmd_AmNat_MS_template.tex
+    #template: Rmd_AmNat_MS_template.tex
     includes:  
       in_header: Am-Nat-preamble-latex.tex
 bibliography: references
@@ -47,8 +47,12 @@ no_genotypes <- dim(distinct(gall_selection.df, Genotype))[1]
 \vspace*{0.1cm} 
 \begin{center} \LARGE Phenotypic evolution is more constrained in simpler food webs \end{center}
 
+\bigskip
+
 <!-- Remove author info for double-blind peer review; Keep for bioRxiv submission -->
 \begin{center} \large Matthew A. Barbour$^{1,2,\ast}$, Christopher J. Greyson-Gaito$^{2,3}$, Arezoo Sootodeh$^{2}$, Brendan Locke$^{4}$, Jordi Bascompte$^{1}$ \normalsize \end{center}
+
+\bigskip
 
 \noindent 1. University of Zurich, Department of Evolutionary Biology and Environmental Studies, Zurich, 8057 ZH, Switzerland;
 
