@@ -1,11 +1,12 @@
 ---
-title: Phenotypic evolution is more constrained in simpler food webs
-author: 
-- Matthew A. Barbour$^{1,2,\ast}$
-- Christopher J. Greyson-Gaito$^{2,3}$ 
-- Arezoo Sootodeh$^{2}$ 
-- Brendan Locke$^{4}$ 
-- Jordi Bascompte$^{1}$
+# Decided to manually format the title page because I had greater control. Note that you should use put this info in the YAML header for compatability across document formats (e.g. html)
+#title: Phenotypic evolution is more constrained in simpler food webs
+#author: 
+#- Matthew A. Barbour$^{1,2,\ast}$ 
+#- Christopher J. Greyson-Gaito$^{2,3}$ 
+#- Arezoo Sootodeh$^{2}$ 
+#- Brendan Locke$^{4}$ 
+#- Jordi Bascompte$^{1}$ 
 # for compatability across document formats use 'date' for affiliations, as recommended by https://github.com/rstudio/bookdown/issues/348, with | to create new sections.
 #date: | 
 #    | 1. Affiliation
@@ -43,8 +44,13 @@ no_genotypes <- dim(distinct(gall_selection.df, Genotype))[1]
 
 <!-- Begin title page formatting -->
 
-<!-- Remove author info for double-blind peer review
-\noindent 1. University of Zurich, Department of Evolutionary Biology and Environmental Studies, 8057 Zurich, Switzerland;
+\vspace*{0.1cm} 
+\begin{center} \LARGE Phenotypic evolution is more constrained in simpler food webs \end{center}
+
+<!-- Remove author info for double-blind peer review; Keep for bioRxiv submission -->
+\begin{center} \large Matthew A. Barbour$^{1,2,\ast}$, Christopher J. Greyson-Gaito$^{2,3}$, Arezoo Sootodeh$^{2}$, Brendan Locke$^{4}$, Jordi Bascompte$^{1}$ \normalsize \end{center}
+
+\noindent 1. University of Zurich, Department of Evolutionary Biology and Environmental Studies, Zurich, 8057 ZH, Switzerland;
 
 \noindent 2. University of British Columbia, Department of Zoology, Vancouver, BC V6T 1Z4, Canada; 
 
@@ -55,9 +61,8 @@ no_genotypes <- dim(distinct(gall_selection.df, Genotype))[1]
 $^\ast$ Corresponding author; e-mail: matthew.barbour@ieu.uzh.ch
 
 \bigskip
--->
 
-*Manuscript elements*: Table 1, figure 1, figure 2, figure 3, figure 4. All figures should be printed in color.
+*Manuscript elements*: table 1, figure 1, figure 2, figure 3, figure 4. All figures should be printed in color.
 
 \bigskip
 
@@ -395,7 +400,7 @@ Our study gives insight to how local extinctions, and concomitant decreases in f
 We thank the staff of Humboldt Bay National Wildlife Refuge (U.S. Fish and Wildlife Service) for facilitating experimental logistics. For assistance with fieldwork, we thank Ruthie Espanol and Andrew MacDonald. For funding support, we thank the University of British Columbia (James Robert Thompson Fellowship and Four-Year Fellowship to M.A. Barbour), NSERC (Discovery grant to Greg Crutsinger), and the Swiss National Science Foundation (grant 31003A_160671 to J. Bascompte). 
 -->
 
-<!--TABLE NOT REFERENCED IN RESULTS
+<!-- TABLE NOT REFERENCED IN RESULTS
 
 \begin{table}[h]
 \caption{Relationship between absolute fitness (larval survival) and phenotypic traits of gall midges in complex vs. simple food webs.}
@@ -530,3 +535,4 @@ $\alpha_{\text{Clutch,Pref}}$ &
 \\
 {\footnotesize Note: Values in brackets represent 95\% confidence intervals. Bold values indicate that the 95\% CI does not overlap zero. $\alpha_{\text{Diam}}$ has been adjusted for bias.}
 \end{table}
+-->
