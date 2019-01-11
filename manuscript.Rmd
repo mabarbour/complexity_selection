@@ -59,7 +59,7 @@ $^\ast$ Corresponding author; e-mail: matthew.barbour@ieu.uzh.ch
 
 \bigskip
 
-*Keywords*: fitness landscape, host-parasitoid, natural selection, G-matrix, community context, ecological networks, evolutionary ecology, eco-evolutionary dynamics.
+*Keywords*: adaptive landscape, ecological networks, eco-evolutionary dynamics, natural selection, host-parasitoid.
 
 \bigskip
 
