@@ -43,7 +43,8 @@ no_genotypes <- dim(distinct(gall_selection.df, Genotype))[1]
 
 <!-- Begin title page formatting -->
 
-\noindent 1. University of Zurich, Department of Evolutionary Biology and Environmental Studies, Winterthurerstrasse 190, 8057 Zurich, Switzerland;
+<!-- Remove author info for double-blind peer review
+\noindent 1. University of Zurich, Department of Evolutionary Biology and Environmental Studies, 8057 Zurich, Switzerland;
 
 \noindent 2. University of British Columbia, Department of Zoology, Vancouver, BC V6T 1Z4, Canada; 
 
@@ -54,6 +55,7 @@ no_genotypes <- dim(distinct(gall_selection.df, Genotype))[1]
 $^\ast$ Corresponding author; e-mail: matthew.barbour@ieu.uzh.ch
 
 \bigskip
+-->
 
 *Manuscript elements*: Table 1, figure 1, figure 2, figure 3, figure 4. All figures should be printed in color.
 
@@ -682,10 +684,11 @@ One of the things that our study did was artificially reduce the mortality induc
 
 
 
-
+<!-- Remove for double-blind peer review process
 # Acknowledgements
 
 We thank the staff of Humboldt Bay National Wildlife Refuge (U.S. Fish and Wildlife Service) for facilitating experimental logistics. For assistance with fieldwork, we thank Ruthie Espanol and Andrew MacDonald. For funding support, we thank the University of British Columbia (James Robert Thompson Fellowship and Four-Year Fellowship to M.A. Barbour), NSERC (Discovery grant to Greg Crutsinger), and the Swiss National Science Foundation (grant 31003A_160671 to J. Bascompte). 
+-->
 
 <!-- <div id="references"></div> this code inserts references wherever you want rather than at the end of the document -->
 
