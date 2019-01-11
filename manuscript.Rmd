@@ -21,10 +21,7 @@ output:
     includes:  
       in_header: Am-Nat-preamble-latex.tex
 bibliography: references
-#references.bib
-#csl: the-american-naturalist.csl
 biblio-style: amnat
-#amnat.bst
 fontsize: 11pt
 fontfamily: mathpazo
 documentclass: article
