@@ -1,17 +1,12 @@
 ---
 title: Phenotypic evolution is more constrained in simpler food webs
-#  | Food-web complexity simplifies the adaptive landscape of an insect herbivore
-#  | Phenotypic evolution is less constrained in complex food webs
-#  | 
-#  | Food-web simplification constrains phenotypic evolution
-#  | Food-web complexity smooths the adaptive landscape of an insect herbivore
 author: 
 - Matthew A. Barbour$^{1,2,\ast}$
 - Christopher J. Greyson-Gaito$^{1,3}$ 
 - Arezoo Sootodeh$^{3}$ 
 - Brendan Locke$^{4}$ 
 - Jordi Bascompte$^{2}$
-# potentially use for 'date' for affiliations, as recommended by https://github.com/rstudio/bookdown/issues/348 for cross-format compatibility, with | to create new sections.
+# for compatability across document formats use 'date' for affiliations, as recommended by https://github.com/rstudio/bookdown/issues/348, with | to create new sections.
 #date: | 
 #    | 1. Affiliation
 output:
