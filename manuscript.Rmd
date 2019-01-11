@@ -3,9 +3,9 @@ title: Phenotypic evolution is more constrained in simpler food webs
 author: 
 - Matthew A. Barbour$^{1,2,\ast}$
 - Christopher J. Greyson-Gaito$^{1,3}$ 
-- Arezoo Sootodeh$^{3}$ 
+- Arezoo Sootodeh$^{2}$ 
 - Brendan Locke$^{4}$ 
-- Jordi Bascompte$^{2}$
+- Jordi Bascompte$^{1}$
 # for compatability across document formats use 'date' for affiliations, as recommended by https://github.com/rstudio/bookdown/issues/348, with | to create new sections.
 #date: | 
 #    | 1. Affiliation
@@ -43,9 +43,9 @@ no_genotypes <- dim(distinct(gall_selection.df, Genotype))[1]
 
 <!-- Begin title page formatting -->
 
-\noindent 1. University of British Columbia, Department of Zoology, Vancouver, BC V6T 1Z4, Canada; <!-- consider removing -->
+\noindent 1. University of Zurich, Department of Evolutionary Biology and Environmental Studies, Winterthurerstrasse 190, 8057 Zurich, Switzerland;
 
-\noindent 2. University of Zurich, Department of Evolutionary Biology and Environmental Studies, Winterthurerstrasse 190, 8057 Zurich, Switzerland;
+\noindent 2. University of British Columbia, Department of Zoology, Vancouver, BC V6T 1Z4, Canada; 
 
 \noindent 3. University of Guelph, Department of Integrative Biology, Guelph, ON N1G 2W1, Canada;
 
@@ -55,7 +55,7 @@ $^\ast$ Corresponding author; e-mail: matthew.barbour@ieu.uzh.ch
 
 \bigskip
 
-*Manuscript elements*: Figure 1, figure 2, figure 3, figure 4. All figures should be printed in color.
+*Manuscript elements*: Table 1, figure 1, figure 2, figure 3, figure 4. All figures should be printed in color.
 
 \bigskip
 
