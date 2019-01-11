@@ -1,0 +1,32 @@
+%%% From AmNat_MS_template.tex
+%\documentclass[11pt]{article}
+%\usepackage[sc]{mathpazo} %Like Palatino with extensive math support
+\usepackage{fullpage}
+%\usepackage[authoryear,sectionbib,sort]{natbib}
+\linespread{1.7}
+%\usepackage[utf8]{inputenc}
+\usepackage{lineno}
+
+%%%%%%% Sections not currently working properly
+%\usepackage{titlesec}
+%\titleformat{\section}[block]{\Large\bfseries\filcenter}{\thesection}{1em}{}
+%\titleformat{\subsection}[block]{\Large\itshape\filcenter}{\thesubsection}{1em}{}
+%\titleformat{\subsubsection}[block]{\large\itshape}{\thesubsubsection}{1em}{}
+%\titleformat{\paragraph}[runin]{\itshape}{\theparagraph}{1em}{}[. ]\renewcommand{\refname}{Literature Cited}
+
+%%% My added packages
+%\usepackage{amsmath} % for matrices
+%\usepackage{graphicx} % for organizing figures
+%\usepackage{lmodern} % for tilde
+%\usepackage[T1]{fontenc} % for tilde
+
+%%%%%%%%% Previous - likely useful though
+%\usepackage{setspace}\doublespacing
+\usepackage{float}
+\let\origfigure\figure
+\let\endorigfigure\endfigure
+\renewenvironment{figure}[1][2] {
+    \expandafter\origfigure\expandafter[H]
+} {
+    \endorigfigure
+}
