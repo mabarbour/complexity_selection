@@ -191,8 +191,6 @@ All analyses and visualizations were conducted in R [@R2018]. Unless otherwise n
 
 # Results 
 
-<!-- TRIPLE CHECK ALL RESULT OUTPUTS AND WRITTEN INTERPRETATIONS -->
-
 ## Simpler food webs increase selective constraints 
 
 \indent We found that more gall midge traits experienced directional selection in the simple (3 of 3) vs. complex food-web treatment (1 of 3)(table \ref{Table:Gradients}). For example, we observed directional selection for smaller clutch sizes in the simple food web, but there was no evidence of selection acting on this trait in the complex food web (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}C). This absence of selection appeared to be a result of conflicting selection pressures imposed by each guild of parasitoids (fig. \ref{fig:UV_Landscape}). Specifically, when we subset our data to focus on differences between parasitoid guilds, we found that larval parasitoids actually impose directional selection for larger clutch sizes ($\beta_{\text{Clutch}}$=
@@ -373,8 +371,6 @@ knitr::include_graphics("analyses/MV_landscapes.pdf")
 
 ## Selection on the extended phenotype of egg parasitoids
 
-<!-- CONSIDER AVOIDING EXTENDED PHENOTYPE AND FOCUS ON INDIRECT EFFECTS OR INDIRECT SELECTION -->
-
 Gall midge preference influenced the probability of observing egg parasitoids in complex vs. simple food webs (contrast $\alpha_{\text{Pref}}$=
 `r round(filter(tidy_eggegg_alphas, type=="Diff", term=="sc.sqrt.Pref")$mean,2)` 
 [`r round(filter(tidy_eggegg_alphas, type=="Diff", term=="sc.sqrt.Pref")$conf.low,2)`,
@@ -405,81 +401,6 @@ Gall midge preference influenced the probability of observing egg parasitoids in
 knitr::include_graphics("analyses/selection_on_Platygaster.pdf")
 ```
 
-<!--
-(contrast $\gamma_{\text{Pref:Pref}}$=
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$mean,2)` 
-[`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`]).
-This indicates that larval parasitoids impose nonlinear selection on this extended phenotype of the egg parasitoid (fig. \ref{fig:EggPtoid_Selection}). Larval parasitoids also dampened the linear relationship between probability of observing egg parasitoids and gall midge preference , but this did not translate into an effect on directional selection 
-(contrast $\beta_{\text{Pref}}$=
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$mean,2)` 
-[`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.high,2)`]). This was likely because there was a tendency (albeit not statistically signficant) for a higher probability of egg-parasitoid survival in the simple vs. complex food webs 
-(contrast=`r round(filter(tidy_eggegg_alphas, type=="Diff", term=="(Intercept)")$mean,2)` [
-`r round(filter(tidy_eggegg_alphas, type=="Diff", term=="(Intercept)")$conf.low,2)`,
-`r round(filter(tidy_eggegg_alphas, type=="Diff", term=="(Intercept)")$conf.high,2)`]). Larval parasitoids did not alter directional, quadratic, or correlational selection on any other extended phenotypes of egg parasitoids (see Supplementary Material).
---> 
-
-
-<!--
-## Slope of the adaptive landscape
-
-\indent We found that food-web complexity altered the slope of the adaptive landscape ($\beta$) in two key ways. First, there were fewer traits under directional selection in the complex (2 of 3) vs. simple food webs (3 of 3)(table \ref{Table:Gradients}). For example, in both simple and complex food webs there was directional selection for larger chamber diameters and for adult females to avoid ovipositing on trees with high densities of conspecifics (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}). In the simple food web, we also observed directional selection for smaller clutch sizes, but there was no evidence of selection acting on this trait in the complex food web (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}). This absence of selection appeared to be a result of conflicting selection pressures imposed by each guild of parasitoids (fig. \ref{fig:UV_Landscape}). Specifically, when we subset our data to focus on differences between parasitoid guilds, we found that larval parasitoids actually impose directional selection for larger clutch sizes ($\beta_{\text{Clutch}}$=
-`r round(filter(tidy_egglarval_grads, type=="Complex", term=="sc.log.Clutch")$mean,2)` 
-[`r round(filter(tidy_egglarval_grads, type=="Complex", term=="sc.log.Clutch")$conf.low,2)`,
-`r round(filter(tidy_egglarval_grads, type=="Complex", term=="sc.log.Clutch")$conf.high,2)`]). 
-
-The second key effect of food-web complexity was to increase the strength of selection acting on chamber diameter. Directional selection on chamber diameter was 
-`r round(((filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam")$mean - filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$mean) / filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$mean * 100),0)`% higher in complex vs. simple food webs (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}). This result was not due to any difference in the relationship between larval survival and chamber diameter (table \ref{Table:Coefs}), but was due to the fact that the average probability of larval survival decreased from
-`r round(filter(tidy_foodweb_alphas, type=="Simple", term=="(Intercept)")$mean,2)` in the simple food web to
-`r round(filter(tidy_foodweb_alphas, type=="Complex", term=="(Intercept)")$mean,2)` in the more complex one (contrast=
-`r round(filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$mean,2)*-1` 
-[`r round(filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$conf.low,2)*-1`,
-`r round(filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$conf.high,2)*-1`]). Note that although the selection gradient is typically expressed as the covariance between relative fitness ($w$) and phenotype ($z_i$), $\beta_{z_i}=\textrm{cov}(w,z_i)$, it can be rewritten as a function of both absolute fitness ($W$) and mean fitness ($\bar W$), $\beta_{z_i}=\textrm{cov}(W,z_i)/ \bar W$. This alternative expression makes clear that lower survival, and thus mean fitness, will always increase the strength of selection.
--->
-<!-- survival result written in terms of percent decrease `r #round(((filter(tidy_foodweb_alphas, type=="Complex", term=="(Intercept)")$mean - filter(tidy_foodweb_alphas, type=="Simple", term=="(Intercept)")$mean) / filter(tidy_foodweb_alphas, type=="Simple", term=="(Intercept)")$mean * 100),0)*-1 # multiply by -1 to match written description`% lower in complex vs. simple food webs -->
-<!--
-## Curvature of the adaptive landscape
-
-Unlike the slope, the curvature of the adaptive landscape is influenced by directional, quadratic, and correlational selection gradients. Our food-web treatment did not alter correlational selection for any combination of traits, although there was evidence that correlational selection on chamber diameter and oviposition preference differed from zero in the complex food web (table \ref{Table:Gradients}; fig. \ref{fig:MV_Landscape}). Similarly, our food-web treatment did not influence quadratic selection on chamber diameter or clutch size and there was no strong evidence that these selection gradients differed from zero (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}). In contrast, our food-web treatment did alter quadratic selection acting on oviposition preference (table \ref{Table:Gradients}). Specifically, the negative relationship between oviposition preference and larval survival dampened at high densities in complex, but not simple food webs (fig. \ref{fig:UV_Landscape}). This dampened relationship was partly due to differences in selection imposed by larval parasitoids (contrast $\gamma_{\text{Pref:Pref}}$=
-`r round(filter(tidy_egglarval_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$mean,2)` 
-[`r round(filter(tidy_egglarval_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
-`r round(filter(tidy_egglarval_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`]), but was also magnified by the lower average survival in complex food webs.
-
-To estimate the net effect of food-web complexity on the curvature ($C$) of the adaptive landscape, we only retained nonzero selection gradients (i.e. 95\% CI did not overlap zero) before subtracting the matrix of directional selection gradients ($\beta \beta^\text{T}$) from the matrix of quadratic and correlational selection gradients ($\gamma$). We found that the curvatures of the adaptive landscape exhibited the following structures:
-
-$$\textbf{C} = \begin{pmatrix} C_{\text{Diam:Diam}}&& \\ C_{\text{Clutch:Diam}} & C_{\text{Clutch:Clutch}} & \\ C_{\text{Pref:Diam}} & C_{\text{Pref:Clutch}} & C_{\text{Pref:Pref}} \end{pmatrix}$$
-
-$$\textbf{C}_{\text{Complex}} = \begin{pmatrix} 
-`r round(complex_curvature["Diam","Diam"],2)` &  &  \\  
-`r round(complex_curvature["Clutch","Diam"],2)` & `r round(complex_curvature["Clutch","Clutch"],2)` &  \\  
-`r round(complex_curvature["Pref","Diam"],2)` & `r round(complex_curvature["Pref","Clutch"],2)` & `r round(complex_curvature["Pref","Pref"],2)` \end{pmatrix}$$
-
-$$\textbf{C}_{\text{Simple}} = \begin{pmatrix} 
-`r round(simple_curvature["Diam","Diam"],2)` &  &  \\  
-`r round(simple_curvature["Clutch","Diam"],2)` & `r round(simple_curvature["Clutch","Clutch"],2)` &  \\  
-`r round(simple_curvature["Pref","Diam"],2)` & `r round(simple_curvature["Pref","Clutch"],2)` & `r round(simple_curvature["Pref","Pref"],2)` \end{pmatrix}$$
-
-The structure of these matrices indicate that there are more selective constraints imposed on the gall midge in the simple (6 of 6) vs. complex (2 of 6) food web. Simple food webs acted to decrease genetic variance for all three phenotypic traits (negative diagonal terms), whereas only one trait (chamber diameter) experienced a decrease in additive genetic variance in the complex food web. For genetic covariances, the simple food web favored integration among all three phenotypic traits (nonzero off-diagonal terms), and thus constraints along all three axes of covariance (fig. \ref{fig:MV_Landscape}). In contrast, the complex food web only constrained genetic covariance by favoring integration between chamber diameter and oviposition preference (fig. \ref{fig:MV_Landscape}).
-
-## Indirect selection acting on egg parasitoids
-
-Larval parasitoids altered nonlinear selection acting on the egg parasitoid's extended phenotype of midge preference (contrast $\gamma_{\text{Pref:Pref}}$=
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$mean,2)` 
-[`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`]). This nonlinear selection was a result of a reduced probability of observing egg parasitoids at high midge densities in complex food webs (fig. \ref{fig:EggPtoid_Selection}). Larval parasitoids also dampened the linear relationship between egg parasitoids and the extended phenotype of midge preference (contrast $\alpha_{\text{Pref}}$=
-`r round(filter(tidy_eggegg_alphas, type=="Diff", term=="sc.sqrt.Pref")$mean,2)` 
-[`r round(filter(tidy_eggegg_alphas, type=="Diff", term=="sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_eggegg_alphas, type=="Diff", term=="sc.sqrt.Pref")$conf.high,2)`]
-), but this did not translate into an effect on directional selection 
-(contrast $\beta_{\text{Pref}}$=
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$mean,2)` 
-[`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.high,2)`]). This was likely because there was a tendency (albeit not statistically signficant) for a higher probability of egg-parasitoid survival in the simple vs. complex food webs 
-(contrast=`r round(filter(tidy_eggegg_alphas, type=="Diff", term=="(Intercept)")$mean,2)` [
-`r round(filter(tidy_eggegg_alphas, type=="Diff", term=="(Intercept)")$conf.low,2)`,
-`r round(filter(tidy_eggegg_alphas, type=="Diff", term=="(Intercept)")$conf.high,2)`]). Larval parasitoids did not alter directional, quadratic, or correlational selection on any other extended phenotypes (see Supplementary Material).
--->
 
 # Discussion
 
