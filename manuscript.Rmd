@@ -31,8 +31,8 @@ citecolor: black
 ---
 
 ```{r setup ms, include=FALSE}
-## Rerun supp mat ----
-knitr::knit("analyses/reproduce_analyses.Rmd") # try changing to knitr::render() and see if it'll also produce the .html document.
+## Reproduce analyses ----
+knitr::knit("analyses/reproduce_analyses.Rmd") 
 
 ## Get sample size info
 no_larvae <- dim(distinct(gall_selection.df, Gall_Number, Gall_ID))[1]
