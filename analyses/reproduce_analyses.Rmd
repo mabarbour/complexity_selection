@@ -1544,10 +1544,9 @@ AF_gradients
 
 ```
 
+# Replot univariate adaptive landscapes in terms of relative fitness
 
-
-
-```{r Plot Univariate RF Landscapes, include=FALSE}
+```{r Plot Univariate RF Landscapes}
 
 RF_plot_foodweb_Clutch_df <- RF_Clutch$absolute_fitness %>% 
   select(-sc.Diam, -sc.sqrt.Pref) %>%
