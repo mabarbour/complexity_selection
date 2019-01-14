@@ -1485,64 +1485,6 @@ AF_gradients
 save_plot(filename = "UV_landscapes.pdf", plot = AF_gradients, base_height = 5, base_width = 8.5)
 ```
 
-```{r Figure-Univariate-Landscapes, echo=FALSE, eval=FALSE, include=F}
-# Get legend
-AF_uni_legend <- get_legend(legend_only + theme(legend.position="top", legend.title.align = 0.5) + guides(color=guide_legend(title.position="top")))
-
-
-# Make plots
-AF_uni_plots <- plot_grid(NULL,
-                          Diam_legend_only + theme(legend.position = "none",                         
-                                             axis.title.y = element_blank(),
-                                             axis.text.x = element_blank()),
-                     pref_legend_only + theme(legend.position = "none",                          
-                                             axis.title.y = element_blank(),
-                                             axis.text.x = element_blank()) + xlab("Preference (SDs)"),
-                     legend_only + theme(legend.position = "none",                         
-                                             axis.title.y = element_blank()),
-                       labels = c("","A", "B", "C"), hjust=0.06, vjust=0.1, 
-                     ncol = 1, nrow=4, align='hv', rel_heights = c(0.5,1,1,1))
-
-AF_uni_legend_plots <- ggdraw(AF_uni_plots) + draw_grob(AF_uni_legend, x=0.15,y=0.4)
-y_title_AF_uni_plots <- ggdraw() + draw_label("Mean larval survival", angle = 90, size=16)
-
-AF_gradients <- plot_grid(y_title_AF_uni_plots, AF_uni_legend_plots, ncol=2, rel_widths = c(0.1,1))
-AF_gradients
-save_plot(filename = "UV_landscapes.pdf", plot = AF_gradients, base_height = 9, base_width = 7)
-```
-
-```{r Alt Figure-Univariate-Landscapes, echo=FALSE, eval=FALSE, include=F}
-# Get legend
-AF_uni_legend <- get_legend(legend_only + theme(legend.title.align = 0.5))
-
-# Make plots
-AF_uni_plots <- plot_grid(NULL,
-                          Diam_legend_only + theme(legend.position = "none",                          # AF_uni_egglarval_Clutch
-                                             axis.title.y = element_blank()), 
-                                             #axis.text.y = element_blank(),
-                                             #axis.text.x = element_text(size=10),
-                                             #axis.title.x = element_text(size=11)),
-                     pref_legend_only + theme(legend.position = "none",                          # AF_uni_egglarval_Clutch
-                                             axis.title.y = element_blank()), 
-                                             #axis.text.y = element_blank(),
-                                             #axis.text.x = element_text(size=10),
-                                             #axis.title.x = element_text(size=11)),
-                     legend_only + theme(legend.position = "none",                          # AF_uni_egglarval_Clutch
-                                             axis.title.y = element_blank()), 
-                                             #axis.text.y = element_blank(),
-                                             #axis.text.x = element_text(size=10),
-                                             #axis.title.x = element_text(size=11)),
-                     #  labels = "AUTO", 
-                     ncol = 2, align='hv')
-
-AF_uni_legend_plots <- ggdraw(AF_uni_plots) + draw_grob(AF_uni_legend, x=0.1, y=0.25) #ggdraw(AF_uni_plots) + draw_grob(AF_uni_legend, x = 0.7, y=-0.2) # draw_grob(AF_uni_legend, x = 0.8, y=0)
-y_title_AF_uni_plots <- ggdraw() + draw_label("Mean larval survival", angle = 90)
-AF_gradients <- plot_grid(y_title_AF_uni_plots, AF_uni_legend_plots, ncol=2, rel_widths = c(0.05,1))
-AF_gradients
-#AF_gradients <- plot_grid(AF_uni_legend, AF_uni_plots,  nrow = 2, rel_heights = c(0.1,1)) #ggdraw(AF_uni_plots) + draw_grob(AF_uni_legend, x = 0.7, y=-0.2) # draw_grob(AF_uni_legend, x = 0.8, y=0)
-#AF_gradients
-
-```
 
 # Replot univariate adaptive landscapes in terms of relative fitness
 
