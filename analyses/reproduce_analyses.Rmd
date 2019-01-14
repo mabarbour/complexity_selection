@@ -3,17 +3,12 @@ title: "Reproduce analyses reported in: *Phenotypic evolution is more constraine
 author: "Matthew A. Barbour"
 date: "`r Sys.Date()`"
 output: github_document
-# Trying github_document for easy viewing on github
-#  prettydoc::html_pretty:
-#    theme: architect
-#    highlight: github
 fontsize: 12pt
 ---
 
 ```{r setup, include=FALSE}
 
 ## Load required libraries ----
-#library(evolqg) # need to load before dplyr
 library(car)        # for homogeneity of variance test
 library(tidyverse)  # for managing data
 library(cowplot)    # pretty default ggplots
@@ -23,7 +18,6 @@ library(viridis)    # for color palette
 library(lme4)       # for generalized linear mixed models
 library(piecewiseSEM) # for calculating model R-square
 library(latex2exp)  # using Latex notation for axes labels
-#library(kableExtra)
 library(stringr)
 library(MVN)        # assessing multivariate normality assumption
 
@@ -132,7 +126,7 @@ mvn_multivariate_qq <- mvn(select(gall_selection.df, sc.Diam, sc.log.Clutch, sc.
 
 # Effect of food-web treatment on trait-fitness relationships and selection gradients
 
-We write the model in a way the independently estimates the effect of food-web treatment, each trait, and all two-way and three-way statistical interactions, on larval survival.
+We write the model in a way that independently estimates the effect of food-web treatment, each trait, and all two-way and three-way statistical interactions, on larval survival. The resulting estimates and confidence intervals are useful for determining whether trait-fitness relationships differ from zero, but not whether they differ between food-web treatments. For the later, we calculate the differences between each food-web treatment from the bootstrapped samples.
 
 ```{r Food-web model, cache=TRUE}
 foodweb_model <- glmer(
@@ -146,11 +140,13 @@ foodweb_model <- glmer(
   family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
 ```
 
-Note that the resulting estimates and confidence intervals are useful for determining whether trait-fitness relationships differ from zero, but not whether they differ between food-web treatments. For the later, we calculate the differences between each food-web treatment from the bootstrapped samples.
+We used parametric bootstrapping to calculate 95% confidence intervals of trait-fitness relationships.
 
-```{r Bootstrap food-web model, cache=TRUE, include=FALSE}
+```{r Bootstrap food-web model, cache=TRUE}
 boot_foodweb_model <- bootMer(foodweb_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
 ```
+
+In order to reliably quantify linear trait-fitness relationships, we remove all higher-order terms from the model [Stinchcombe et al. 2008](https://onlinelibrary.wiley.com/doi/full/10.1111/j.1558-5646.2008.00449.x).
 
 ```{r Linear food-web model, cache=TRUE}
 linear_foodweb_model <- glmer(
@@ -162,21 +158,24 @@ linear_foodweb_model <- glmer(
   family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
 ```
 
-```{r Bootstrap linear food-web model, cache=TRUE, include=FALSE}
+And refit using parametric bootstrapping.
+
+```{r Bootstrap linear food-web model, cache=TRUE}
 boot_linear_foodweb_model <- bootMer(linear_foodweb_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
 ```
 
-
-To estimate biased selection on chamber diameter, we subset our data to only include multi-chambered galls where there was variability in larval survival. We then fit a reduced model to estimate the bias in the logistic regression coefficient of chamber diameter in each food web.
+Chamber diameter, but not the other phenotypes, could be influenced by parasitism itself rather than being under natural selection. To estimate this potential bias, we subset our data to only include multi-chambered galls where there was variability in larval survival. We then fit a reduced model to estimate the bias in the logistic regression coefficient of chamber diameter in each food web.
 
 ```{r Bias in food-web model, cache=TRUE}
+
+# Subset data
 biased_foodweb_df <- gall_selection.df %>%
   group_by(Foodweb, Gall_Number) %>%
   mutate(mean_survival = mean(gall_survival)) %>%
   filter(mean_survival > 0, mean_survival < 1) %>%
   ungroup()
 
-# using linear model, but I'm only interested in the chamber diameter coefficient
+# Fit linear model with only chamber diameter 
 biased_foodweb_model <- glmer(
   gall_survival ~ -1 + Foodweb + 
     Foodweb:sc.Diam + 
@@ -184,13 +183,16 @@ biased_foodweb_model <- glmer(
   data = biased_foodweb_df,
   family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
 
+# Accuracy of confidence intervals is not a priority here, so we just use the asymptotic estimates rather than parametric bootstrapping.
 biased_foodweb_confint <- tidy(biased_foodweb_model, conf.int=TRUE) %>% filter(group=="fixed")
 
+# Print table
 knitr::kable(biased_foodweb_confint)
 ```
 
+We gather regression coefficients from the full and reduced model to display trait-fitness relationships. For chamber diameter, we subtracted the coefficient due to bias to better approximate the trait-fitness relationship. We also used the bootstrapped samples to calculate the differences in estimates between treatments (labelled **Diff**). The code for tidying this data is not displayed, but is available in the 'reproduce_analyses.Rmd'.
 
-```{r Food-web alpha coefficients, include=FALSE}
+```{r Food-web alpha coefficients}
 foodweb_bind <- bind_cols(
   as_tibble(boot_linear_foodweb_model$t),
   select(as_tibble(boot_foodweb_model$t), `FoodwebComplex:I(sc.Diam^2)`:`FoodwebSimple:sc.log.Clutch:sc.sqrt.Pref`) # only retain nonlinear coefficients from full model
@@ -234,12 +236,15 @@ tidy_foodweb_alphas <- foodweb_alphas %>%
                                           ifelse(grepl(":", .$term)==TRUE, "Correlational","Linear"))))
 ```
 
-```{r Table of food web coefficients, echo=F}
+Table of trait-fitness relationships:
+
+```{r Table of food web coefficients}
 knitr::kable(tidy_foodweb_alphas)
 ```
 
+Plot these trait-fitness relationships: 
 
-```{r Plot food-web coefficients, echo=FALSE}
+```{r Plot food-web coefficients}
 
 # Plot helpers
 dodge_width <- position_dodge(width=0.5)
@@ -320,7 +325,9 @@ figure_foodweb_coefs <- plot_foodweb_coefs
 figure_foodweb_coefs
 ```
 
-```{r Food-web selection gradients, include=FALSE}
+Using the methods proposed by [Janzen and Stern, 1998](https://onlinelibrary.wiley.com/doi/10.1111/j.1558-5646.1998.tb02237.x), we estimated selection gradients from our trait-fitness relationships.
+
+```{r Food-web selection gradients}
 
 # Estimate mean fitness and mean "brackets" for each food-web treatment (see Janzen and Stern 1998 equation 4 for details about "brackets")
 foodweb_complex_predict <- predict(foodweb_model, newdata=filter(gall_selection.df, Foodweb=="Complex"), type="response")
@@ -373,12 +380,15 @@ tidy_foodweb_grads <- foodweb_grads %>%
          conf.high = ifelse(gradient_type=="Quadratic", 2*conf.high, conf.high))
 ```
 
+Table of selection gradients.
+
 ```{r Table of food web selection gradients, echo=F}
 knitr::kable(tidy_foodweb_grads)
 ```
 
+Plot of selection gradients.
 
-```{r Plot food-web gradients, echo=FALSE}
+```{r Plot food-web gradients}
 
 # Plot helpers
 dodge_width <- position_dodge(width=0.5)
@@ -459,30 +469,41 @@ Our simple food-web treatment allows us to estimate the unique contribution of e
 # excludes cases of egg-parasitism from Complex food web
 egglarval_df <- filter(gall_selection.df, Foodweb == "Simple" | Foodweb == "Complex" & platy < 1) 
 
+# fit model with same structure as foodweb_model
 egglarval_model <- update(foodweb_model, data=egglarval_df)
 
+# subset data to estimate bias
 biased_egglarval_df <- egglarval_df %>%
   group_by(Foodweb, Gall_Number) %>%
   mutate(mean_survival = mean(gall_survival)) %>%
   filter(mean_survival > 0, mean_survival < 1) %>%
   ungroup()
 
+# fit model with same structure as biased_foodweb_model
 biased_egglarval_model <- update(biased_foodweb_model, data=biased_egglarval_df)
 ```
 
-```{r Bootstrap egg vs. larval ptoid model, cache=TRUE, include=FALSE}
+Parametric bootstrapping to estimate confidence intervals
+
+```{r Bootstrap egg vs. larval ptoid model, cache=TRUE}
 boot_egglarval_model <- bootMer(egglarval_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
 ```
+
+Fit a reduced model to reliably estimate linear trait-fitness relationships.
 
 ```{r Linear egg vs. larval ptoid model, cache=TRUE}
 linear_egglarval_model <- update(linear_foodweb_model, data=egglarval_df)
 ```
 
-```{r Bootstrap linear egg vs. larval model, cache=TRUE, include=FALSE}
+Parametric bootstrapping to estimate confidence intervals.
+
+```{r Bootstrap linear egg vs. larval model, cache=TRUE}
 boot_linear_egglarval_model <- bootMer(linear_egglarval_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
 ```
 
-```{r Egg vs. larval ptoid alpha coefficients, include=FALSE}
+Tidy trait-fitness relationships for egg and larval parasitoids from above models.
+
+```{r Egg vs. larval ptoid alpha coefficients}
 egglarval_bind <- bind_cols(
   as_tibble(boot_linear_egglarval_model$t),
   select(as_tibble(boot_egglarval_model$t), `FoodwebComplex:I(sc.Diam^2)`:`FoodwebSimple:sc.log.Clutch:sc.sqrt.Pref`) # only retain nonlinear coefficients from full model
@@ -526,12 +547,15 @@ tidy_egglarval_alphas <- egglarval_alphas %>%
                                           ifelse(grepl(":", .$term)==TRUE, "Correlational","Linear"))))
 ```
 
-```{r Tabel of egg vs. larval coefficients, echo=FALSE}
+Table of trait-fitness relationships for egg and larval parasitoids.
+
+```{r Tabel of egg vs. larval coefficients}
 knitr::kable(tidy_egglarval_alphas)
 ```
 
+Plot of trait-fitness relationships for egg and larval parasitoids.
 
-```{r Plot egglarval coefficients, echo=FALSE}
+```{r Plot egglarval coefficients}
 
 # Plot helpers
 dodge_width <- position_dodge(width=0.5)
@@ -612,7 +636,9 @@ figure_egglarval_coefs <- plot_egglarval_coefs
 figure_egglarval_coefs
 ```
 
-```{r Egg vs. larval ptoid selection gradients, include=FALSE}
+Calculate selection gradients from trait-fitness relationships.
+
+```{r Egg vs. larval ptoid selection gradients}
 
 # Estimate mean fitness and mean "brackets" for each food-web treatment (see Janzen and Stern 1998 equation 4 for details about "brackets")
 egglarval_complex_predict <- predict(egglarval_model, newdata=filter(egglarval_df, Foodweb=="Complex"), type="response")
@@ -664,9 +690,13 @@ tidy_egglarval_grads <- egglarval_grads %>%
          conf.high = ifelse(gradient_type=="Quadratic", 2*conf.high, conf.high))
 ```
 
+Table of selection gradients imposed by egg and larval parasitoids.
+
 ```{r Egg vs. larval selection gradients, echo=F}
 knitr::kable(tidy_egglarval_grads)
 ```
+
+Plot of selection gradients imposed by egg and larval parasitoids.
 
 ```{r Plot egg vs. larval ptoid gradients, echo=FALSE}
 
@@ -744,7 +774,7 @@ figure_egglarval_grads
 
 We combine our estimates of selection gradients for each food-web treatment as well as the contribution of larval parasitoids to selection in the complex food web.
 
-```{r Figure-Selection-Gradients, echo=FALSE, fig.cap="**Selection gradients**. Estimates of standardized selection gradients in complex (orange) and simple (blue) food webs. The contribution of larval parasitoids (yellow) was estimated with a subset of the complex food-web data that only contained attacks from larval parasitoids (and gall survival). Points and lines correspond to estimates of the mean and 95% confidence intervals, respectively. Overlapping confidence intervals with zero (dotted line) indicate no strong evidence of selection."}
+```{r Figure-Selection-Gradients, echo=FALSE, fig.cap="**Selection gradients**. Estimates of standardized selection gradients in complex (orange) and simple (blue) food webs. The contribution of larval parasitoids (yellow) was estimated with a subset of the complex food-web data that only contained attacks from larval parasitoids (and gall survival). Points and lines correspond to estimates of the mean and 95% confidence intervals, respectively. Overlapping confidence intervals with zero (dotted line) indicate no strong evidence of selection.", include=FALSE}
 tidy_foodwebegglarval_grads <- bind_rows(
   tidy_foodweb_grads, mutate(filter(tidy_egglarval_grads, type=="Complex"), type="Larval")
 )
@@ -825,7 +855,7 @@ figure_foodwebegglarval_grads
 
 Selection gradients are influenced by both trait-fitness relationships and population mean fitness. Here, we partition selection gradients into these underlying components.
 
-```{r Plot foodwebegglarval coefficients, echo=FALSE, fig.cap="**Partitioning Selection Gradients.**"}
+```{r Plot foodwebegglarval coefficients, echo=FALSE, fig.cap="**Partitioning Selection Gradients.**", include=FALSE}
 tidy_foodwebegglarval_alphas <- bind_rows(
   tidy_foodweb_alphas, mutate(filter(tidy_egglarval_alphas, type=="Complex"), type="Larval")
 )
@@ -1223,9 +1253,11 @@ data.frame(terms = names(coef(nonadj_model)), nonadj_coefs = coef(nonadj_model),
   mutate(diff_coefs = nonadj_coefs - adj_coefs)
 ```
 
-# Reproduce Figure 4 - Univariate adaptive landscape
+# Reproduce Figure 2 in main text of manuscript.
 
-```{r Get Gall Diameter Relative Fitness Landscape, cache=TRUE, include=FALSE}
+Use the fitted model to generate predicted estimates of mean fitness for changes in the mean trait value of a population. I restrict these predictions to +/- 1 SD because we can only reliably estimate the shape of the adaptive landscape near the mean phenotype of the population [Arnold et al., 2001](https://link.springer.com/article/10.1023/A:1013373907708). Other trait values are held constant at the mean phenotype (i.e. trait = 0).
+
+```{r Get Gall Diameter Relative Fitness Landscape, cache=TRUE}
 newdata_Diam <- bind_rows(
   expand.grid(Foodweb = "Complex", sc.Diam = seq(-1,1,length.out=1000), sc.log.Clutch = 0, sc.sqrt.Pref = 0),
   expand.grid(Foodweb = "Simple", sc.Diam = seq(-1,1,length.out=1000), sc.log.Clutch = 0, sc.sqrt.Pref = 0))
@@ -1241,7 +1273,7 @@ egglarval_RF_Diam <- bootstrap_fitness(
   bootstraps=n_boots_plots)
 ```
 
-```{r Get Clutch Size Fitness Landscape, cache=TRUE, include=FALSE}
+```{r Get Clutch Size Fitness Landscape, cache=TRUE}
 newdata_Clutch <- bind_rows(
   expand.grid(Foodweb = "Complex", sc.Diam = 0, sc.log.Clutch = seq(-1,1,length.out=1000), sc.sqrt.Pref = 0),
   expand.grid(Foodweb = "Simple", sc.Diam = 0, sc.log.Clutch = seq(-1,1,length.out=1000), sc.sqrt.Pref = 0))
@@ -1257,7 +1289,7 @@ egglarval_RF_Clutch <- bootstrap_fitness(
   bootstraps=n_boots_plots)
 ```
 
-```{r Get Oviposition preference Fitness Landscape, cache=TRUE, include=FALSE}
+```{r Get Oviposition preference Fitness Landscape, cache=TRUE}
 
 newdata_Pref <- bind_rows(
   expand.grid(Foodweb = "Complex", sc.Diam = 0, sc.log.Clutch = 0, sc.sqrt.Pref = seq(-1,1,length.out=1000)),
@@ -1284,8 +1316,9 @@ linear_eggegg_RF_Pref <- bootstrap_fitness(
   bootstraps=n_boots_plots) 
 ```
 
+Create plots for each panel of Figure 2 in main text.
 
-```{r Plot Univariate Landscapes, include=FALSE}
+```{r Plot Univariate Landscapes}
 uni_breaks <- c(0.1,0.5,1.0)
 
 # Gall size 
@@ -1461,10 +1494,12 @@ Diam_legend_only <- bind_rows(plot_foodweb_Diam_df, plot_egglarval_Diam_df) %>%
   theme(strip.background=element_blank(), strip.text = element_blank())
 ```
 
+Fit plots together to reproduce Figure 2.
+
 ```{r Univariate-Fitness-Landscapes, echo=FALSE, fig.cap="Selection gradients acting on gall traits in complex vs. simple food webs. Each panel corresponds to a different gall trait: gall diameter (A); clutch size (B); and Oviposition preference (C). Solid lines represent the estimated gradients in complex (orange) and simple (blue) food webs. Transparent lines represent bootstrapped replicates (n=100) to show the uncertainty in estimated gradients. Note that only 100 bootstraps are displayed here, but that inferences are based on 1,000 bootstrapped samples."}
 
 # Get legend
-AF_uni_legend <- get_legend(AF_uni_Diam + theme(legend.title.align = 0.5)) #get_legend(AF_uni_Diam)
+AF_uni_legend <- get_legend(AF_uni_Diam + theme(legend.title.align = 0.5)) 
 
 # Make plots
 AF_uni_plots <- plot_grid(AF_uni_Diam + theme(legend.position = "none"), 
@@ -1479,7 +1514,7 @@ AF_gradients
 save_plot(filename = "UV_landscapes.pdf", plot = AF_gradients, base_height = 5, base_width = 8.5)
 ```
 
-```{r Figure-Univariate-Landscapes, echo=FALSE, eval=FALSE}
+```{r Figure-Univariate-Landscapes, echo=FALSE, eval=FALSE, include=F}
 # Get legend
 AF_uni_legend <- get_legend(legend_only + theme(legend.position="top", legend.title.align = 0.5) + guides(color=guide_legend(title.position="top")))
 
@@ -1505,7 +1540,7 @@ AF_gradients
 save_plot(filename = "UV_landscapes.pdf", plot = AF_gradients, base_height = 9, base_width = 7)
 ```
 
-```{r Alt Figure-Univariate-Landscapes, echo=FALSE, eval=FALSE}
+```{r Alt Figure-Univariate-Landscapes, echo=FALSE, eval=FALSE, include=F}
 # Get legend
 AF_uni_legend <- get_legend(legend_only + theme(legend.title.align = 0.5))
 
@@ -1561,7 +1596,7 @@ eggptoid_selection_plot
 save_plot(filename = "selection_on_Platygaster.pdf", plot = eggptoid_selection_plot, base_height = 4) # base_height = 6 is to large for PDF of manuscript
 ```
 
-```{r Egg-Parasitoid-Selection-linear, echo=F}
+```{r Egg-Parasitoid-Selection-linear, echo=F, eval=F, include=F}
 linear_eggptoid_plot_df <- linear_eggegg_RF_Pref$absolute_fitness %>% 
   select(-sc.Diam, -sc.log.Clutch) %>%
   gather(ID, absolute_fitness, -sc.sqrt.Pref, -Foodweb) %>%
@@ -1711,10 +1746,11 @@ RF_gradients <- plot_grid(RF_uni_plots, RF_uni_legend, ncol = 2, rel_widths = c(
 RF_gradients
 ```
 
+# Reproduce Figure 3 presented in main text.
 
-# Multivariate fitness landscapes
+Use the fitted model to generate predicted estimates of mean fitness for different phenotypic combinations. I restrict these predictions to +/- 1 SD because we can only reliably estimate the shape of the adaptive landscape near the mean phenotype of the population [Arnold et al., 2001](https://link.springer.com/article/10.1023/A:1013373907708).
 
-```{r Get Clutch Size x Oviposition preference Landscape, cache=TRUE, include=FALSE}
+```{r Get Clutch Size x Oviposition preference Landscape, cache=TRUE}
 
 newdata_Clutch.Pref <- bind_rows(
   expand.grid(Foodweb = "Complex", sc.Diam = 0, sc.log.Clutch = seq(-1,1,length.out=1000), sc.sqrt.Pref = seq(-1,1,length.out=1000)),
@@ -1727,7 +1763,7 @@ RF_Clutch.Pref <- bootstrap_fitness(
 
 ```
 
-```{r Get Gall Diameter x Clutch Size Landscape, cache=TRUE, include=FALSE}
+```{r Get Gall Diameter x Clutch Size Landscape, cache=TRUE}
 
 newdata_Diam.Clutch <- bind_rows(
   expand.grid(Foodweb = "Complex", sc.Diam = seq(-1,1,length.out=1000), sc.log.Clutch = seq(-1,1,length.out=1000), sc.sqrt.Pref = 0),
@@ -1740,7 +1776,7 @@ RF_Diam.Clutch <- bootstrap_fitness(
 
 ```
 
-```{r Get Gall Diameter x Oviposition preference Landscape, cache=TRUE, include=FALSE}
+```{r Get Gall Diameter x Oviposition preference Landscape, cache=TRUE}
 
 newdata_Diam.Pref <- bind_rows(
   expand.grid(Foodweb = "Complex", sc.Diam = seq(-1,1,length.out=1000), sc.log.Clutch = 0, sc.sqrt.Pref = seq(-1,1,length.out=1000)),
@@ -1753,7 +1789,9 @@ RF_Diam.Pref <- bootstrap_fitness(
 
 ```
 
-```{r Get plots of multivariate adaptive landscape, include=FALSE}
+Create plots for each panel.
+
+```{r Get plots of multivariate adaptive landscape}
 
 # Plot helpers
 AF_range <- bind_rows(RF_Clutch.Pref$absolute_fitness, RF_Diam.Clutch$absolute_fitness, RF_Diam.Pref$absolute_fitness) %>%
@@ -1818,9 +1856,9 @@ AF_plot_Clutch.Pref <- RF_Clutch.Pref$absolute_fitness %>%
 
 ```
 
-Reproduce Figure 3 in main manuscript.
+Fit plots together to reproduce Figure 3.
 
-```{r Figure-Multivariate-Landscapes, echo=FALSE, fig.cap="Fitness landscapes of gall traits in complex vs. simple food webs. Each panel corresponds to a different combination of traits: clutch size and gall diameter (A); clutch size and Oviposition preference (B); Oviposition preference and gall diameter (C). Note that traits for all plots range 1 SD below and above the mean (=0)."}
+```{r Figure-Multivariate-Landscapes}
 
 # Get legend
 AF_landscape_legend <- get_legend(AF_plot_Diam.Pref + theme(legend.text = element_text(size=10)))
@@ -1876,8 +1914,11 @@ AF_landscape_2d
 save_plot(filename = "MV_landscapes.pdf", plot = AF_landscape_2d, base_width=8, base_height = 6)
 ```
 
+# Calculating Slope and Curvature of the Adaptive Landscape
 
-```{r Slope and Curvature of the Adaptive Landscape, include=FALSE}
+Below is the code I used to get estimates for the slope and curvature of the adaptive landscape in each food-web treatment. If 95% confidence intervals of selection gradients overlap zero, then they are set to zero; otherwise, I retain the mean estimate. 
+
+```{r Slope and Curvature of the Adaptive Landscape}
 
 ## Create beta-matrix for complex food-web treatment
 complex_betas_df <- tidy_foodweb_grads %>%
@@ -1965,3 +2006,17 @@ simple_gammas <- round(simple_gammas, 2)
 complex_curvature <- complex_gammas - complex_betas %*% t(complex_betas)
 simple_curvature <- simple_gammas - simple_betas %*% t(simple_betas)
 ```
+
+I use these estimates to populate the curvature matrices presented in the **Results** of the main text. I reproduce these estimates here for clarity:
+
+$$\textbf{C} = \begin{pmatrix} C_{\text{Diam:Diam}}&& \\ C_{\text{Clutch:Diam}} & C_{\text{Clutch:Clutch}} & \\ C_{\text{Pref:Diam}} & C_{\text{Pref:Clutch}} & C_{\text{Pref:Pref}} \end{pmatrix}$$
+
+$$\textbf{C}_{\text{Complex}} = \begin{pmatrix} 
+`r round(complex_curvature["Diam","Diam"],2)` &  &  \\  
+`r round(complex_curvature["Clutch","Diam"],2)` & `r round(complex_curvature["Clutch","Clutch"],2)` &  \\  
+`r round(complex_curvature["Pref","Diam"],2)` & `r round(complex_curvature["Pref","Clutch"],2)` & `r round(complex_curvature["Pref","Pref"],2)` \end{pmatrix}$$
+
+$$\textbf{C}_{\text{Simple}} = \begin{pmatrix} 
+`r round(simple_curvature["Diam","Diam"],2)` &  &  \\  
+`r round(simple_curvature["Clutch","Diam"],2)` & `r round(simple_curvature["Clutch","Clutch"],2)` &  \\  
+`r round(simple_curvature["Pref","Diam"],2)` & `r round(simple_curvature["Pref","Clutch"],2)` & `r round(simple_curvature["Pref","Pref"],2)` \end{pmatrix}$$
