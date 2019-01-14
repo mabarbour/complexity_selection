@@ -1224,35 +1224,6 @@ figure_eggegg_grads <- plot_grid(y_title_eggegg_grads, plot_legend_eggegg_grads,
 figure_eggegg_grads
 ```
 
-
-```{r simulate bias in chamber diameter, include=FALSE, eval=FALSE}
-
-# To determine whether I should adjust any coefficients associated with chamber diameter, e.g. quadratic and correlation terms, I conducted a quick simulation. In the simulation, I assumed that if the larva survive, then the chamber diameter was the correct one. However, if the larva did not survive, its size could be due to both its size and parasitism. I assumed a constant value of parasitism effect on gall size.
-
-n <- 10000
-diam <- rnorm(n, mean=0, sd=1) # simulate 1,000 chamber diameters from a normal distribution with mean=0 and sd=1
-pref <- rnorm(n, mean=0, sd=1)               # simulate 1,000 Oviposition preferences from a normal distribution with mean=0 and sd=1
-bias.adj <- 0.34                  # this value corresponds to actual estimates from my bias analyses.
-mean_survival <- 0.5              # approximate survival across food-web treatments
-logit_survival <- mean_survival + 1.5*diam + 0.1*diam*diam -0.2*pref + 0*pref*pref -0.2*diam*pref # using coefficients that closely match empirical estimates
-link_survival <- exp(logit_survival)/(1 + exp(logit_survival))
-survival <- (runif(n) < link_survival) 
-
-sim_df <- data.frame(survival=survival, diam=diam, pref=pref) %>%
-  mutate(diam_adj = ifelse(survival==FALSE, diam + bias.adj, diam)) # adjust bias only if larva did not survive
-
-## Fit non-adjusted model
-nonadj_model <- glm(survival ~ diam + I(diam^2) + pref + I(pref^2) + diam*pref, data=sim_df, family=binomial) 
-summary(nonadj_model)
-
-adj_model <- glm(survival ~ diam_adj  + I(diam_adj^2) + pref + I(pref^2) + diam_adj*pref, data=sim_df, family=binomial) 
-summary(adj_model)
-
-## Interesting, it seems that my simulation design affects the intercept term; however, its clear that my biological hypothesis for how chamber diameter is influenced by parasitism (simply decreasing size of non-surviving larva), would not affect the quadratic or nonlinear terms.
-data.frame(terms = names(coef(nonadj_model)), nonadj_coefs = coef(nonadj_model), adj_coefs = coef(adj_model)) %>%
-  mutate(diff_coefs = nonadj_coefs - adj_coefs)
-```
-
 # Reproduce Figure 2 in main text of manuscript.
 
 Use the fitted model to generate predicted estimates of mean fitness for changes in the mean trait value of a population. I restrict these predictions to +/- 1 SD because we can only reliably estimate the shape of the adaptive landscape near the mean phenotype of the population [Arnold et al., 2001](https://link.springer.com/article/10.1023/A:1013373907708). Other trait values are held constant at the mean phenotype (i.e. trait = 0).
