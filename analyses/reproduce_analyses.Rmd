@@ -974,12 +974,6 @@ RF_Pref <- bootstrap_fitness(
   logistic_model = foodweb_model, 
   newdata = newdata_Pref,
   bootstraps=n_boots_plots)
-
-# this is used for plotting selection on egg parasitoids extended phenotype. We only did this for preference since this was the only trait under selection.
-eggegg_RF_Pref <- bootstrap_fitness(
-  logistic_model = eggegg_model, 
-  newdata = newdata_Pref,
-  bootstraps=n_boots_plots) 
 ```
 
 Create plots for each panel of Figure 2 in main text.
@@ -1754,6 +1748,12 @@ figure_eggegg_grads
 # Reproduce Figure 4 in main text
 
 ```{r Egg-Parasitoid-Selection}
+# this is used for plotting selection on egg parasitoids extended phenotype. We only did this for preference since this was the only trait under selection.
+eggegg_RF_Pref <- bootstrap_fitness(
+  logistic_model = eggegg_model, 
+  newdata = newdata_Pref,
+  bootstraps=n_boots_plots) 
+
 eggptoid_plot_df <- eggegg_RF_Pref$absolute_fitness %>% 
   select(-sc.Diam, -sc.log.Clutch) %>%
   gather(ID, absolute_fitness, -sc.sqrt.Pref, -Foodweb) %>%
