@@ -53,8 +53,8 @@ bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0
   get_absolute_fitness <- function(.) predict(., newdata=newdata, type="response", re.form=~0) 
   
   if(is.null(bootstraps) == FALSE){
-    set.seed(34) # make sure results are reproducible
-    get_bootstraps_absolute_fitness <-bootMer(logistic_model, FUN = get_absolute_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
+
+    get_bootstraps_absolute_fitness <-bootMer(logistic_model, FUN = get_absolute_fitness, nsim=bootstraps, parallel="multicore", ncpus=32, seed=34)
   
    get_intervals_absolute_fitness <- apply(get_bootstraps_absolute_fitness$t, 2, function(x) x[order(x)][c(round(bootstraps*intervals[1],0),round(bootstraps*intervals[2],0))])
    
@@ -73,8 +73,8 @@ bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0
   get_relative_fitness <- function(.) get_absolute_fitness(.)/mean(get_absolute_fitness(.))
   
   if(is.null(bootstraps) == FALSE){
-    set.seed(34) # make sure results are reproducible
-    get_bootstraps_relative_fitness <-bootMer(logistic_model, FUN = get_relative_fitness, nsim=bootstraps, parallel="multicore", ncpus=32)
+
+    get_bootstraps_relative_fitness <-bootMer(logistic_model, FUN = get_relative_fitness, nsim=bootstraps, parallel="multicore", ncpus=32, seed=34)
   
   get_intervals_relative_fitness <- apply(get_bootstraps_relative_fitness$t, 2, function(x) x[order(x)][c(round(bootstraps*intervals[1],0),round(bootstraps*intervals[2],0))])
     
@@ -143,7 +143,7 @@ foodweb_model <- glmer(
 We used parametric bootstrapping to calculate 95% confidence intervals of trait-fitness relationships.
 
 ```{r Bootstrap food-web model, cache=TRUE}
-boot_foodweb_model <- bootMer(foodweb_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+boot_foodweb_model <- bootMer(foodweb_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32, seed=34)
 ```
 
 In order to reliably quantify linear trait-fitness relationships, we remove all higher-order terms from the model [Stinchcombe et al. 2008](https://onlinelibrary.wiley.com/doi/full/10.1111/j.1558-5646.2008.00449.x).
@@ -161,7 +161,7 @@ linear_foodweb_model <- glmer(
 And refit using parametric bootstrapping.
 
 ```{r Bootstrap linear food-web model, cache=TRUE}
-boot_linear_foodweb_model <- bootMer(linear_foodweb_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+boot_linear_foodweb_model <- bootMer(linear_foodweb_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32, seed=34)
 ```
 
 Chamber diameter, but not the other phenotypes, could be influenced by parasitism itself rather than being under natural selection. To estimate this potential bias, we subset our data to only include multi-chambered galls where there was variability in larval survival. We then fit a reduced model to estimate the bias in the logistic regression coefficient of chamber diameter in each food web.
@@ -486,7 +486,7 @@ biased_egglarval_model <- update(biased_foodweb_model, data=biased_egglarval_df)
 Parametric bootstrapping to estimate confidence intervals
 
 ```{r Bootstrap egg vs. larval ptoid model, cache=TRUE}
-boot_egglarval_model <- bootMer(egglarval_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+boot_egglarval_model <- bootMer(egglarval_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32, seed=34)
 ```
 
 Fit a reduced model to reliably estimate linear trait-fitness relationships.
@@ -498,7 +498,7 @@ linear_egglarval_model <- update(linear_foodweb_model, data=egglarval_df)
 Parametric bootstrapping to estimate confidence intervals.
 
 ```{r Bootstrap linear egg vs. larval model, cache=TRUE}
-boot_linear_egglarval_model <- bootMer(linear_egglarval_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+boot_linear_egglarval_model <- bootMer(linear_egglarval_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32, seed=34)
 ```
 
 Tidy trait-fitness relationships for egg and larval parasitoids from above models.
@@ -1480,7 +1480,7 @@ biased_eggegg_model <- update(biased_foodweb_model, data=biased_eggegg_df)
 ```
 
 ```{r Bootstrap egg vs. egg ptoid model, cache=TRUE, include=FALSE}
-boot_eggegg_model <- bootMer(eggegg_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+boot_eggegg_model <- bootMer(eggegg_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32, seed=34)
 ```
 
 ```{r Linear egg vs. egg ptoid model, cache=TRUE}
@@ -1488,7 +1488,7 @@ linear_eggegg_model <- update(linear_foodweb_model, data=eggegg_df)
 ```
 
 ```{r Bootstrap linear egg vs. egg model, cache=TRUE, include=FALSE}
-boot_linear_eggegg_model <- bootMer(linear_eggegg_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32)
+boot_linear_eggegg_model <- bootMer(linear_eggegg_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32, seed=34)
 ```
 
 ```{r Egg vs. egg ptoid alpha coefficients, include=FALSE}
