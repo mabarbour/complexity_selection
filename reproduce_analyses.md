@@ -72,7 +72,13 @@ biased_foodweb_model <- glmer(
     (1|Genotype/Plant_Position/Gall_Number),
   data = biased_foodweb_df,
   family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
+```
 
+```
+## singular fit
+```
+
+```r
 biased_foodweb_confint <- tidy(biased_foodweb_model, conf.int=TRUE) %>% filter(group=="fixed")
 ```
 
@@ -113,65 +119,65 @@ FoodwebSimple:sc.Diam & 0.4158534 & 0.2066780 & 2.0120841 & 0.0442111 & 0.010772
 \hline
 type & term & conf.high & conf.low & mean & P\_cutoff & coefficient\_type\\
 \hline
-Complex & (Intercept) & 0.5577970 & 0.2746507 & 0.4132922 & * & Mean fitness\\
+Complex & (Intercept) & 0.5561001 & 0.2728743 & 0.4188447 & * & Mean fitness\\
 \hline
-Complex & I(sc.Diam\textasciicircum{}2) & 0.5383929 & -0.0950983 & 0.2271685 &  & Quadratic\\
+Complex & I(sc.Diam\textasciicircum{}2) & 0.5458940 & -0.0565636 & 0.2340236 &  & Quadratic\\
 \hline
-Complex & I(sc.log.Clutch\textasciicircum{}2) & 0.2604850 & -0.4216912 & -0.0884475 &  & Quadratic\\
+Complex & I(sc.log.Clutch\textasciicircum{}2) & 0.2673715 & -0.4442637 & -0.0934645 &  & Quadratic\\
 \hline
-Complex & I(sc.sqrt.Pref\textasciicircum{}2) & 1.0744532 & 0.0999931 & 0.5566625 & * & Quadratic\\
+Complex & I(sc.sqrt.Pref\textasciicircum{}2) & 1.1078055 & 0.1575109 & 0.5813342 & * & Quadratic\\
 \hline
-Complex & sc.Diam & 1.5693700 & 0.7298912 & 1.1352672 & * & Linear\\
+Complex & sc.Diam & 1.6397205 & 0.7475711 & 1.1511781 & * & Linear\\
 \hline
-Complex & sc.Diam:sc.log.Clutch & 0.2525351 & -0.5715558 & -0.1577118 &  & Correlational\\
+Complex & sc.Diam:sc.log.Clutch & 0.2400422 & -0.5655092 & -0.1426436 &  & Correlational\\
 \hline
-Complex & sc.Diam:sc.sqrt.Pref & 0.0059841 & -0.9494477 & -0.4424437 &  & Correlational\\
+Complex & sc.Diam:sc.sqrt.Pref & 0.0357144 & -0.9376507 & -0.4497678 &  & Correlational\\
 \hline
-Complex & sc.log.Clutch & 0.5748866 & -0.1309147 & 0.2102483 &  & Linear\\
+Complex & sc.log.Clutch & 0.5742409 & -0.1782814 & 0.2015568 &  & Linear\\
 \hline
-Complex & sc.log.Clutch:sc.sqrt.Pref & 0.5866006 & -0.3682643 & 0.0970880 &  & Correlational\\
+Complex & sc.log.Clutch:sc.sqrt.Pref & 0.5409796 & -0.3072356 & 0.1084018 &  & Correlational\\
 \hline
-Complex & sc.sqrt.Pref & 0.1548968 & -0.9673799 & -0.4054556 &  & Linear\\
+Complex & sc.sqrt.Pref & 0.1599006 & -0.9617830 & -0.4056342 &  & Linear\\
 \hline
-Diff & (Intercept) & 0.4174345 & 0.1187386 & 0.2624413 & * & Mean fitness\\
+Diff & (Intercept) & 0.4244776 & 0.1154952 & 0.2670227 & * & Mean fitness\\
 \hline
-Diff & I(sc.Diam\textasciicircum{}2) & 0.5212381 & -0.4324914 & 0.0397940 &  & Quadratic\\
+Diff & I(sc.Diam\textasciicircum{}2) & 0.4842451 & -0.4243171 & 0.0280245 &  & Quadratic\\
 \hline
-Diff & I(sc.log.Clutch\textasciicircum{}2) & 0.3120400 & -0.7667277 & -0.2179471 &  & Quadratic\\
+Diff & I(sc.log.Clutch\textasciicircum{}2) & 0.3296182 & -0.7464913 & -0.2141728 &  & Quadratic\\
 \hline
-Diff & I(sc.sqrt.Pref\textasciicircum{}2) & 0.0941926 & -1.1762737 & -0.5220837 &  & Quadratic\\
+Diff & I(sc.sqrt.Pref\textasciicircum{}2) & 0.0254895 & -1.1655746 & -0.5434675 &  & Quadratic\\
 \hline
-Diff & sc.Diam & 0.5147400 & -0.5651894 & -0.0397714 &  & Linear\\
+Diff & sc.Diam & 0.5314249 & -0.6157623 & -0.0390675 &  & Linear\\
 \hline
-Diff & sc.Diam:sc.log.Clutch & 0.4400598 & -0.7849733 & -0.1938585 &  & Correlational\\
+Diff & sc.Diam:sc.log.Clutch & 0.3596399 & -0.7890798 & -0.2172148 &  & Correlational\\
 \hline
-Diff & sc.Diam:sc.sqrt.Pref & 0.9724702 & -0.2653500 & 0.3573678 &  & Correlational\\
+Diff & sc.Diam:sc.sqrt.Pref & 1.0033748 & -0.2509312 & 0.3671110 &  & Correlational\\
 \hline
-Diff & sc.log.Clutch & -0.1261059 & -1.2744060 & -0.6819489 & * & Linear\\
+Diff & sc.log.Clutch & -0.1350917 & -1.2435804 & -0.6762277 & * & Linear\\
 \hline
-Diff & sc.log.Clutch:sc.sqrt.Pref & 0.4876757 & -0.6934578 & -0.0965558 &  & Correlational\\
+Diff & sc.log.Clutch:sc.sqrt.Pref & 0.4674799 & -0.7392477 & -0.1070403 &  & Correlational\\
 \hline
-Diff & sc.sqrt.Pref & 0.2549453 & -1.1550758 & -0.4321609 &  & Linear\\
+Diff & sc.sqrt.Pref & 0.2620370 & -1.0910036 & -0.4293349 &  & Linear\\
 \hline
-Simple & (Intercept) & 0.8082259 & 0.5313324 & 0.6757334 & * & Mean fitness\\
+Simple & (Intercept) & 0.8166066 & 0.5532049 & 0.6858674 & * & Mean fitness\\
 \hline
-Simple & I(sc.Diam\textasciicircum{}2) & 0.6535475 & -0.0680735 & 0.2669625 &  & Quadratic\\
+Simple & I(sc.Diam\textasciicircum{}2) & 0.6252214 & -0.0523585 & 0.2620482 &  & Quadratic\\
 \hline
-Simple & I(sc.log.Clutch\textasciicircum{}2) & 0.0801733 & -0.7093998 & -0.3063946 &  & Quadratic\\
+Simple & I(sc.log.Clutch\textasciicircum{}2) & 0.1041150 & -0.7351263 & -0.3076373 &  & Quadratic\\
 \hline
-Simple & I(sc.sqrt.Pref\textasciicircum{}2) & 0.4628712 & -0.3810782 & 0.0345788 &  & Quadratic\\
+Simple & I(sc.sqrt.Pref\textasciicircum{}2) & 0.4378315 & -0.3910659 & 0.0378668 &  & Quadratic\\
 \hline
-Simple & sc.Diam & 1.5833488 & 0.6759297 & 1.0954958 & * & Linear\\
+Simple & sc.Diam & 1.6299262 & 0.6939471 & 1.1121106 & * & Linear\\
 \hline
-Simple & sc.Diam:sc.log.Clutch & 0.0807693 & -0.7782059 & -0.3515703 &  & Correlational\\
+Simple & sc.Diam:sc.log.Clutch & 0.0772856 & -0.8152498 & -0.3598584 &  & Correlational\\
 \hline
-Simple & sc.Diam:sc.sqrt.Pref & 0.2986535 & -0.4957363 & -0.0850759 &  & Correlational\\
+Simple & sc.Diam:sc.sqrt.Pref & 0.3179567 & -0.5082598 & -0.0826568 &  & Correlational\\
 \hline
-Simple & sc.log.Clutch & -0.0892229 & -0.9376601 & -0.4717006 & * & Linear\\
+Simple & sc.log.Clutch & -0.0787164 & -0.8991793 & -0.4746709 & * & Linear\\
 \hline
-Simple & sc.log.Clutch:sc.sqrt.Pref & 0.3804199 & -0.3657039 & 0.0005322 &  & Correlational\\
+Simple & sc.log.Clutch:sc.sqrt.Pref & 0.4122045 & -0.4139481 & 0.0013615 &  & Correlational\\
 \hline
-Simple & sc.sqrt.Pref & -0.3622454 & -1.3513666 & -0.8376166 & * & Linear\\
+Simple & sc.sqrt.Pref & -0.3639175 & -1.3831022 & -0.8349691 & * & Linear\\
 \hline
 \end{tabular}
 
@@ -185,59 +191,59 @@ Simple & sc.sqrt.Pref & -0.3622454 & -1.3513666 & -0.8376166 & * & Linear\\
 \hline
 type & term & conf.high & conf.low & mean & P\_cutoff & gradient\_type\\
 \hline
-Complex & I(sc.Diam\textasciicircum{}2) & 0.3226752 & -0.0569953 & 0.1361490 &  & Quadratic\\
+Complex & I(sc.Diam\textasciicircum{}2) & 0.3271709 & -0.0339003 & 0.1402575 &  & Quadratic\\
 \hline
-Complex & I(sc.log.Clutch\textasciicircum{}2) & 0.1561166 & -0.2527324 & -0.0530093 &  & Quadratic\\
+Complex & I(sc.log.Clutch\textasciicircum{}2) & 0.1602439 & -0.2662608 & -0.0560161 &  & Quadratic\\
 \hline
-Complex & I(sc.sqrt.Pref\textasciicircum{}2) & 0.6439525 & 0.0599289 & 0.3336248 & * & Quadratic\\
+Complex & I(sc.sqrt.Pref\textasciicircum{}2) & 0.6639415 & 0.0944011 & 0.3484113 & * & Quadratic\\
 \hline
-Complex & sc.Diam & 0.4702856 & 0.2187230 & 0.3402001 & * & Directional\\
+Complex & sc.Diam & 0.4913672 & 0.2240211 & 0.3449680 & * & Directional\\
 \hline
-Complex & sc.Diam:sc.log.Clutch & 0.0756760 & -0.1712754 & -0.0472607 &  & Correlational\\
+Complex & sc.Diam:sc.log.Clutch & 0.0719323 & -0.1694634 & -0.0427453 &  & Correlational\\
 \hline
-Complex & sc.Diam:sc.sqrt.Pref & 0.0017932 & -0.2845164 & -0.1325850 &  & Correlational\\
+Complex & sc.Diam:sc.sqrt.Pref & 0.0107023 & -0.2809813 & -0.1347798 &  & Correlational\\
 \hline
-Complex & sc.log.Clutch & 0.1722735 & -0.0392306 & 0.0630041 &  & Directional\\
+Complex & sc.log.Clutch & 0.1720800 & -0.0534247 & 0.0603996 &  & Directional\\
 \hline
-Complex & sc.log.Clutch:sc.sqrt.Pref & 0.1757838 & -0.1103560 & 0.0290939 &  & Correlational\\
+Complex & sc.log.Clutch:sc.sqrt.Pref & 0.1621128 & -0.0920678 & 0.0324842 &  & Correlational\\
 \hline
-Complex & sc.sqrt.Pref & 0.0464172 & -0.2898901 & -0.1215010 &  & Directional\\
+Complex & sc.sqrt.Pref & 0.0479166 & -0.2882129 & -0.1215545 &  & Directional\\
 \hline
-Diff & I(sc.Diam\textasciicircum{}2) & 0.1971101 & -0.2716844 & -0.0357266 &  & Quadratic\\
+Diff & I(sc.Diam\textasciicircum{}2) & 0.1766276 & -0.2701726 & -0.0416837 &  & Quadratic\\
 \hline
-Diff & I(sc.log.Clutch\textasciicircum{}2) & 0.1884530 & -0.3311794 & -0.0622461 &  & Quadratic\\
+Diff & I(sc.log.Clutch\textasciicircum{}2) & 0.1908814 & -0.3128531 & -0.0597068 &  & Quadratic\\
 \hline
-Diff & I(sc.sqrt.Pref\textasciicircum{}2) & -0.0035932 & -0.6628308 & -0.3206174 & * & Quadratic\\
+Diff & I(sc.sqrt.Pref\textasciicircum{}2) & -0.0401891 & -0.6792307 & -0.3341671 & * & Quadratic\\
 \hline
-Diff & sc.Diam & 0.0064375 & -0.2627085 & -0.1341556 &  & Directional\\
+Diff & sc.Diam & -0.0009627 & -0.2885423 & -0.1357985 & * & Directional\\
 \hline
-Diff & sc.Diam:sc.log.Clutch & 0.1305590 & -0.1583110 & -0.0188638 &  & Correlational\\
+Diff & sc.Diam:sc.log.Clutch & 0.1172844 & -0.1668003 & -0.0249380 &  & Correlational\\
 \hline
-Diff & sc.Diam:sc.sqrt.Pref & 0.2850260 & -0.0457236 & 0.1165836 &  & Correlational\\
+Diff & sc.Diam:sc.sqrt.Pref & 0.2829095 & -0.0403247 & 0.1192334 &  & Correlational\\
 \hline
-Diff & sc.log.Clutch & -0.0159345 & -0.2928373 & -0.1517231 & * & Directional\\
+Diff & sc.log.Clutch & -0.0182048 & -0.2927574 & -0.1496772 & * & Directional\\
 \hline
-Diff & sc.log.Clutch:sc.sqrt.Pref & 0.1228931 & -0.1865889 & -0.0289938 &  & Correlational\\
+Diff & sc.log.Clutch:sc.sqrt.Pref & 0.1127559 & -0.1892195 & -0.0322282 &  & Correlational\\
 \hline
-Diff & sc.sqrt.Pref & 0.1387417 & -0.2201026 & -0.0360408 &  & Directional\\
+Diff & sc.sqrt.Pref & 0.1413158 & -0.2070588 & -0.0354893 &  & Directional\\
 \hline
-Simple & I(sc.Diam\textasciicircum{}2) & 0.2458428 & -0.0256070 & 0.1004224 &  & Quadratic\\
+Simple & I(sc.Diam\textasciicircum{}2) & 0.2351875 & -0.0196955 & 0.0985738 &  & Quadratic\\
 \hline
-Simple & I(sc.log.Clutch\textasciicircum{}2) & 0.0301585 & -0.2668526 & -0.1152554 &  & Quadratic\\
+Simple & I(sc.log.Clutch\textasciicircum{}2) & 0.0391646 & -0.2765300 & -0.1157229 &  & Quadratic\\
 \hline
-Simple & I(sc.sqrt.Pref\textasciicircum{}2) & 0.1741167 & -0.1433489 & 0.0130074 &  & Quadratic\\
+Simple & I(sc.sqrt.Pref\textasciicircum{}2) & 0.1646976 & -0.1471060 & 0.0142442 &  & Quadratic\\
 \hline
-Simple & sc.Diam & 0.2978015 & 0.1271311 & 0.2060445 & * & Directional\\
+Simple & sc.Diam & 0.3065620 & 0.1305199 & 0.2091695 & * & Directional\\
 \hline
-Simple & sc.Diam:sc.log.Clutch & 0.0151914 & -0.1463676 & -0.0661245 &  & Correlational\\
+Simple & sc.Diam:sc.log.Clutch & 0.0145361 & -0.1533349 & -0.0676834 &  & Correlational\\
 \hline
-Simple & sc.Diam:sc.sqrt.Pref & 0.0561717 & -0.0932397 & -0.0160014 &  & Correlational\\
+Simple & sc.Diam:sc.sqrt.Pref & 0.0598024 & -0.0955952 & -0.0155464 &  & Correlational\\
 \hline
-Simple & sc.log.Clutch & -0.0167814 & -0.1763583 & -0.0887190 & * & Directional\\
+Simple & sc.log.Clutch & -0.0148052 & -0.1691207 & -0.0892777 & * & Directional\\
 \hline
-Simple & sc.log.Clutch:sc.sqrt.Pref & 0.0715506 & -0.0687828 & 0.0001001 &  & Correlational\\
+Simple & sc.log.Clutch:sc.sqrt.Pref & 0.0775288 & -0.0778567 & 0.0002561 &  & Correlational\\
 \hline
-Simple & sc.sqrt.Pref & -0.0681323 & -0.2541695 & -0.1575417 & * & Directional\\
+Simple & sc.sqrt.Pref & -0.0684468 & -0.2601385 & -0.1570438 & * & Directional\\
 \hline
 \end{tabular}
 
@@ -264,6 +270,10 @@ biased_egglarval_df <- egglarval_df %>%
 biased_egglarval_model <- update(biased_foodweb_model, data=biased_egglarval_df)
 ```
 
+```
+## singular fit
+```
+
 
 
 
@@ -280,65 +290,65 @@ linear_egglarval_model <- update(linear_foodweb_model, data=egglarval_df)
 \hline
 type & term & conf.high & conf.low & mean & P\_cutoff & coefficient\_type\\
 \hline
-Complex & (Intercept) & 0.8291572 & 0.5018696 & 0.6707670 & * & Mean fitness\\
+Complex & (Intercept) & 0.8322366 & 0.4720168 & 0.6700690 & * & Mean fitness\\
 \hline
-Complex & I(sc.Diam\textasciicircum{}2) & 0.5252164 & -0.2124211 & 0.1546565 &  & Quadratic\\
+Complex & I(sc.Diam\textasciicircum{}2) & 0.5096068 & -0.1785902 & 0.1643608 &  & Quadratic\\
 \hline
-Complex & I(sc.log.Clutch\textasciicircum{}2) & 0.3763112 & -0.3412520 & 0.0192410 &  & Quadratic\\
+Complex & I(sc.log.Clutch\textasciicircum{}2) & 0.3854401 & -0.3636687 & 0.0088227 &  & Quadratic\\
 \hline
-Complex & I(sc.sqrt.Pref\textasciicircum{}2) & 1.0809739 & -0.0286449 & 0.4635128 &  & Quadratic\\
+Complex & I(sc.sqrt.Pref\textasciicircum{}2) & 1.0774509 & -0.0100810 & 0.4726738 &  & Quadratic\\
 \hline
-Complex & sc.Diam & 1.7505608 & 0.6409519 & 1.1493273 & * & Linear\\
+Complex & sc.Diam & 1.7594724 & 0.6785354 & 1.1651462 & * & Linear\\
 \hline
-Complex & sc.Diam:sc.log.Clutch & 0.5704469 & -0.3539789 & 0.1020909 &  & Correlational\\
+Complex & sc.Diam:sc.log.Clutch & 0.5539638 & -0.3258649 & 0.0997995 &  & Correlational\\
 \hline
-Complex & sc.Diam:sc.sqrt.Pref & 0.3178538 & -0.8451925 & -0.2724925 &  & Correlational\\
+Complex & sc.Diam:sc.sqrt.Pref & 0.3476120 & -0.8633409 & -0.2786942 &  & Correlational\\
 \hline
-Complex & sc.log.Clutch & 1.1814515 & 0.1596120 & 0.6742001 & * & Linear\\
+Complex & sc.log.Clutch & 1.2008051 & 0.1994744 & 0.6578867 & * & Linear\\
 \hline
-Complex & sc.log.Clutch:sc.sqrt.Pref & 0.2750507 & -0.7387619 & -0.2048680 &  & Correlational\\
+Complex & sc.log.Clutch:sc.sqrt.Pref & 0.3109048 & -0.7446019 & -0.2056841 &  & Correlational\\
 \hline
-Complex & sc.sqrt.Pref & -0.1391448 & -1.7356777 & -0.8941844 & * & Linear\\
+Complex & sc.sqrt.Pref & -0.1584967 & -1.7124265 & -0.9080523 & * & Linear\\
 \hline
-Diff & (Intercept) & 0.2196657 & -0.1799276 & 0.0174850 &  & Mean fitness\\
+Diff & (Intercept) & 0.2252990 & -0.1995580 & 0.0172334 &  & Mean fitness\\
 \hline
-Diff & I(sc.Diam\textasciicircum{}2) & 0.5574665 & -0.3584458 & 0.1022658 &  & Quadratic\\
+Diff & I(sc.Diam\textasciicircum{}2) & 0.5719119 & -0.3865508 & 0.0846807 &  & Quadratic\\
 \hline
-Diff & I(sc.log.Clutch\textasciicircum{}2) & 0.1860787 & -0.8691844 & -0.3225297 &  & Quadratic\\
+Diff & I(sc.log.Clutch\textasciicircum{}2) & 0.1931778 & -0.8612449 & -0.3012207 &  & Quadratic\\
 \hline
-Diff & I(sc.sqrt.Pref\textasciicircum{}2) & 0.1316942 & -1.3477486 & -0.5351730 &  & Quadratic\\
+Diff & I(sc.sqrt.Pref\textasciicircum{}2) & 0.0930201 & -1.2916097 & -0.5463166 &  & Quadratic\\
 \hline
-Diff & sc.Diam & 0.5371689 & -0.7334456 & -0.0698901 &  & Linear\\
+Diff & sc.Diam & 0.5392765 & -0.6909172 & -0.0884426 &  & Linear\\
 \hline
-Diff & sc.Diam:sc.log.Clutch & 0.1098853 & -1.1099933 & -0.4700208 &  & Correlational\\
+Diff & sc.Diam:sc.log.Clutch & 0.1465344 & -1.0612704 & -0.4586126 &  & Correlational\\
 \hline
-Diff & sc.Diam:sc.sqrt.Pref & 0.8535288 & -0.4724468 & 0.1677916 &  & Correlational\\
+Diff & sc.Diam:sc.sqrt.Pref & 0.8368888 & -0.5233818 & 0.1873353 &  & Correlational\\
 \hline
-Diff & sc.log.Clutch & -0.7742105 & -2.3326708 & -1.4870077 & * & Linear\\
+Diff & sc.log.Clutch & -0.7885031 & -2.2567213 & -1.4550976 & * & Linear\\
 \hline
-Diff & sc.log.Clutch:sc.sqrt.Pref & 0.8519946 & -0.3230277 & 0.2409038 &  & Correlational\\
+Diff & sc.log.Clutch:sc.sqrt.Pref & 0.8736969 & -0.4036615 & 0.2419612 &  & Correlational\\
 \hline
-Diff & sc.sqrt.Pref & 0.8048892 & -0.9803708 & -0.1097636 &  & Linear\\
+Diff & sc.sqrt.Pref & 0.8028004 & -0.9331559 & -0.0939651 &  & Linear\\
 \hline
-Simple & (Intercept) & 0.8534582 & 0.5064552 & 0.6882520 & * & Mean fitness\\
+Simple & (Intercept) & 0.8576103 & 0.4955104 & 0.6873024 & * & Mean fitness\\
 \hline
-Simple & I(sc.Diam\textasciicircum{}2) & 0.6009394 & -0.0599399 & 0.2569223 &  & Quadratic\\
+Simple & I(sc.Diam\textasciicircum{}2) & 0.6067336 & -0.0419911 & 0.2490416 &  & Quadratic\\
 \hline
-Simple & I(sc.log.Clutch\textasciicircum{}2) & 0.0426746 & -0.6945156 & -0.3032887 &  & Quadratic\\
+Simple & I(sc.log.Clutch\textasciicircum{}2) & 0.0652989 & -0.6840806 & -0.2923980 &  & Quadratic\\
 \hline
-Simple & I(sc.sqrt.Pref\textasciicircum{}2) & 0.3458282 & -0.5386174 & -0.0716601 &  & Quadratic\\
+Simple & I(sc.sqrt.Pref\textasciicircum{}2) & 0.3694016 & -0.5284587 & -0.0736428 &  & Quadratic\\
 \hline
-Simple & sc.Diam & 1.6309519 & 0.6443025 & 1.0794372 & * & Linear\\
+Simple & sc.Diam & 1.6071684 & 0.6125782 & 1.0767036 & * & Linear\\
 \hline
-Simple & sc.Diam:sc.log.Clutch & 0.0521287 & -0.8171435 & -0.3679299 &  & Correlational\\
+Simple & sc.Diam:sc.log.Clutch & 0.0258376 & -0.8224415 & -0.3588130 &  & Correlational\\
 \hline
-Simple & sc.Diam:sc.sqrt.Pref & 0.2953305 & -0.4636802 & -0.1047010 &  & Correlational\\
+Simple & sc.Diam:sc.sqrt.Pref & 0.2857568 & -0.4686261 & -0.0913589 &  & Correlational\\
 \hline
-Simple & sc.log.Clutch & -0.3237684 & -1.3682319 & -0.8128076 & * & Linear\\
+Simple & sc.log.Clutch & -0.2933414 & -1.3339773 & -0.7972110 & * & Linear\\
 \hline
-Simple & sc.log.Clutch:sc.sqrt.Pref & 0.4021321 & -0.3141034 & 0.0360358 &  & Correlational\\
+Simple & sc.log.Clutch:sc.sqrt.Pref & 0.3944040 & -0.3566626 & 0.0362771 &  & Correlational\\
 \hline
-Simple & sc.sqrt.Pref & -0.4374714 & -1.6020535 & -1.0039480 & * & Linear\\
+Simple & sc.sqrt.Pref & -0.4224492 & -1.6164371 & -1.0020174 & * & Linear\\
 \hline
 \end{tabular}
 
@@ -352,59 +362,59 @@ Simple & sc.sqrt.Pref & -0.4374714 & -1.6020535 & -1.0039480 & * & Linear\\
 \hline
 type & term & conf.high & conf.low & mean & P\_cutoff & gradient\_type\\
 \hline
-Complex & I(sc.Diam\textasciicircum{}2) & 0.2034272 & -0.0822751 & 0.0599017 &  & Quadratic\\
+Complex & I(sc.Diam\textasciicircum{}2) & 0.1973813 & -0.0691717 & 0.0636604 &  & Quadratic\\
 \hline
-Complex & I(sc.log.Clutch\textasciicircum{}2) & 0.1457531 & -0.1321740 & 0.0074525 &  & Quadratic\\
+Complex & I(sc.log.Clutch\textasciicircum{}2) & 0.1492889 & -0.1408564 & 0.0034172 &  & Quadratic\\
 \hline
-Complex & I(sc.sqrt.Pref\textasciicircum{}2) & 0.4186836 & -0.0110947 & 0.1795281 &  & Quadratic\\
+Complex & I(sc.sqrt.Pref\textasciicircum{}2) & 0.4173191 & -0.0039046 & 0.1830763 &  & Quadratic\\
 \hline
-Complex & sc.Diam & 0.3390142 & 0.1241270 & 0.2225791 & * & Directional\\
+Complex & sc.Diam & 0.3407401 & 0.1314054 & 0.2256426 & * & Directional\\
 \hline
-Complex & sc.Diam:sc.log.Clutch & 0.1104729 & -0.0685517 & 0.0197710 &  & Correlational\\
+Complex & sc.Diam:sc.log.Clutch & 0.1072808 & -0.0631071 & 0.0193272 &  & Correlational\\
 \hline
-Complex & sc.Diam:sc.sqrt.Pref & 0.0615557 & -0.1636803 & -0.0527710 &  & Correlational\\
+Complex & sc.Diam:sc.sqrt.Pref & 0.0673187 & -0.1671949 & -0.0539720 &  & Correlational\\
 \hline
-Complex & sc.log.Clutch & 0.2288003 & 0.0309105 & 0.1305658 & * & Directional\\
+Complex & sc.log.Clutch & 0.2325483 & 0.0386303 & 0.1274066 & * & Directional\\
 \hline
-Complex & sc.log.Clutch:sc.sqrt.Pref & 0.0532664 & -0.1430689 & -0.0396748 &  & Correlational\\
+Complex & sc.log.Clutch:sc.sqrt.Pref & 0.0602099 & -0.1441999 & -0.0398329 &  & Correlational\\
 \hline
-Complex & sc.sqrt.Pref & -0.0269468 & -0.3361320 & -0.1731681 & * & Directional\\
+Complex & sc.sqrt.Pref & -0.0306945 & -0.3316291 & -0.1758537 & * & Directional\\
 \hline
-Diff & I(sc.Diam\textasciicircum{}2) & 0.2187304 & -0.1383949 & 0.0417561 &  & Quadratic\\
+Diff & I(sc.Diam\textasciicircum{}2) & 0.2270190 & -0.1494159 & 0.0348792 &  & Quadratic\\
 \hline
-Diff & I(sc.log.Clutch\textasciicircum{}2) & 0.0720939 & -0.3400311 & -0.1274562 &  & Quadratic\\
+Diff & I(sc.log.Clutch\textasciicircum{}2) & 0.0740182 & -0.3383712 & -0.1191118 &  & Quadratic\\
 \hline
-Diff & I(sc.sqrt.Pref\textasciicircum{}2) & 0.0532460 & -0.5243575 & -0.2078822 &  & Quadratic\\
+Diff & I(sc.sqrt.Pref\textasciicircum{}2) & 0.0380564 & -0.5048781 & -0.2122150 &  & Quadratic\\
 \hline
-Diff & sc.Diam & 0.1107413 & -0.1398044 & -0.0090260 &  & Directional\\
+Diff & sc.Diam & 0.1108178 & -0.1306718 & -0.0126303 &  & Directional\\
 \hline
-Diff & sc.Diam:sc.log.Clutch & 0.0204044 & -0.2177643 & -0.0925613 &  & Correlational\\
+Diff & sc.Diam:sc.log.Clutch & 0.0269317 & -0.2087418 & -0.0903139 &  & Correlational\\
 \hline
-Diff & sc.Diam:sc.sqrt.Pref & 0.1660019 & -0.0930250 & 0.0320572 &  & Correlational\\
+Diff & sc.Diam:sc.sqrt.Pref & 0.1625125 & -0.1019349 & 0.0358978 &  & Correlational\\
 \hline
-Diff & sc.log.Clutch & -0.1512996 & -0.4584534 & -0.2913696 & * & Directional\\
+Diff & sc.log.Clutch & -0.1546165 & -0.4409842 & -0.2851248 & * & Directional\\
 \hline
-Diff & sc.log.Clutch:sc.sqrt.Pref & 0.1656268 & -0.0629836 & 0.0468040 &  & Correlational\\
+Diff & sc.log.Clutch:sc.sqrt.Pref & 0.1704039 & -0.0787670 & 0.0470098 &  & Correlational\\
 \hline
-Diff & sc.sqrt.Pref & 0.1524155 & -0.1934690 & -0.0254505 &  & Directional\\
+Diff & sc.sqrt.Pref & 0.1530003 & -0.1865995 & -0.0223829 &  & Directional\\
 \hline
-Simple & I(sc.Diam\textasciicircum{}2) & 0.2377767 & -0.0237167 & 0.1016577 &  & Quadratic\\
+Simple & I(sc.Diam\textasciicircum{}2) & 0.2400693 & -0.0166148 & 0.0985395 &  & Quadratic\\
 \hline
-Simple & I(sc.log.Clutch\textasciicircum{}2) & 0.0168853 & -0.2748024 & -0.1200037 &  & Quadratic\\
+Simple & I(sc.log.Clutch\textasciicircum{}2) & 0.0258371 & -0.2706736 & -0.1156946 &  & Quadratic\\
 \hline
-Simple & I(sc.sqrt.Pref\textasciicircum{}2) & 0.1368356 & -0.2131174 & -0.0283541 &  & Quadratic\\
+Simple & I(sc.sqrt.Pref\textasciicircum{}2) & 0.1461630 & -0.2090979 & -0.0291386 &  & Quadratic\\
 \hline
-Simple & sc.Diam & 0.3226634 & 0.1274672 & 0.2135531 & * & Directional\\
+Simple & sc.Diam & 0.3179581 & 0.1211909 & 0.2130123 & * & Directional\\
 \hline
-Simple & sc.Diam:sc.log.Clutch & 0.0103130 & -0.1616616 & -0.0727903 &  & Correlational\\
+Simple & sc.Diam:sc.log.Clutch & 0.0051116 & -0.1627098 & -0.0709867 &  & Correlational\\
 \hline
-Simple & sc.Diam:sc.sqrt.Pref & 0.0584274 & -0.0917333 & -0.0207138 &  & Correlational\\
+Simple & sc.Diam:sc.sqrt.Pref & 0.0565334 & -0.0927118 & -0.0180742 &  & Correlational\\
 \hline
-Simple & sc.log.Clutch & -0.0640535 & -0.2706876 & -0.1608038 & * & Directional\\
+Simple & sc.log.Clutch & -0.0580339 & -0.2639107 & -0.1577182 & * & Directional\\
 \hline
-Simple & sc.log.Clutch:sc.sqrt.Pref & 0.0795568 & -0.0621414 & 0.0071292 &  & Correlational\\
+Simple & sc.log.Clutch:sc.sqrt.Pref & 0.0780279 & -0.0705612 & 0.0071770 &  & Correlational\\
 \hline
-Simple & sc.sqrt.Pref & -0.0865482 & -0.3169462 & -0.1986185 & * & Directional\\
+Simple & sc.sqrt.Pref & -0.0835763 & -0.3197919 & -0.1982366 & * & Directional\\
 \hline
 \end{tabular}
 
@@ -456,6 +466,10 @@ biased_eggegg_model <- update(biased_foodweb_model, data=biased_eggegg_df)
 linear_eggegg_model <- update(linear_foodweb_model, data=eggegg_df)
 ```
 
+```
+## singular fit
+```
+
 
 
 
@@ -465,65 +479,65 @@ linear_eggegg_model <- update(linear_foodweb_model, data=eggegg_df)
 \hline
 type & term & conf.high & conf.low & mean & P\_cutoff & coefficient\_type\\
 \hline
-Complex & (Intercept) & 0.3093470 & 0.0342100 & 0.1637632 & * & Mean fitness\\
+Complex & (Intercept) & 0.3114757 & 0.0237400 & 0.1598366 & * & Mean fitness\\
 \hline
-Complex & I(sc.Diam\textasciicircum{}2) & 0.1134587 & -0.6750140 & -0.2620791 &  & Quadratic\\
+Complex & I(sc.Diam\textasciicircum{}2) & 0.1365455 & -0.6841817 & -0.2482329 &  & Quadratic\\
 \hline
-Complex & I(sc.log.Clutch\textasciicircum{}2) & 0.4333846 & -0.5120566 & -0.0250286 &  & Quadratic\\
+Complex & I(sc.log.Clutch\textasciicircum{}2) & 0.4782877 & -0.5311894 & -0.0138701 &  & Quadratic\\
 \hline
-Complex & I(sc.sqrt.Pref\textasciicircum{}2) & -0.1265881 & -1.3942082 & -0.6392281 & * & Quadratic\\
+Complex & I(sc.sqrt.Pref\textasciicircum{}2) & -0.1237055 & -1.2265495 & -0.6133299 & * & Quadratic\\
 \hline
-Complex & sc.Diam & 0.2197196 & -0.9119897 & -0.3078570 &  & Linear\\
+Complex & sc.Diam & -0.6153271 & -1.8173164 & -1.1716018 & * & Linear\\
 \hline
-Complex & sc.Diam:sc.log.Clutch & 0.8818965 & -0.2424917 & 0.2790402 &  & Correlational\\
+Complex & sc.Diam:sc.log.Clutch & 0.8201621 & -0.2571678 & 0.2716512 &  & Correlational\\
 \hline
-Complex & sc.Diam:sc.sqrt.Pref & 1.2896701 & 0.0594661 & 0.6355660 & * & Correlational\\
+Complex & sc.Diam:sc.sqrt.Pref & 1.3696159 & -0.0217621 & 0.6250497 &  & Correlational\\
 \hline
-Complex & sc.log.Clutch & 1.5957475 & 0.2098793 & 0.8263345 & * & Linear\\
+Complex & sc.log.Clutch & 1.4816537 & 0.2205095 & 0.8282898 & * & Linear\\
 \hline
-Complex & sc.log.Clutch:sc.sqrt.Pref & 0.2519279 & -1.1311451 & -0.4264012 &  & Correlational\\
+Complex & sc.log.Clutch:sc.sqrt.Pref & 0.2966796 & -1.1104209 & -0.4015418 &  & Correlational\\
 \hline
-Complex & sc.sqrt.Pref & 0.9876934 & -0.3733873 & 0.2876438 &  & Linear\\
+Complex & sc.sqrt.Pref & 0.9538929 & -0.4305641 & 0.2832528 &  & Linear\\
 \hline
-Diff & (Intercept) & 0.3077723 & -0.0794831 & 0.0980581 &  & Mean fitness\\
+Diff & (Intercept) & 0.3056092 & -0.0886631 & 0.1010864 &  & Mean fitness\\
 \hline
-Diff & I(sc.Diam\textasciicircum{}2) & 0.5272038 & -0.6777435 & -0.0207512 &  & Quadratic\\
+Diff & I(sc.Diam\textasciicircum{}2) & 0.6329564 & -0.6818572 & -0.0352761 &  & Quadratic\\
 \hline
-Diff & I(sc.log.Clutch\textasciicircum{}2) & 1.1007484 & -0.3052390 & 0.3783894 &  & Quadratic\\
+Diff & I(sc.log.Clutch\textasciicircum{}2) & 1.1041264 & -0.3030515 & 0.3726176 &  & Quadratic\\
 \hline
-Diff & I(sc.sqrt.Pref\textasciicircum{}2) & 1.4343500 & -0.1590111 & 0.5703844 &  & Quadratic\\
+Diff & I(sc.sqrt.Pref\textasciicircum{}2) & 1.3549567 & -0.1352078 & 0.5565992 &  & Quadratic\\
 \hline
-Diff & sc.Diam & 0.9350398 & -1.0200247 & 0.0747079 &  & Linear\\
+Diff & sc.Diam & 0.3849687 & -1.5093489 & -0.3962667 &  & Linear\\
 \hline
-Diff & sc.Diam:sc.log.Clutch & 0.9744818 & -0.7101728 & 0.1068076 &  & Correlational\\
+Diff & sc.Diam:sc.log.Clutch & 0.9223406 & -0.7344833 & 0.1057713 &  & Correlational\\
 \hline
-Diff & sc.Diam:sc.sqrt.Pref & 0.2253183 & -1.5866545 & -0.6469685 &  & Correlational\\
+Diff & sc.Diam:sc.sqrt.Pref & 0.1710301 & -1.6409986 & -0.6422392 &  & Correlational\\
 \hline
-Diff & sc.log.Clutch & 1.1184565 & -0.9005062 & 0.0917723 &  & Linear\\
+Diff & sc.log.Clutch & 1.0331306 & -0.8006272 & 0.0938289 &  & Linear\\
 \hline
-Diff & sc.log.Clutch:sc.sqrt.Pref & 1.4033743 & -0.3594328 & 0.4985444 &  & Correlational\\
+Diff & sc.log.Clutch:sc.sqrt.Pref & 1.3910187 & -0.3889056 & 0.4687916 &  & Correlational\\
 \hline
-Diff & sc.sqrt.Pref & 2.2216253 & 0.0253542 & 1.0040638 & * & Linear\\
+Diff & sc.sqrt.Pref & 2.2007100 & 0.1223735 & 1.0266191 & * & Linear\\
 \hline
-Simple & (Intercept) & 0.4615029 & 0.0835218 & 0.2618213 & * & Mean fitness\\
+Simple & (Intercept) & 0.4542118 & 0.0732664 & 0.2609230 & * & Mean fitness\\
 \hline
-Simple & I(sc.Diam\textasciicircum{}2) & 0.1457836 & -0.7895109 & -0.2828304 &  & Quadratic\\
+Simple & I(sc.Diam\textasciicircum{}2) & 0.1446221 & -0.7850159 & -0.2835090 &  & Quadratic\\
 \hline
-Simple & I(sc.log.Clutch\textasciicircum{}2) & 1.0206323 & -0.1132328 & 0.3533609 &  & Quadratic\\
+Simple & I(sc.log.Clutch\textasciicircum{}2) & 0.9199272 & -0.1590539 & 0.3587474 &  & Quadratic\\
 \hline
-Simple & I(sc.sqrt.Pref\textasciicircum{}2) & 0.3531123 & -0.5615823 & -0.0688438 &  & Quadratic\\
+Simple & I(sc.sqrt.Pref\textasciicircum{}2) & 0.4445187 & -0.5242999 & -0.0567306 &  & Quadratic\\
 \hline
-Simple & sc.Diam & 0.4583775 & -1.4036169 & -0.2331491 &  & Linear\\
+Simple & sc.Diam & -0.8860579 & -2.6684745 & -1.5678685 & * & Linear\\
 \hline
-Simple & sc.Diam:sc.log.Clutch & 0.9969600 & -0.1532823 & 0.3858478 &  & Correlational\\
+Simple & sc.Diam:sc.log.Clutch & 0.9657093 & -0.1874869 & 0.3774225 &  & Correlational\\
 \hline
-Simple & sc.Diam:sc.sqrt.Pref & 0.4805191 & -0.5843721 & -0.0114025 &  & Correlational\\
+Simple & sc.Diam:sc.sqrt.Pref & 0.5161961 & -0.5680212 & -0.0171895 &  & Correlational\\
 \hline
-Simple & sc.log.Clutch & 1.8539833 & 0.2214306 & 0.9181068 & * & Linear\\
+Simple & sc.log.Clutch & 1.7542730 & 0.2580699 & 0.9221187 & * & Linear\\
 \hline
-Simple & sc.log.Clutch:sc.sqrt.Pref & 0.6062398 & -0.4403961 & 0.0721432 &  & Correlational\\
+Simple & sc.log.Clutch:sc.sqrt.Pref & 0.6445268 & -0.4035012 & 0.0672498 &  & Correlational\\
 \hline
-Simple & sc.sqrt.Pref & 2.1299312 & 0.6847067 & 1.2917076 & * & Linear\\
+Simple & sc.sqrt.Pref & 2.2424971 & 0.6427081 & 1.3098720 & * & Linear\\
 \hline
 \end{tabular}
 
@@ -537,59 +551,59 @@ Simple & sc.sqrt.Pref & 2.1299312 & 0.6847067 & 1.2917076 & * & Linear\\
 \hline
 type & term & conf.high & conf.low & mean & P\_cutoff & gradient\_type\\
 \hline
-Complex & I(sc.Diam\textasciicircum{}2) & 0.0877982 & -0.5223485 & -0.2028056 &  & Quadratic\\
+Complex & I(sc.Diam\textasciicircum{}2) & 0.1056635 & -0.5294428 & -0.1920909 &  & Quadratic\\
 \hline
-Complex & I(sc.log.Clutch\textasciicircum{}2) & 0.3353676 & -0.3962466 & -0.0193679 &  & Quadratic\\
+Complex & I(sc.log.Clutch\textasciicircum{}2) & 0.3701151 & -0.4110522 & -0.0107332 &  & Quadratic\\
 \hline
-Complex & I(sc.sqrt.Pref\textasciicircum{}2) & -0.0979581 & -1.0788852 & -0.4946562 & * & Quadratic\\
+Complex & I(sc.sqrt.Pref\textasciicircum{}2) & -0.0957274 & -0.9491452 & -0.4746153 & * & Quadratic\\
 \hline
-Complex & sc.Diam & 0.0850132 & -0.3528641 & -0.1191151 &  & Directional\\
+Complex & sc.Diam & -0.2380804 & -0.7031502 & -0.4533124 & * & Directional\\
 \hline
-Complex & sc.Diam:sc.log.Clutch & 0.3412206 & -0.0938241 & 0.1079653 &  & Correlational\\
+Complex & sc.Diam:sc.log.Clutch & 0.3173345 & -0.0995025 & 0.1051064 &  & Correlational\\
 \hline
-Complex & sc.Diam:sc.sqrt.Pref & 0.4989950 & 0.0230084 & 0.2459112 & * & Correlational\\
+Complex & sc.Diam:sc.sqrt.Pref & 0.5299274 & -0.0084201 & 0.2418422 &  & Correlational\\
 \hline
-Complex & sc.log.Clutch & 0.6174215 & 0.0812058 & 0.3197227 & * & Directional\\
+Complex & sc.log.Clutch & 0.5732767 & 0.0853188 & 0.3204792 & * & Directional\\
 \hline
-Complex & sc.log.Clutch:sc.sqrt.Pref & 0.0974751 & -0.4376590 & -0.1649818 &  & Correlational\\
+Complex & sc.log.Clutch:sc.sqrt.Pref & 0.1147903 & -0.4296405 & -0.1553632 &  & Correlational\\
 \hline
-Complex & sc.sqrt.Pref & 0.3821552 & -0.1444698 & 0.1112942 &  & Directional\\
+Complex & sc.sqrt.Pref & 0.3690772 & -0.1665925 & 0.1095953 &  & Directional\\
 \hline
-Diff & I(sc.Diam\textasciicircum{}2) & 0.4181186 & -0.3701468 & 0.0480556 &  & Quadratic\\
+Diff & I(sc.Diam\textasciicircum{}2) & 0.4846209 & -0.3785137 & 0.0369696 &  & Quadratic\\
 \hline
-Diff & I(sc.log.Clutch\textasciicircum{}2) & 0.6783308 & -0.2392577 & 0.2127086 &  & Quadratic\\
+Diff & I(sc.log.Clutch\textasciicircum{}2) & 0.6965027 & -0.2558297 & 0.2070211 &  & Quadratic\\
 \hline
-Diff & I(sc.sqrt.Pref\textasciicircum{}2) & 1.0956040 & -0.0339619 & 0.4569885 &  & Quadratic\\
+Diff & I(sc.sqrt.Pref\textasciicircum{}2) & 1.0062894 & -0.0140187 & 0.4435752 &  & Quadratic\\
 \hline
-Diff & sc.Diam & 0.3372742 & -0.2578536 & 0.0553315 &  & Directional\\
+Diff & sc.Diam & 0.2771725 & -0.2895892 & 0.0243844 &  & Directional\\
 \hline
-Diff & sc.Diam:sc.log.Clutch & 0.2773973 & -0.2705193 & -0.0024074 &  & Correlational\\
+Diff & sc.Diam:sc.log.Clutch & 0.2604027 & -0.2779800 & -0.0018534 &  & Correlational\\
 \hline
-Diff & sc.Diam:sc.sqrt.Pref & 0.0438126 & -0.5659037 & -0.2490306 &  & Correlational\\
+Diff & sc.Diam:sc.sqrt.Pref & 0.0402846 & -0.5918523 & -0.2465448 &  & Correlational\\
 \hline
-Diff & sc.log.Clutch & 0.2643048 & -0.4093538 & -0.0685526 &  & Directional\\
+Diff & sc.log.Clutch & 0.2310404 & -0.3561994 & -0.0682116 &  & Directional\\
 \hline
-Diff & sc.log.Clutch:sc.sqrt.Pref & 0.5003004 & -0.1039114 & 0.1847183 &  & Correlational\\
+Diff & sc.log.Clutch:sc.sqrt.Pref & 0.4954332 & -0.1263209 & 0.1737610 &  & Correlational\\
 \hline
-Diff & sc.sqrt.Pref & 0.6167639 & -0.0917153 & 0.2420834 &  & Directional\\
+Diff & sc.sqrt.Pref & 0.6382296 & -0.0594115 & 0.2487516 &  & Directional\\
 \hline
-Simple & I(sc.Diam\textasciicircum{}2) & 0.0797652 & -0.4319793 & -0.1547501 &  & Quadratic\\
+Simple & I(sc.Diam\textasciicircum{}2) & 0.0791297 & -0.4295199 & -0.1551213 &  & Quadratic\\
 \hline
-Simple & I(sc.log.Clutch\textasciicircum{}2) & 0.5584369 & -0.0619551 & 0.1933407 &  & Quadratic\\
+Simple & I(sc.log.Clutch\textasciicircum{}2) & 0.5033363 & -0.0870260 & 0.1962879 &  & Quadratic\\
 \hline
-Simple & I(sc.sqrt.Pref\textasciicircum{}2) & 0.1932047 & -0.3072686 & -0.0376677 &  & Quadratic\\
+Simple & I(sc.sqrt.Pref\textasciicircum{}2) & 0.2432175 & -0.2868696 & -0.0310401 &  & Quadratic\\
 \hline
-Simple & sc.Diam & 0.1254002 & -0.3839931 & -0.0637835 &  & Directional\\
+Simple & sc.Diam & -0.2424024 & -0.7300252 & -0.4289280 & * & Directional\\
 \hline
-Simple & sc.Diam:sc.log.Clutch & 0.2727423 & -0.0419341 & 0.1055579 &  & Correlational\\
+Simple & sc.Diam:sc.log.Clutch & 0.2641929 & -0.0512915 & 0.1032530 &  & Correlational\\
 \hline
-Simple & sc.Diam:sc.sqrt.Pref & 0.1314575 & -0.1598690 & -0.0031194 &  & Correlational\\
+Simple & sc.Diam:sc.sqrt.Pref & 0.1412178 & -0.1553958 & -0.0047026 &  & Correlational\\
 \hline
-Simple & sc.log.Clutch & 0.5072016 & 0.0605777 & 0.2511701 & * & Directional\\
+Simple & sc.log.Clutch & 0.4799234 & 0.0706012 & 0.2522677 & * & Directional\\
 \hline
-Simple & sc.log.Clutch:sc.sqrt.Pref & 0.1658514 & -0.1204809 & 0.0197365 &  & Correlational\\
+Simple & sc.log.Clutch:sc.sqrt.Pref & 0.1763258 & -0.1103874 & 0.0183978 &  & Correlational\\
 \hline
-Simple & sc.sqrt.Pref & 0.5826938 & 0.1873179 & 0.3533776 & * & Directional\\
+Simple & sc.sqrt.Pref & 0.6134889 & 0.1758282 & 0.3583469 & * & Directional\\
 \hline
 \end{tabular}
 
