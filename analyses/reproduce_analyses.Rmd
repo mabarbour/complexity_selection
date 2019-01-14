@@ -1238,10 +1238,6 @@ RF_Diam <- bootstrap_fitness(
   newdata = newdata_Diam,
   bootstraps=n_boots_plots)
 
-egglarval_RF_Diam <- bootstrap_fitness(
-  logistic_model = egglarval_model,
-  newdata = newdata_Diam,
-  bootstraps=n_boots_plots)
 ```
 
 ```{r Get Clutch Size Fitness Landscape, cache=TRUE}
@@ -1254,10 +1250,6 @@ RF_Clutch <- bootstrap_fitness(
   newdata = newdata_Clutch,
   bootstraps=n_boots_plots)
 
-egglarval_RF_Clutch <- bootstrap_fitness(
-  logistic_model = egglarval_model,
-  newdata = newdata_Clutch,
-  bootstraps=n_boots_plots)
 ```
 
 ```{r Get Oviposition preference Fitness Landscape, cache=TRUE}
@@ -1271,18 +1263,9 @@ RF_Pref <- bootstrap_fitness(
   newdata = newdata_Pref,
   bootstraps=n_boots_plots)
 
-egglarval_RF_Pref <- bootstrap_fitness(
-  logistic_model = egglarval_model, 
-  newdata = newdata_Pref,
-  bootstraps=n_boots_plots)
-
+# this is used for plotting selection on egg parasitoids extended phenotype. We only did this for preference since this was the only trait under selection.
 eggegg_RF_Pref <- bootstrap_fitness(
   logistic_model = eggegg_model, 
-  newdata = newdata_Pref,
-  bootstraps=n_boots_plots) 
-
-linear_eggegg_RF_Pref <- bootstrap_fitness(
-  logistic_model = linear_eggegg_model, 
   newdata = newdata_Pref,
   bootstraps=n_boots_plots) 
 ```
