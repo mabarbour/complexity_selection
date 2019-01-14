@@ -46,7 +46,7 @@ gall_selection.df <- read_csv("../data/gall_selection_data.csv") %>%
 ## Transform logit to probability
 inverse_logit <- function(x) exp(x)/(1+exp(x))
 
-## Bootstrap fitness estimates
+## Get data for plotting bootstrapped estimates in Figures 2, 3, and 4 of main text
 bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0.025,0.975)){
   
   # Absolute fitness
