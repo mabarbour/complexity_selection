@@ -1324,22 +1324,7 @@ AF_uni_Pref <- RF_Pref$absolute_fitness %>%
   scale_y_log10(breaks=uni_breaks, labels=uni_breaks) + annotation_logticks(sides = "l") +
   coord_cartesian(ylim=c(0.07,1))
 
-AF_uni_egglarval_Pref <- egglarval_RF_Pref$absolute_fitness %>% 
-  select(-sc.Diam, -sc.log.Clutch) %>%
-  gather(ID, absolute_fitness, -sc.sqrt.Pref, -Foodweb) %>%
-  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
-  ggplot(., aes(x=sc.sqrt.Pref, y=absolute_fitness, group=interaction(ID,Foodweb), color=Foodweb, alpha=ID_group, size=ID_group)) +
-  geom_line() +
-  scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
-  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
-  xlab("Oviposition preference (SDs)") +
-  ylab("Mean larval survival") +
-  scale_color_manual(values = treatment_colors, name = "Food web") +
-  scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
-  scale_y_log10(breaks=uni_breaks, labels=uni_breaks) + annotation_logticks(sides = "l") +
-  coord_cartesian(ylim=c(0.07,1)) 
-
-# Clutch size -- food web
+# Clutch size 
 AF_uni_Clutch <- RF_Clutch$absolute_fitness %>% 
   select(-sc.Diam, -sc.sqrt.Pref) %>%
   gather(ID, absolute_fitness, -sc.log.Clutch, -Foodweb) %>%
@@ -1354,115 +1339,6 @@ AF_uni_Clutch <- RF_Clutch$absolute_fitness %>%
   scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
   scale_y_log10(breaks=uni_breaks, labels=uni_breaks) + annotation_logticks(sides = "l") +
   coord_cartesian(ylim=c(0.07,1))
-
-# Clutch size -- egg vs. larval ptoids
-AF_uni_egglarval_Clutch <- egglarval_RF_Clutch$absolute_fitness %>% 
-  select(-sc.Diam, -sc.sqrt.Pref) %>%
-  gather(ID, absolute_fitness, -sc.log.Clutch, -Foodweb) %>%
-  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
-  mutate(Foodweb = factor(ifelse(Foodweb=="Complex","Larval","Simple"), levels=c("Simple","Larval"))) %>%
-  ggplot(., aes(x=sc.log.Clutch, y=absolute_fitness, group=interaction(ID,Foodweb), color=Foodweb, alpha=ID_group, size=ID_group)) +
-  geom_line() +
-  scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
-  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
-  xlab("Clutch size (SDs)") +
-  ylab("Mean larval survival") +
-  scale_color_manual(values = cbPalette[c(5,4)], name = "Food web") +
-  scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
-  scale_y_log10(breaks=uni_breaks, labels=uni_breaks) + annotation_logticks(sides = "l") +
-  coord_cartesian(ylim=c(0.07,1)) 
-
-plot_foodweb_Clutch_df <- RF_Clutch$absolute_fitness %>% 
-  select(-sc.Diam, -sc.sqrt.Pref) %>%
-  gather(ID, absolute_fitness, -sc.log.Clutch, -Foodweb) %>%
-  mutate(ID_group = ifelse(ID == "average", "average", "replicate"), facet="a") 
-
-plot_egglarval_Clutch_df <- egglarval_RF_Clutch$absolute_fitness %>% 
-  select(-sc.Diam, -sc.sqrt.Pref) %>%
-  gather(ID, absolute_fitness, -sc.log.Clutch, -Foodweb) %>%
-  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
-  mutate(Foodweb = ifelse(Foodweb=="Complex","Larval","Simple")) %>%
-  filter(ID_group=="average") %>%
-  bind_rows(., filter(plot_foodweb_Clutch_df, ID_group=="average", Foodweb=="Complex")) %>%
-  mutate(facet = "b")
-
-legend_only <- bind_rows(plot_foodweb_Clutch_df, plot_egglarval_Clutch_df) %>%
-  mutate(Foodweb=factor(Foodweb, levels=c("Complex","Simple","Larval"), labels=c("Egg + Larval (Complex)  ","Egg (Simple)  ","Larval"))) %>%
-  ggplot(., aes(x=sc.log.Clutch, y=absolute_fitness, group=interaction(ID,Foodweb), color=Foodweb, alpha=ID_group, size=ID_group)) +
-  geom_line() +
-  scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
-  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
-  xlab("Clutch size (SDs)") +
-  ylab("Mean larval survival") +
-  scale_color_manual(values = cbPalette[c(6,5,4)], name = "Parasitoids") +
-  scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
-  scale_y_log10(breaks=uni_breaks, labels=uni_breaks) + annotation_logticks(sides = "l") +
-  coord_cartesian(ylim=c(0.07,1))+
-  facet_wrap(~facet) +
-  theme(strip.background=element_blank(), strip.text = element_blank()) +
-  guides(color=guide_legend(title.position="top"))
-
-## Female pref
-plot_foodweb_Pref_df <- RF_Pref$absolute_fitness %>%
-  select(-sc.Diam, -sc.log.Clutch) %>%
-  gather(ID, absolute_fitness, -sc.sqrt.Pref, -Foodweb) %>%
-  mutate(ID_group = ifelse(ID == "average", "average", "replicate"), facet="a") 
-
-plot_egglarval_Pref_df <- egglarval_RF_Pref$absolute_fitness %>% 
-  select(-sc.Diam, -sc.log.Clutch) %>%
-  gather(ID, absolute_fitness, -sc.sqrt.Pref, -Foodweb) %>%
-  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
-  mutate(Foodweb = ifelse(Foodweb=="Complex","Larval","Simple")) %>%
-  filter(ID_group=="average")  %>%
-  bind_rows(., filter(plot_foodweb_Pref_df, ID_group=="average", Foodweb=="Complex")) %>%
-  mutate(facet = "b")
-
-pref_legend_only <- bind_rows(plot_foodweb_Pref_df, plot_egglarval_Pref_df) %>%
-  mutate(Foodweb=factor(Foodweb, levels=c("Complex","Simple","Larval"), labels=c("Egg + Larval (Complex)","Egg (Simple)","Larval"))) %>%
-  ggplot(., aes(x=sc.sqrt.Pref, y=absolute_fitness, group=interaction(ID,Foodweb), color=Foodweb, alpha=ID_group, size=ID_group)) +
-  geom_line() +
-  scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
-  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
-  xlab("Oviposition preference (SDs)") +
-  ylab("Mean larval survival") +
-  scale_color_manual(values = cbPalette[c(6,5,4)], name = "Parasitoids") + 
-  scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
-  scale_y_log10(breaks=uni_breaks, labels=uni_breaks) + annotation_logticks(sides = "l") +
-  coord_cartesian(ylim=c(0.07,1)) +
-  theme(legend.title.align = 0.5) +
-  facet_wrap(~facet) +
-  theme(strip.background=element_blank(), strip.text = element_blank())
-
-# Chamber diameter
-plot_foodweb_Diam_df <- RF_Diam$absolute_fitness %>% 
-  select(-sc.sqrt.Pref, -sc.log.Clutch) %>%
-  gather(ID, absolute_fitness, -sc.Diam, -Foodweb) %>%
-  mutate(ID_group = ifelse(ID == "average", "average", "replicate"), facet="a")
-
-plot_egglarval_Diam_df <- egglarval_RF_Diam$absolute_fitness %>% 
-  select(-sc.sqrt.Pref, -sc.log.Clutch) %>%
-  gather(ID, absolute_fitness, -sc.Diam, -Foodweb) %>%
-  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
-  mutate(Foodweb = ifelse(Foodweb=="Complex","Larval","Simple")) %>%
-  filter(ID_group=="average") %>%
-  bind_rows(., filter(plot_foodweb_Diam_df, ID_group=="average", Foodweb=="Complex")) %>%
-  mutate(facet = "b")
-
-Diam_legend_only <- bind_rows(plot_foodweb_Diam_df, plot_egglarval_Diam_df) %>%
-  mutate(Foodweb=factor(Foodweb, levels=c("Complex","Simple","Larval"), labels=c("Egg + Larval (Complex)","Egg (Simple)","Larval"))) %>%
-  ggplot(., aes(x=sc.Diam, y=absolute_fitness, group=interaction(ID,Foodweb), color=Foodweb, alpha=ID_group, size=ID_group)) +
-  geom_line() +
-  scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
-  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
-  xlab("Chamber diameter (SDs)") +
-  ylab("Mean larval survival") +
-  scale_color_manual(values = cbPalette[c(6,5,4)], name = "Parasitoids") + 
-  scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
-  scale_y_log10(breaks=uni_breaks, labels=uni_breaks) + annotation_logticks(sides = "l") +
-  coord_cartesian(ylim=c(0.07,1)) +
-  theme(legend.title.align = 0.5) +
-  facet_wrap(~facet) +
-  theme(strip.background=element_blank(), strip.text = element_blank())
 ```
 
 Fit plots together to reproduce Figure 2.
