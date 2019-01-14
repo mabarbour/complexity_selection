@@ -1567,28 +1567,6 @@ eggptoid_selection_plot
 save_plot(filename = "selection_on_Platygaster.pdf", plot = eggptoid_selection_plot, base_height = 4) # base_height = 6 is to large for PDF of manuscript
 ```
 
-```{r Egg-Parasitoid-Selection-linear, echo=F, eval=F, include=F}
-linear_eggptoid_plot_df <- linear_eggegg_RF_Pref$absolute_fitness %>% 
-  select(-sc.Diam, -sc.log.Clutch) %>%
-  gather(ID, absolute_fitness, -sc.sqrt.Pref, -Foodweb) %>%
-  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
-  spread(Foodweb, absolute_fitness) %>%
-  mutate(fitness_difference = Complex-Simple)
-
-linear_eggptoid_selection_plot <- linear_eggptoid_plot_df %>%
-  ggplot(., aes(x=sc.sqrt.Pref, y=fitness_difference, group=ID, alpha=ID_group, size=ID_group)) +
-  geom_line(color=cbPalette[5]) +
-  scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
-  scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
-  xlab("Gall midge preference (SDs)") + 
-  ylab(expression(paste(Delta," egg parasitoid survival (complex - simple)"))) +
-  scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
-  geom_hline(yintercept=0, linetype="dotted") #+
-
-linear_eggptoid_selection_plot
-save_plot(filename = "linear_selection_on_Platygaster.pdf", plot = linear_eggptoid_selection_plot, base_height = 6)
-```
-
 
 ```{r Plot Univariate RF Landscapes, include=FALSE}
 
