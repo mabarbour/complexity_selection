@@ -116,11 +116,11 @@ treatment_colors <- c(complex_color, simple_color)
 
 We used graphical checks to evaluate whether our transformations of trait values resulted in a multivariate normal distribution. Figure S\ref{fig:Univariate_histograms} shows that our transformations resulted in approximately normal distributions for each phenotypic trait. Note also that in the multivariate quantile-quantile (Q-Q) plot, most points fall along the expected line (fig. S\ref{fig:Multivariate_QQ}), suggesting that our transformations provide a reasonable approximation of a multivariate normal distribution. 
 
-```{r Univariate_histograms, echo=FALSE, fig.cap="\\label{fig:Univariate_histograms}Histograms of each phenotypic trait after transformation. The red line illustrates a normal distribution."}
+```{r Univariate_histograms, fig.cap="\\label{fig:Univariate_histograms}Histograms of each phenotypic trait after transformation. The red line illustrates a normal distribution."}
 mvn_univariate_hist <- mvn(select(gall_selection.df, sc.Diam, sc.log.Clutch, sc.sqrt.Pref), univariatePlot = "histogram")
 ```
 
-```{r Multivariate_QQ, echo=FALSE, fig.cap="\\label{fig:Multivariate_QQ}Multivariate quantile-quantile (Q-Q) plot to assess deviations from multivariate normality (black line)."}
+```{r Multivariate_QQ, fig.cap="\\label{fig:Multivariate_QQ}Multivariate quantile-quantile (Q-Q) plot to assess deviations from multivariate normality (black line)."}
 mvn_multivariate_qq <- mvn(select(gall_selection.df, sc.Diam, sc.log.Clutch, sc.sqrt.Pref), multivariatePlot = "qq")
 ```
 
@@ -382,7 +382,7 @@ tidy_foodweb_grads <- foodweb_grads %>%
 
 Table of selection gradients.
 
-```{r Table of food web selection gradients, echo=F}
+```{r Table of food web selection gradients}
 knitr::kable(tidy_foodweb_grads)
 ```
 
@@ -692,13 +692,13 @@ tidy_egglarval_grads <- egglarval_grads %>%
 
 Table of selection gradients imposed by egg and larval parasitoids.
 
-```{r Egg vs. larval selection gradients, echo=F}
+```{r Egg vs. larval selection gradients}
 knitr::kable(tidy_egglarval_grads)
 ```
 
 Plot of selection gradients imposed by egg and larval parasitoids.
 
-```{r Plot egg vs. larval ptoid gradients, echo=FALSE}
+```{r Plot egg vs. larval ptoid gradients}
 
 # Plot helpers
 dodge_width <- position_dodge(width=0.5)
@@ -774,7 +774,7 @@ figure_egglarval_grads
 
 We combine our estimates of selection gradients for each food-web treatment as well as the contribution of larval parasitoids to selection in the complex food web.
 
-```{r Figure-Selection-Gradients, echo=FALSE, fig.cap="**Selection gradients**. Estimates of standardized selection gradients in complex (orange) and simple (blue) food webs. The contribution of larval parasitoids (yellow) was estimated with a subset of the complex food-web data that only contained attacks from larval parasitoids (and gall survival). Points and lines correspond to estimates of the mean and 95% confidence intervals, respectively. Overlapping confidence intervals with zero (dotted line) indicate no strong evidence of selection.", include=FALSE}
+```{r Figure-Selection-Gradients, fig.cap="**Selection gradients**. Estimates of standardized selection gradients in complex (orange) and simple (blue) food webs. The contribution of larval parasitoids (yellow) was estimated with a subset of the complex food-web data that only contained attacks from larval parasitoids (and gall survival). Points and lines correspond to estimates of the mean and 95% confidence intervals, respectively. Overlapping confidence intervals with zero (dotted line) indicate no strong evidence of selection.", include=FALSE}
 tidy_foodwebegglarval_grads <- bind_rows(
   tidy_foodweb_grads, mutate(filter(tidy_egglarval_grads, type=="Complex"), type="Larval")
 )
@@ -855,7 +855,7 @@ figure_foodwebegglarval_grads
 
 Selection gradients are influenced by both trait-fitness relationships and population mean fitness. Here, we partition selection gradients into these underlying components.
 
-```{r Plot foodwebegglarval coefficients, echo=FALSE, fig.cap="**Partitioning Selection Gradients.**", include=FALSE}
+```{r Plot foodwebegglarval coefficients, fig.cap="**Partitioning Selection Gradients.**", include=FALSE}
 tidy_foodwebegglarval_alphas <- bind_rows(
   tidy_foodweb_alphas, mutate(filter(tidy_egglarval_alphas, type=="Complex"), type="Larval")
 )
@@ -1038,7 +1038,7 @@ AF_uni_Clutch <- RF_Clutch$absolute_fitness %>%
 
 Fit plots together to reproduce Figure 2.
 
-```{r Univariate-Fitness-Landscapes, echo=FALSE, fig.cap="Selection gradients acting on gall traits in complex vs. simple food webs. Each panel corresponds to a different gall trait: gall diameter (A); clutch size (B); and Oviposition preference (C). Solid lines represent the estimated gradients in complex (orange) and simple (blue) food webs. Transparent lines represent bootstrapped replicates (n=100) to show the uncertainty in estimated gradients. Note that only 100 bootstraps are displayed here, but that inferences are based on 1,000 bootstrapped samples."}
+```{r Univariate-Fitness-Landscapes, fig.cap="Selection gradients acting on gall traits in complex vs. simple food webs. Each panel corresponds to a different gall trait: gall diameter (A); clutch size (B); and Oviposition preference (C). Solid lines represent the estimated gradients in complex (orange) and simple (blue) food webs. Transparent lines represent bootstrapped replicates (n=100) to show the uncertainty in estimated gradients. Note that only 100 bootstraps are displayed here, but that inferences are based on 1,000 bootstrapped samples."}
 
 # Get legend
 AF_uni_legend <- get_legend(AF_uni_Diam + theme(legend.title.align = 0.5)) 
@@ -1535,12 +1535,12 @@ tidy_eggegg_alphas <- eggegg_alphas %>%
                                           ifelse(grepl(":", .$term)==TRUE, "Correlational","Linear"))))
 ```
 
-```{r Egg vs. egg ptoid coefficients, echo=F}
+```{r Egg vs. egg ptoid coefficients}
 knitr::kable(tidy_eggegg_alphas)
 ```
 
 
-```{r Plot egg vs. egg ptoid coefficients, echo=FALSE}
+```{r Plot egg vs. egg ptoid coefficients}
 
 # Plot helpers
 dodge_width <- position_dodge(width=0.5)
@@ -1673,12 +1673,12 @@ tidy_eggegg_grads <- eggegg_grads %>%
          conf.high = ifelse(gradient_type=="Quadratic", 2*conf.high, conf.high))
 ```
 
-```{r Table of egg vs. egg ptoid gradients, echo=F}
+```{r Table of egg vs. egg ptoid gradients}
 knitr::kable(tidy_eggegg_grads)
 ```
 
 
-```{r Plot egg vs. egg ptoid gradients, echo=FALSE}
+```{r Plot egg vs. egg ptoid gradients}
 
 # Plot helpers
 dodge_width <- position_dodge(width=0.5)
