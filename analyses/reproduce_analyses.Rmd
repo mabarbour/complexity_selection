@@ -1059,31 +1059,31 @@ RF_plot_foodweb_Clutch_df <- RF_Clutch$absolute_fitness %>%
   select(-sc.Diam, -sc.sqrt.Pref) %>%
   gather(ID, absolute_fitness, -sc.log.Clutch, -Foodweb) %>%
   mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
-  filter(ID_group == "average") %>%
+  #filter(ID_group == "average") %>%
   group_by(Foodweb) %>%
   mutate(relative_fitness = absolute_fitness/mean(absolute_fitness)) %>%
   ungroup()
 
-RF_plot_egglarval_Clutch_df <- egglarval_RF_Clutch$absolute_fitness %>% 
-  select(-sc.Diam, -sc.sqrt.Pref) %>%
-  gather(ID, absolute_fitness, -sc.log.Clutch, -Foodweb) %>%
-  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
-  mutate(Foodweb = ifelse(Foodweb=="Complex","Larval","Simple")) %>%
-  filter(Foodweb=="Larval", ID_group=="average") %>%
-  group_by(Foodweb) %>%
-  mutate(relative_fitness = absolute_fitness/mean(absolute_fitness))%>%
-  ungroup()
+#RF_plot_egglarval_Clutch_df <- egglarval_RF_Clutch$absolute_fitness %>% 
+#  select(-sc.Diam, -sc.sqrt.Pref) %>%
+#  gather(ID, absolute_fitness, -sc.log.Clutch, -Foodweb) %>%
+#  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
+#  mutate(Foodweb = ifelse(Foodweb=="Complex","Larval","Simple")) %>%
+#  filter(Foodweb=="Larval", ID_group=="average") %>%
+#  group_by(Foodweb) %>%
+#  mutate(relative_fitness = absolute_fitness/mean(absolute_fitness))%>%
+#  ungroup()
 
-RF_legend_only <- bind_rows(RF_plot_foodweb_Clutch_df, RF_plot_egglarval_Clutch_df) %>%
-  mutate(Foodweb=factor(Foodweb, levels=c("Complex","Simple","Larval"), labels=c("Egg + Larval (Complex)","Egg (Simple)","Larval"))) %>%
-  filter(ID_group=="average") %>%
+RF_uni_Clutch <- RF_plot_foodweb_Clutch_df %>%
+#  mutate(Foodweb=factor(Foodweb, levels=c("Complex","Simple","Larval"), labels=c("Egg + Larval (Complex)","Egg (Simple)","Larval"))) %>%
+#  filter(ID_group=="average") %>%
   ggplot(., aes(x=sc.log.Clutch, y=relative_fitness, group=interaction(ID,Foodweb), color=Foodweb, alpha=ID_group, size=ID_group)) +
   geom_line() +
   scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
   scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
   xlab("Clutch size (SDs)") +
   ylab("Relative fitness") +
-  scale_color_manual(values = cbPalette[c(6,5,4)], name = "Parasitoids") + 
+  scale_color_manual(values = cbPalette[c(6,5)], name = "Food web") + 
   scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
   coord_cartesian(ylim=c(0.2,2)) +
   geom_hline(yintercept=1, linetype="dotted")
@@ -1094,31 +1094,31 @@ RF_plot_foodweb_Pref_df <- RF_Pref$absolute_fitness %>%
   select(-sc.Diam, -sc.log.Clutch) %>%
   gather(ID, absolute_fitness, -sc.sqrt.Pref, -Foodweb) %>%
   mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
-  filter(ID_group == "average") %>%
+  #filter(ID_group == "average") %>%
   group_by(Foodweb) %>%
   mutate(relative_fitness = absolute_fitness/mean(absolute_fitness))%>%
   ungroup()
 
-RF_plot_egglarval_Pref_df <- egglarval_RF_Pref$absolute_fitness %>%
-  select(-sc.Diam, -sc.log.Clutch) %>%
-  gather(ID, absolute_fitness, -sc.sqrt.Pref, -Foodweb) %>%
-  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
-  mutate(Foodweb = ifelse(Foodweb=="Complex","Larval","Simple")) %>%
-  filter(Foodweb=="Larval", ID_group=="average") %>%
-  group_by(Foodweb) %>%
-  mutate(relative_fitness = absolute_fitness/mean(absolute_fitness))%>%
-  ungroup()
+#RF_plot_egglarval_Pref_df <- egglarval_RF_Pref$absolute_fitness %>%
+#  select(-sc.Diam, -sc.log.Clutch) %>%
+#  gather(ID, absolute_fitness, -sc.sqrt.Pref, -Foodweb) %>%
+#  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
+#  mutate(Foodweb = ifelse(Foodweb=="Complex","Larval","Simple")) %>%
+#  filter(Foodweb=="Larval", ID_group=="average") %>%
+#  group_by(Foodweb) %>%
+#  mutate(relative_fitness = absolute_fitness/mean(absolute_fitness))%>%
+#  ungroup()
 
-RF_pref_legend_only <- bind_rows(RF_plot_foodweb_Pref_df, RF_plot_egglarval_Pref_df) %>%
-  mutate(Foodweb=factor(Foodweb, levels=c("Complex","Simple","Larval"), labels=c("Egg + Larval (Complex)","Egg (Simple)","Larval"))) %>%
-  filter(ID_group=="average") %>%
+RF_uni_Pref <- RF_plot_foodweb_Pref_df %>%
+#  mutate(Foodweb=factor(Foodweb, levels=c("Complex","Simple","Larval"), labels=c("Egg + Larval (Complex)","Egg (Simple)","Larval"))) %>%
+#  filter(ID_group=="average") %>%
   ggplot(., aes(x=sc.sqrt.Pref, y=relative_fitness, group=interaction(ID,Foodweb), color=Foodweb, alpha=ID_group, size=ID_group)) +
   geom_line() +
   scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
   scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
   xlab("Oviposition preference (SDs)") +
   ylab("Relative fitness") +
-  scale_color_manual(values = cbPalette[c(6,5,4)], name = "Parasitoids") + 
+  scale_color_manual(values = cbPalette[c(6,5)], name = "Food web") + 
   scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
   coord_cartesian(ylim=c(0.2,2)) +
   theme(legend.title.align = 0.5) +
@@ -1129,48 +1129,48 @@ RF_plot_foodweb_Diam_df <- RF_Diam$absolute_fitness %>%
   select(-sc.sqrt.Pref, -sc.log.Clutch) %>%
   gather(ID, absolute_fitness, -sc.Diam, -Foodweb) %>%
   mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
-  filter(ID_group == "average") %>%
+  #filter(ID_group == "average") %>%
   group_by(Foodweb) %>%
   mutate(relative_fitness = absolute_fitness/mean(absolute_fitness))%>%
   ungroup()
 
-RF_plot_egglarval_Diam_df <- egglarval_RF_Diam$absolute_fitness %>% 
-  select(-sc.sqrt.Pref, -sc.log.Clutch) %>%
-  gather(ID, absolute_fitness, -sc.Diam, -Foodweb) %>%
-  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
-  mutate(Foodweb = ifelse(Foodweb=="Complex","Larval","Simple")) %>%
-  filter(Foodweb=="Larval", ID_group=="average") %>%
-  group_by(Foodweb) %>%
-  mutate(relative_fitness = absolute_fitness/mean(absolute_fitness))%>%
-  ungroup()
+#RF_plot_egglarval_Diam_df <- egglarval_RF_Diam$absolute_fitness %>% 
+#  select(-sc.sqrt.Pref, -sc.log.Clutch) %>%
+#  gather(ID, absolute_fitness, -sc.Diam, -Foodweb) %>%
+#  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
+#  mutate(Foodweb = ifelse(Foodweb=="Complex","Larval","Simple")) %>%
+#  filter(Foodweb=="Larval", ID_group=="average") %>%
+#  group_by(Foodweb) %>%
+#  mutate(relative_fitness = absolute_fitness/mean(absolute_fitness))%>%
+#  ungroup()
 
-RF_Diam_legend_only <- bind_rows(RF_plot_foodweb_Diam_df, RF_plot_egglarval_Diam_df) %>%
-  mutate(Foodweb=factor(Foodweb, levels=c("Complex","Simple","Larval"), labels=c("Egg + Larval (Complex)","Egg (Simple)","Larval"))) %>%
-  filter(ID_group=="average") %>%
+RF_uni_Diam <- RF_plot_foodweb_Diam_df %>%
+#  mutate(Foodweb=factor(Foodweb, levels=c("Complex","Simple","Larval"), labels=c("Egg + Larval (Complex)","Egg (Simple)","Larval"))) %>%
+#  filter(ID_group=="average") %>%
   ggplot(., aes(x=sc.Diam, y=relative_fitness, group=interaction(ID,Foodweb), color=Foodweb, alpha=ID_group, size=ID_group)) +
   geom_line() +
   scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
   scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
   xlab("Chamber diameter (SDs)") +
   ylab("Relative fitness") +
-  scale_color_manual(values = cbPalette[c(6,5,4)], name = "Parasitoids") + 
+  scale_color_manual(values = cbPalette[c(6,5)], name = "Food web") + 
   scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
   coord_cartesian(ylim=c(0.2,2)) +
   theme(legend.title.align = 0.5) +
   geom_hline(yintercept=1, linetype="dotted")
 
 # Get legend
-RF_uni_legend <- get_legend(RF_legend_only)  
+RF_uni_legend <- get_legend(RF_uni_Diam)  
 
 # Make plots
-RF_uni_plots <- plot_grid(RF_Diam_legend_only + theme(legend.position = "none", 
+RF_uni_plots <- plot_grid(RF_uni_Diam + theme(legend.position = "none", 
                                              axis.text.x = element_text(size=10),
                                              axis.title.x = element_text(size=11)),
-                     RF_pref_legend_only + theme(legend.position = "none",                          
+                     RF_uni_Pref + theme(legend.position = "none",                          
                                              axis.title.y = element_blank(), 
                                              axis.text.x = element_text(size=10),
                                              axis.title.x = element_text(size=11)),
-                     RF_legend_only + theme(legend.position = "none",                          
+                     RF_uni_Clutch + theme(legend.position = "none",                          
                                              axis.title.y = element_blank(), 
                                              axis.text.x = element_text(size=10),
                                              axis.title.x = element_text(size=11)),
