@@ -92,7 +92,7 @@ Set parameters for analyses and plots.
 
 ```{r set parameters}
 # Number of bootstrap replicates
-n_boots_analysis <- 100
+n_boots_analysis <- 1000
 n_boots_plots <- 100
 
 # Color-blind friendly palette: http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/; 
