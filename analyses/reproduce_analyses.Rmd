@@ -17,10 +17,9 @@ Suppress messages, warnings, and errors for document aesthetics.
 knitr::opts_chunk$set(message=FALSE, warning=FALSE, error=FALSE)
 ```
 
-Read in data, packages, and required functions.
+Load required libraries.
 
-```{r read data and functions, results='hide'}
-# Load required libraries
+```{r required libraries, results='hide'}
 library(car)        # for homogeneity of variance test
 library(tidyverse)  # for managing data
 library(cowplot)    # pretty default ggplots
@@ -30,30 +29,17 @@ library(lme4)       # for generalized linear mixed models
 library(latex2exp)  # using Latex notation for axes labels
 library(stringr)
 library(MVN)        # assessing multivariate normality assumption
+```
 
-# Load and manage data 
+Write custom functions to avoid repetitive code.
 
-gall_selection.df <- read_csv("../data/gall_selection_manuscript_dataset.csv") %>%
-  # convert appropriate variables to characters instead of integers
-  mutate(Plant_Position = as.character(Plant_Position),
-         Gall_Number = as.character(Gall_Number)) %>%
-  unite(Gall_ID, Gall_Number, Gall_Letter, remove = FALSE) %>%
-  
-  # subset data for analysis
-  filter(egg.ptoid > 0 | larval.ptoid > 0 | pupa > 0) %>% # eliminate unknown sources of mortality
-  filter(Treatment == "Ectoparasitoid exclusion" & larval.ptoid < 1 | Treatment == "Control") %>% # excluding any larva that were parasitized by an ectoparasitoid in the exclusion experiment.
-  mutate(Foodweb = ifelse(Treatment=="Control","Complex","Simple"),
-         gall_survival = as.numeric(ifelse(pupa > 0, 1, 0)),
-         egg.ptoid = as.numeric(ifelse(egg.ptoid > 0, 1, 0)), # there were a couple occassions where two egg parasitoids were found in a single chamber. I set these to 1 to permit an analysis with a binomial model.
-         # transform and scale traits to approximate multivariate normal assumption
-         sc.Diam = as.numeric(scale(chamber.diameter_mm)), 
-         sc.log.Clutch = as.numeric(scale(log(clutch.size_individuals))), 
-         sc.sqrt.Pref = as.numeric(scale(sqrt(oviposition.preference_individuals.per.100.shoots)))) 
-
-# Custom functions and parameters to avoid repetitive code 
-
+```{r custom functions}
 # Transform logit to probability
 inverse_logit <- function(x) exp(x)/(1+exp(x))
+
+# Get confidence intervals from bootstrapped samples
+conf.high <- function(x) quantile(x, probs = 0.975)
+conf.low <- function(x) quantile(x, probs = 0.025)
 
 # Get data for plotting bootstrapped estimates in Figures 2, 3, and 4 of main text
 bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0.025,0.975)){
@@ -100,22 +86,49 @@ bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0
   # Organize data
   return(list(absolute_fitness = absolute_fitness_df, relative_fitness = relative_fitness_df))
 }
+```
 
+Set parameters for analyses and plots.
 
+```{r set parameters}
 # Number of bootstrap replicates
 n_boots_analysis <- 100
 n_boots_plots <- 100
 
-
-# Get confidence intervals from bootstrapped samples
-conf.high <- function(x) quantile(x, probs = 0.975)
-conf.low <- function(x) quantile(x, probs = 0.025)
-
-# Color-blind friendly palette: http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/; order -> orange, light blue, green, yellow, dark blue, red, pink
+# Color-blind friendly palette: http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/; 
+# order: orange, light blue, green, yellow, dark blue, red, pink
 cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#000000", "#999999")
 complex_color <- cbPalette[6] 
 simple_color <- cbPalette[5] 
 treatment_colors <- c(complex_color, simple_color)
+```
+
+Read and tidy data for analyses.
+
+```{r read and tidy data}
+
+gall_selection.df <- read_csv("../data/gall_selection_manuscript_dataset.csv") %>%
+  # convert appropriate variables to characters instead of integers
+  mutate(Plant_Position = as.character(Plant_Position),
+         Gall_Number = as.character(Gall_Number)) %>%
+  unite(Gall_ID, Gall_Number, Gall_Letter, remove = FALSE) %>%
+  
+  # eliminate unknown sources of mortality
+  filter(egg.ptoid > 0 | larval.ptoid > 0 | pupa > 0) %>% 
+  # excluding any larva that were parasitized by an ectoparasitoid in the exclusion experiment.
+  filter(Treatment == "Ectoparasitoid exclusion" & larval.ptoid < 1 | Treatment == "Control") %>% 
+  mutate(Foodweb = ifelse(Treatment=="Control","Complex","Simple"), # rename Treatment to match presentation in manuscript
+         gall_survival = as.numeric(ifelse(pupa > 0, 1, 0)),
+         egg.ptoid = as.numeric(ifelse(egg.ptoid > 0, 1, 0)), # there were a couple occassions where two egg parasitoids were found in a single chamber. I set these to 1 to permit an analysis with a binomial model.
+         
+         # transform and scale traits to approximate multivariate normal assumption
+         sc.Diam = as.numeric(scale(chamber.diameter_mm)), 
+         sc.log.Clutch = as.numeric(scale(log(clutch.size_individuals))), 
+         sc.sqrt.Pref = as.numeric(scale(sqrt(oviposition.preference_individuals.per.100.shoots)))) 
+
+
+
+
 
 ```
 
@@ -1698,7 +1711,7 @@ figure_eggegg_grads
 
 ## Reproduce Figure 4 in main text
 
-```{r Egg-Parasitoid-Selection, include=FALSE, eval=FALSE}
+```{r Egg-Parasitoid-Selection, fig.cap="Selection on extended phenotype (oviposition preference) of egg parasitoids"}
 # this is used for plotting selection on egg parasitoids extended phenotype. We only did this for preference since this was the only trait under selection.
 eggegg_RF_Pref <- bootstrap_fitness(
   logistic_model = eggegg_model, 
