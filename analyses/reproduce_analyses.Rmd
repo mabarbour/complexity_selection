@@ -9,23 +9,29 @@ output:
 fontsize: 11pt
 ---
 
-```{r setup}
-knitr::opts_chunk$set(messages=FALSE, warning=FALSE, error=FALSE)
+## Setup
 
-# Load required libraries ----
+Suppress messages, warnings, and errors for document aesthetics.
+
+```{r setup}
+knitr::opts_chunk$set(message=FALSE, warning=FALSE, error=FALSE)
+```
+
+Read in data, packages, and required functions.
+
+```{r read data and functions, results='hide'}
+# Load required libraries
 library(car)        # for homogeneity of variance test
 library(tidyverse)  # for managing data
 library(cowplot)    # pretty default ggplots
 library(broom)      # for tidying multiple linear models
-#library(visreg)     # for quick visualizations of model effects
 library(viridis)    # for color palette
 library(lme4)       # for generalized linear mixed models
-#library(piecewiseSEM) # for calculating model R-square
 library(latex2exp)  # using Latex notation for axes labels
 library(stringr)
 library(MVN)        # assessing multivariate normality assumption
 
-# Load and manage data ----
+# Load and manage data 
 
 gall_selection.df <- read_csv("../data/gall_selection_manuscript_dataset.csv") %>%
   # convert appropriate variables to characters instead of integers
@@ -34,8 +40,7 @@ gall_selection.df <- read_csv("../data/gall_selection_manuscript_dataset.csv") %
   unite(Gall_ID, Gall_Number, Gall_Letter, remove = FALSE) %>%
   
   # subset data for analysis
-  filter(#phenology == "early", Location == "tree",
-         egg.ptoid > 0 | larval.ptoid > 0 | pupa > 0) %>%                  # eliminate unknown sources of mortality
+  filter(egg.ptoid > 0 | larval.ptoid > 0 | pupa > 0) %>% # eliminate unknown sources of mortality
   filter(Treatment == "Ectoparasitoid exclusion" & larval.ptoid < 1 | Treatment == "Control") %>% # excluding any larva that were parasitized by an ectoparasitoid in the exclusion experiment.
   mutate(Foodweb = ifelse(Treatment=="Control","Complex","Simple"),
          gall_survival = as.numeric(ifelse(pupa > 0, 1, 0)),
@@ -45,7 +50,7 @@ gall_selection.df <- read_csv("../data/gall_selection_manuscript_dataset.csv") %
          sc.log.Clutch = as.numeric(scale(log(clutch.size_individuals))), 
          sc.sqrt.Pref = as.numeric(scale(sqrt(oviposition.preference_individuals.per.100.shoots)))) 
 
-# Custom functions to avoid repetitive code ----
+# Custom functions and parameters to avoid repetitive code 
 
 # Transform logit to probability
 inverse_logit <- function(x) exp(x)/(1+exp(x))
@@ -99,7 +104,7 @@ bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0
 
 # Number of bootstrap replicates
 n_boots_analysis <- 100
-n_boots_plots <- 10
+n_boots_plots <- 100
 
 
 # Get confidence intervals from bootstrapped samples
@@ -127,6 +132,8 @@ mvn_univariate_hist <- mvn(select(gall_selection.df, sc.Diam, sc.log.Clutch, sc.
 ```{r Multivariate_QQ, fig.cap="Multivariate quantile-quantile (Q-Q) plot to assess deviations from multivariate normality (black line)."}
 mvn_multivariate_qq <- mvn(select(gall_selection.df, sc.Diam, sc.log.Clutch, sc.sqrt.Pref), multivariatePlot = "qq")
 ```
+
+\ 
 
 ## Gall trait-fitness relationships: effect of food-web treatment
 
@@ -196,9 +203,11 @@ biased_foodweb_confint <- tidy(biased_foodweb_model, conf.int=TRUE) %>% filter(g
 biased_foodweb_confint %>%
   select(term, estimate, conf.low, conf.high) %>%
   filter(term %in% c("FoodwebComplex:sc.Diam","FoodwebSimple:sc.Diam")) %>%
+  mutate(estimate = round(estimate, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%
   knitr::kable(., caption = "Estimates of bias in trait-fitness relationship of chamber diameter in each food-web treatment.")
 ```
 
+\ 
 
 We gather regression coefficients from the full and reduced model to display trait-fitness relationships. For chamber diameter, we subtracted the coefficient due to bias to better approximate the trait-fitness relationship. We also used the bootstrapped samples to calculate the differences in estimates between treatments (labelled **Diff**). 
 
@@ -245,6 +254,7 @@ tidy_foodweb_alphas <- foodweb_alphas %>%
                                    ifelse(grepl("\\^2", .$term)==TRUE, "Quadratic",
                                           ifelse(grepl(":", .$term)==TRUE, "Correlational","Linear"))))
 ```
+
 \  
 
 ```{r Table of food web coefficients, echo=FALSE}
@@ -605,12 +615,16 @@ tidy_egglarval_alphas %>%
   mutate(mean = round(mean, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%   knitr::kable(., caption = "Table of gall trait-fitness relationships imposed by egg and larval parasitoids. Note that type = Simple = Egg parasitoid and Complex = Larval parasitoid.")
 ```
 
+\ 
+
 ```{r Table of differences in egg vs. larval coefficients, echo=FALSE}
 tidy_egglarval_alphas %>%
   filter(type == "Diff") %>%
   select(term, coefficient_type, mean, conf.low, conf.high, P_cutoff) %>%
   mutate(mean = round(mean, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%   knitr::kable(., caption = "Table of differences in gall trait-fitness relationships between egg and larval parasitoids.")
 ```
+
+\ 
 
 See the table results in figure form.
 
@@ -694,6 +708,8 @@ plot_egglarval_coefs <- plot_grid(
 figure_egglarval_coefs <- plot_egglarval_coefs 
 figure_egglarval_coefs
 ```
+
+\ 
 
 ## Selection gradients acting on gall traits due to egg and larval parasitoids
 
@@ -972,24 +988,11 @@ RF_plot_foodweb_Clutch_df <- RF_Clutch$absolute_fitness %>%
   select(-sc.Diam, -sc.sqrt.Pref) %>%
   gather(ID, absolute_fitness, -sc.log.Clutch, -Foodweb) %>%
   mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
-  #filter(ID_group == "average") %>%
   group_by(Foodweb) %>%
   mutate(relative_fitness = absolute_fitness/mean(absolute_fitness)) %>%
   ungroup()
 
-#RF_plot_egglarval_Clutch_df <- egglarval_RF_Clutch$absolute_fitness %>% 
-#  select(-sc.Diam, -sc.sqrt.Pref) %>%
-#  gather(ID, absolute_fitness, -sc.log.Clutch, -Foodweb) %>%
-#  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
-#  mutate(Foodweb = ifelse(Foodweb=="Complex","Larval","Simple")) %>%
-#  filter(Foodweb=="Larval", ID_group=="average") %>%
-#  group_by(Foodweb) %>%
-#  mutate(relative_fitness = absolute_fitness/mean(absolute_fitness))%>%
-#  ungroup()
-
 RF_uni_Clutch <- RF_plot_foodweb_Clutch_df %>%
-#  mutate(Foodweb=factor(Foodweb, levels=c("Complex","Simple","Larval"), labels=c("Egg + Larval (Complex)","Egg (Simple)","Larval"))) %>%
-#  filter(ID_group=="average") %>%
   ggplot(., aes(x=sc.log.Clutch, y=relative_fitness, group=interaction(ID,Foodweb), color=Foodweb, alpha=ID_group, size=ID_group)) +
   geom_line() +
   scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
@@ -1001,30 +1004,17 @@ RF_uni_Clutch <- RF_plot_foodweb_Clutch_df %>%
   coord_cartesian(ylim=c(0.2,2)) +
   geom_hline(yintercept=1, linetype="dotted")
 
-# Female pref
+# Oviposition preference
 
 RF_plot_foodweb_Pref_df <- RF_Pref$absolute_fitness %>% 
   select(-sc.Diam, -sc.log.Clutch) %>%
   gather(ID, absolute_fitness, -sc.sqrt.Pref, -Foodweb) %>%
   mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
-  #filter(ID_group == "average") %>%
   group_by(Foodweb) %>%
   mutate(relative_fitness = absolute_fitness/mean(absolute_fitness))%>%
   ungroup()
 
-#RF_plot_egglarval_Pref_df <- egglarval_RF_Pref$absolute_fitness %>%
-#  select(-sc.Diam, -sc.log.Clutch) %>%
-#  gather(ID, absolute_fitness, -sc.sqrt.Pref, -Foodweb) %>%
-#  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
-#  mutate(Foodweb = ifelse(Foodweb=="Complex","Larval","Simple")) %>%
-#  filter(Foodweb=="Larval", ID_group=="average") %>%
-#  group_by(Foodweb) %>%
-#  mutate(relative_fitness = absolute_fitness/mean(absolute_fitness))%>%
-#  ungroup()
-
 RF_uni_Pref <- RF_plot_foodweb_Pref_df %>%
-#  mutate(Foodweb=factor(Foodweb, levels=c("Complex","Simple","Larval"), labels=c("Egg + Larval (Complex)","Egg (Simple)","Larval"))) %>%
-#  filter(ID_group=="average") %>%
   ggplot(., aes(x=sc.sqrt.Pref, y=relative_fitness, group=interaction(ID,Foodweb), color=Foodweb, alpha=ID_group, size=ID_group)) +
   geom_line() +
   scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
@@ -1042,24 +1032,11 @@ RF_plot_foodweb_Diam_df <- RF_Diam$absolute_fitness %>%
   select(-sc.sqrt.Pref, -sc.log.Clutch) %>%
   gather(ID, absolute_fitness, -sc.Diam, -Foodweb) %>%
   mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
-  #filter(ID_group == "average") %>%
   group_by(Foodweb) %>%
   mutate(relative_fitness = absolute_fitness/mean(absolute_fitness))%>%
   ungroup()
 
-#RF_plot_egglarval_Diam_df <- egglarval_RF_Diam$absolute_fitness %>% 
-#  select(-sc.sqrt.Pref, -sc.log.Clutch) %>%
-#  gather(ID, absolute_fitness, -sc.Diam, -Foodweb) %>%
-#  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>%
-#  mutate(Foodweb = ifelse(Foodweb=="Complex","Larval","Simple")) %>%
-#  filter(Foodweb=="Larval", ID_group=="average") %>%
-#  group_by(Foodweb) %>%
-#  mutate(relative_fitness = absolute_fitness/mean(absolute_fitness))%>%
-#  ungroup()
-
 RF_uni_Diam <- RF_plot_foodweb_Diam_df %>%
-#  mutate(Foodweb=factor(Foodweb, levels=c("Complex","Simple","Larval"), labels=c("Egg + Larval (Complex)","Egg (Simple)","Larval"))) %>%
-#  filter(ID_group=="average") %>%
   ggplot(., aes(x=sc.Diam, y=relative_fitness, group=interaction(ID,Foodweb), color=Foodweb, alpha=ID_group, size=ID_group)) +
   geom_line() +
   scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
@@ -1092,6 +1069,8 @@ RF_uni_plots <- plot_grid(RF_uni_Diam + theme(legend.position = "none",
 RF_gradients <- plot_grid(RF_uni_plots, RF_uni_legend, ncol = 2, rel_widths = c(0.8,0.2)) 
 RF_gradients
 ```
+
+\ 
 
 ## Reproduce Figure 3 in manuscript
 
@@ -1260,6 +1239,8 @@ AF_landscape_2d <- ggdraw(AF_landscape_plots) + draw_grob(AF_landscape_legend, x
 AF_landscape_2d
 save_plot(filename = "MV_landscapes.pdf", plot = AF_landscape_2d, base_width=8, base_height = 6)
 ```
+
+\ 
 
 ## Slope and curvature of the adaptive landscape of gall traits
 
@@ -1712,6 +1693,8 @@ y_title_eggegg_grads <- ggdraw() + draw_label("Selection gradient (SDs)", angle 
 figure_eggegg_grads <- plot_grid(y_title_eggegg_grads, plot_legend_eggegg_grads, ncol=2, rel_widths = c(0.05,1)) 
 figure_eggegg_grads
 ```
+
+\ 
 
 ## Reproduce Figure 4 in main text
 
