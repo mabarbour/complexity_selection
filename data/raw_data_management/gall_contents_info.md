@@ -12,20 +12,20 @@
 - **exit-none-torymid-male** (Fig. 7): exit hole found at tip of gall point, but nothing inside gall. Found a male of the ectoparasitoid *Torymus* sp. (Order: Hymenoptera, Family: Torymidae). Description - metallic green, antenna are dark throughout, lacking distinct ovipositor of female, upper part of legs are metallic green, characteristic wing veination of wasps in the family Torymidae (stubby stigma vein). 
 - **exit-none-torymid-female** (Fig. 8): exit hole found at tip of gall point, but nothing inside gall. Found a female of the ectoparasitoid *Torymus* sp. (Order: Hymenoptera, Family: Torymidae). Description - metallic green, distinct ovipositor extending out behind abdomen, characteristic wing veination of wasps in the family Torymidae (stubby stigma vein). 
 
-![Image of pupa of *Iteomyia salicisverruca*](/Users/matthewbarbour/Documents/Genotype_Ptoid_Phenology_Experiment/gall_contents_pictures/sp_378_larva_with_papery_sheath_it_was_removed_from.jpeg)
+![Image of pupa of *Iteomyia salicisverruca*](gall_contents_pictures/sp_378_larva_with_papery_sheath_it_was_removed_from.jpeg)
 
-![Image of *Platygaster* sp. inside cocoon](/Users/matthewbarbour/Documents/Genotype_Ptoid_Phenology_Experiment/gall_contents_pictures/sp_12_with_clear_brown_cocoon.jpeg)
+![Image of *Platygaster* sp. inside cocoon](gall_contents_pictures/sp_12_with_clear_brown_cocoon.jpeg)
 
-![Image of *Platygaster* sp. outside cocoon](/Users/matthewbarbour/Documents/Genotype_Ptoid_Phenology_Experiment/gall_contents_pictures/sp_12_side_view.jpeg)
+![Image of *Platygaster* sp. outside cocoon](gall_contents_pictures/sp_12_side_view.jpeg)
 
-![Image of hairy larva (likely ectoparasitoid larva)](/Users/matthewbarbour/Documents/Genotype_Ptoid_Phenology_Experiment/gall_contents_pictures/larva_possible_ptoid_413_15a003.jpeg)
+![Image of hairy larva (likely ectoparasitoid larva)](gall_contents_pictures/larva_possible_ptoid_413_15a003.jpeg)
 
-![Image of *Mesopolobus* sp. (likely male)](/Users/matthewbarbour/Documents/Genotype_Ptoid_Phenology_Experiment/gall_contents_pictures/Image_8.jpg)
+![Image of *Mesopolobus* sp. (likely male)](gall_contents_pictures/Image_8.jpg)
 
-![Image of Pteromalid sp. 2 (likely female)](/Users/matthewbarbour/Documents/Genotype_Ptoid_Phenology_Experiment/gall_contents_pictures/sp_408_side_view001.jpeg)
+![Image of Pteromalid sp. 2 (likely female)](gall_contents_pictures/sp_408_side_view001.jpeg)
 
-![Image of *Torymus* sp. male](/Users/matthewbarbour/Documents/Genotype_Ptoid_Phenology_Experiment/gall_contents_pictures/sp_380_whole_body.jpeg)
+![Image of *Torymus* sp. male](gall_contents_pictures/sp_380_whole_body.jpeg)
 
-![Image of *Torymus* sp. female](/Users/matthewbarbour/Documents/Genotype_Ptoid_Phenology_Experiment/gall_contents_pictures/Torymus_female_rG_survey2_gall_207_9001.jpeg)
+![Image of *Torymus* sp. female](gall_contents_pictures/Torymus_female_rG_survey2_gall_207_9001.jpeg)
 
 
