@@ -1,5 +1,5 @@
 \documentclass[11pt,]{article}
-\usepackage{mathpazo}
+\usepackage[]{mathpazo}
 \usepackage{amssymb,amsmath}
 \usepackage{ifxetex,ifluatex}
 \usepackage{fixltx2e} % provides \textsubscript
@@ -9,12 +9,10 @@
 \else % if luatex or xelatex
   \ifxetex
     \usepackage{mathspec}
-    \usepackage{xltxtra,xunicode}
   \else
     \usepackage{fontspec}
   \fi
-  \defaultfontfeatures{Mapping=tex-text,Scale=MatchLowercase}
-  \newcommand{\euro}{€}
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
 \fi
 % use upquote if available, for straight quotes in verbatim environments
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
@@ -23,9 +21,19 @@
 \usepackage{microtype}
 \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
 }{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\PassOptionsToPackage{usenames,dvipsnames}{color} % color is loaded by hyperref
+\hypersetup{unicode=true,
+            colorlinks=true,
+            linkcolor=black,
+            citecolor=black,
+            urlcolor=black,
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
 \usepackage{natbib}
 \bibliographystyle{amnat}
-\usepackage{graphicx}
+\usepackage{graphicx,grffile}
 \makeatletter
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
 \def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
@@ -34,61 +42,56 @@
 % margins by default, and it is still possible to overwrite the defaults
 % using explicit options in \includegraphics[width, height, ...]{}
 \setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
-\ifxetex
-  \usepackage[setpagesize=false, % page size defined by xetex
-              unicode=false, % unicode breaks when used with xetex
-              xetex]{hyperref}
-\else
-  \usepackage[unicode=true]{hyperref}
-\fi
-\hypersetup{breaklinks=true,
-            bookmarks=true,
-            pdfauthor={Matthew A. Barbour\^{}\{1,2,\textbackslash{}ast\}; Christopher J. Greyson-Gaito\^{}\{1,3\}; Arezoo Sootodeh\^{}\{3\}; Brendan Locke\^{}\{4\}; Jordi Bascompte\^{}\{2\}},
-            pdftitle={Phenotypic evolution is more constrained in simpler food webs},
-            colorlinks=true,
-            citecolor=black,
-            urlcolor=black,
-            linkcolor=black,
-            pdfborder={0 0 0}}
-\urlstyle{same}  % don't use monospace font for urls
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
 \setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
 
 %%% Use protect on footnotes to avoid problems with footnotes in titles
 \let\rmarkdownfootnote\footnote%
 \def\footnote{\protect\rmarkdownfootnote}
 
+%%% Change title format to be more compact
+\usepackage{titling}
 
-  \title{Phenotypic evolution is more constrained in simpler food webs}
-    \author{Matthew A. Barbour\(^{1,2,\ast}\) \\ Christopher J. Greyson-Gaito\(^{1,3}\) \\ Arezoo Sootodeh\(^{3}\) \\ Brendan Locke\(^{4}\) \\ Jordi Bascompte\(^{2}\)}
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{}
+    \pretitle{\vspace{\droptitle}}
+  \posttitle{}
+    \author{}
+    \preauthor{}\postauthor{}
     \date{}
+    \predate{}\postdate{}
   
-%%% From AmNat_MS_template.tex
-%\documentclass[11pt]{article}
-%\usepackage[sc]{mathpazo} %Like Palatino with extensive math support
+%%% Modified from Latex Template for Am. Nat., many other details aren't necessary because they are specified in YAML header of Rmarkdown document.
 \usepackage{fullpage}
-%\usepackage[authoryear,sectionbib,sort]{natbib}
 \linespread{1.7}
-%\usepackage[utf8]{inputenc}
 \usepackage{lineno}
 
-%%%%%%% Sections not currently working properly
-%\usepackage{titlesec}
-%\titleformat{\section}[block]{\Large\bfseries\filcenter}{\thesection}{1em}{}
-%\titleformat{\subsection}[block]{\Large\itshape\filcenter}{\thesubsection}{1em}{}
-%\titleformat{\subsubsection}[block]{\large\itshape}{\thesubsubsection}{1em}{}
-%\titleformat{\paragraph}[runin]{\itshape}{\theparagraph}{1em}{}[. ]\renewcommand{\refname}{Literature Cited}
-
-%%% My added packages
-%\usepackage{amsmath} % for matrices
-%\usepackage{graphicx} % for organizing figures
-%\usepackage{lmodern} % for tilde
-%\usepackage[T1]{fontenc} % for tilde
-
-%%%%%%%%% Previous - likely useful though
-%\usepackage{setspace}\doublespacing
+% code below is important for holding figure positions in main text. Make sure to set fig.pos="H" in code chunk for figure.
 \usepackage{float}
 \let\origfigure\figure
 \let\endorigfigure\endfigure
@@ -97,18 +100,38 @@
 } {
     \endorigfigure
 }
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage[table]{xcolor}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
 
 \begin{document}
 
-\maketitle
+\vspace*{0.1cm}
 
+\begin{center} \LARGE Phenotypic evolution is more constrained in simpler food webs \end{center}
 
-\noindent 1. University of British Columbia, Department of Zoology,
+\bigskip
+
+\begin{center} \large Matthew A. Barbour$^{1,2,\ast}$, Christopher J. Greyson-Gaito$^{2,3}$, Arezoo Sootodeh$^{2}$, Brendan Locke$^{4}$, Jordi Bascompte$^{1}$ \normalsize \end{center}
+
+\bigskip
+
+\noindent 1. University of Zurich, Department of Evolutionary Biology
+and Environmental Studies, Zurich, 8057 ZH, Switzerland;
+
+\noindent 2. University of British Columbia, Department of Zoology,
 Vancouver, BC V6T 1Z4, Canada;
-
-\noindent 2. University of Zurich, Department of Evolutionary Biology
-and Environmental Studies, Winterthurerstrasse 190, 8057 Zurich,
-Switzerland;
 
 \noindent 3. University of Guelph, Department of Integrative Biology,
 Guelph, ON N1G 2W1, Canada;
@@ -121,14 +144,17 @@ Sciences, Arcata, CA 95521, USA.
 
 \bigskip
 
-\emph{Manuscript elements}: Figure 1, figure 2, figure 3, figure 4. All
-figures should be printed in color.
+\emph{Manuscript elements}: table 1, figure 1, figure 2, figure 3,
+figure 4. All figures should be printed in color.
 
 \bigskip
 
-\emph{Keywords}: fitness landscape, host-parasitoid, natural selection,
-G-matrix, community context, ecological networks, evolutionary ecology,
-eco-evolutionary dynamics.
+\emph{Keywords}: adaptive landscape, ecological networks,
+eco-evolutionary dynamics, natural selection, host-parasitoid.
+
+\bigskip
+
+\emph{Number of words}: 5075
 
 \bigskip
 
@@ -187,11 +213,11 @@ interactions often play a key role in shaping adaptive landscapes, as
 evidenced by the role of antagonistic \citep{Schluter2000, Abrams2000}
 and mutualistic \citep{Bronstein2006} interactions in driving
 evolutionary change. Although there is clear evidence that pairwise
-interactions can shape the adaptive landscape, we do not know how the
-adaptive landscape is shaped by the community context
-\citep{McPeek2017, terHorst2018}. Resolution on how the community
-context shapes phenotypic evolution is urgently needed though, given the
-rapid impacts of climate change on ecological communities
+interactions can shape the adaptive landscape, we still have a poor
+understanding of how the adaptive landscape is shaped by the community
+context \citep{McPeek2017, terHorst2018}. Resolution on how the
+community context shapes phenotypic evolution is urgently needed though,
+given the rapid impacts of climate change on ecological communities
 \citep{Scheffers2016}.
 
 Ecological networks, such as food webs describing who-eats-whom in
@@ -317,7 +343,7 @@ Traits}\label{measuring-phenotypic-traits}
 
 We collected data on three different traits that we expected to
 influence larval survival based on our previous work \citep{Barbour2016}
-and others work with gall midges \citep{Weis1983, Heath2018}. First, we
+and other work with gall midges \citep{Weis1983, Heath2018}. First, we
 measured gall diameter as the size of each gall chamber to the nearest
 0.01 mm at its maximum diameter (perpendicular to the direction of plant
 tissue growth). Our previous work has shown that larger galls are
@@ -461,7 +487,7 @@ gall ID explains 54\% of the variance in chamber diameter), then the
 relationship between chamber diameter and larval survival in this data
 subset represents the effect of parasitism on trait expression
 (i.e.~bias). We used a GLMM with the same structure as described above
-except that we only modelled a linear relationship between chamber
+except that we modelled only a linear relationship between chamber
 diameter and larval survival (\(\alpha_{\text{Diam}}\)). We detected a
 positive bias in both food-web treatments (complex
 \(\alpha_{\text{Diam}}\)= 0.36 {[}0.05, 0.67{]}; simple
@@ -517,7 +543,7 @@ pressures imposed by each guild of parasitoids (fig.
 \ref{fig:UV_Landscape}). Specifically, when we subset our data to focus
 on differences between parasitoid guilds, we found that larval
 parasitoids actually impose directional selection for larger clutch
-sizes (\(\beta_{\text{Clutch}}\)= 0.13 {[}0.03, 0.23{]}). In the simple
+sizes (\(\beta_{\text{Clutch}}\)= 0.13 {[}0.04, 0.24{]}). In the simple
 food web, we also observed clear evidence of directional selection for
 midges to avoid ovipositing on plants with high densities of
 conspecifics (table \ref{Table:Gradients}; fig.
@@ -527,11 +553,11 @@ result of larval parasitoids imposing greater mortality on egg
 parasitoids at high gall midge densities (see Selection on the extended
 phenotype of egg parasitoids section), and thus a less than additive
 effect on gall midges. Chamber diameter experienced positive directional
-selection in both food-web treatments, but selection was 65\% higher in
+selection in both food-web treatments, but selection was 66\% higher in
 complex food webs (table \ref{Table:Gradients}; fig.
 \ref{fig:UV_Landscape}). This was not due to any difference between egg
 and larval parasitoids (fig. \ref{fig:UV_Landscape}), but was due to the
-lower average survival in complex food webs (contrast -0.26 {[}-0.12,
+lower average survival in complex food webs (contrast -0.27 {[}-0.11,
 -0.42{]}).
 
 \bigskip
@@ -549,85 +575,85 @@ $\beta_{\text{Diam}}$ &
 \textbf{
 0.34 [
 0.22,
-0.47] }& 
+0.48] }& 
 \textbf{
 0.21 [
-0.13,
-0.3] }& 
+0.12,
+0.31] }& 
 
--0.13 [
--0.26,
-0.01] \\
+-0.14 [
+-0.27,
+0] \\
 
 $\beta_{\text{Clutch}}$ & 
 0.06 [
--0.04,
+-0.05,
 0.17] & 
 \textbf{
 -0.09 [
--0.18,
--0.02] }& 
+-0.17,
+-0.01] }& 
 \textbf{
 -0.15 [
 -0.29,
--0.02] }\\
+-0.03] }\\
 
 $\beta_{\text{Pref}}$ &
--0.12 [
+-0.13 [
 -0.29,
 0.05] & 
 \textbf{
 -0.16 [
--0.25,
--0.07] }& 
+-0.26,
+-0.06] }& 
 
--0.04 [
--0.22,
-0.14] \\
+-0.03 [
+-0.21,
+0.15] \\
 
 $\gamma_{\text{Diam,Diam}}$ &
-0.14 [
+0.13 [
 -0.06,
-0.32] & 
+0.33] & 
 
 0.1 [
--0.03,
-0.25] & 
+-0.02,
+0.23] & 
 
--0.04 [
+-0.03 [
 -0.27,
 0.2] \\
 
 $\gamma_{\text{Clutch,Clutch}}$ & 
 -0.05 [
--0.25,
-0.16] & 
-
--0.12 [
 -0.27,
+0.18] & 
+
+-0.11 [
+-0.28,
 0.03] & 
 
 -0.06 [
--0.33,
-0.19] \\
+-0.32,
+0.2] \\
 
 $\gamma_{\text{Pref,Pref}}$ & 
 \textbf{
-0.33 [
-0.06,
-0.64] }& 
+0.34 [
+0.07,
+0.63] }& 
 
-0.01 [
+0.02 [
 -0.14,
-0.17] & 
+0.18] & 
 \textbf{
 -0.32 [
--0.66,
-0] }\\
+-0.64,
+-0.01] }\\
 
 $\gamma_{\text{Diam,Clutch}}$ & 
--0.05 [
--0.17,
+-0.04 [
+-0.16,
 0.08] & 
 
 -0.07 [
@@ -635,25 +661,25 @@ $\gamma_{\text{Diam,Clutch}}$ &
 0.02] & 
 
 -0.02 [
--0.16,
-0.13] \\
+-0.17,
+0.12] \\
 
 $\gamma_{\text{Diam,Pref}}$ & 
 -0.13 [
--0.28,
-0] & 
+-0.29,
+0.02] & 
 
 -0.02 [
--0.09,
-0.06] & 
+-0.1,
+0.07] & 
 
 0.12 [
 -0.05,
-0.29] \\
+0.3] \\
 
 $\gamma_{\text{Clutch,Pref}}$ & 
 0.03 [
--0.11,
+-0.1,
 0.18] & 
 
 0 [
@@ -661,7 +687,7 @@ $\gamma_{\text{Clutch,Pref}}$ &
 0.07] & 
 
 -0.03 [
--0.19,
+-0.18,
 0.12] \\ 
 \hline
 \end{tabular}
@@ -701,7 +727,7 @@ relationship between oviposition preference and larval survival dampened
 at high densities in complex, but not simple food webs (fig.
 \ref{fig:UV_Landscape}B). This dampened relationship was partly due to a
 trend for nonlinear selection imposed by larval parasitoids
-(\(\gamma_{\text{Pref:Pref}}\)= 0.18 {[}-0.01, 0.42{]}), but was also
+(\(\gamma_{\text{Pref:Pref}}\)= 0.18 {[}-0.02, 0.42{]}), but was also
 magnified by the lower average survival in complex food webs.
 
 To estimate the net effect of food-web complexity on the curvature
@@ -716,7 +742,7 @@ exhibited the following structures:
 \[\textbf{C}_{\text{Complex}} = \begin{pmatrix} 
 -0.12 &  &  \\  
 0 & 0 &  \\  
-0 & 0 & 0.33 \end{pmatrix}\]
+0 & 0 & 0.34 \end{pmatrix}\]
 
 \[\textbf{C}_{\text{Simple}} = \begin{pmatrix} 
 -0.04 &  &  \\  
@@ -763,25 +789,25 @@ parasitoids}\label{selection-on-the-extended-phenotype-of-egg-parasitoids}
 
 Gall midge preference influenced the probability of observing egg
 parasitoids in complex vs.~simple food webs (contrast
-\(\alpha_{\text{Pref}}\)= 1 {[}0.03, 2.22{]} ). Specifically, larval
+\(\alpha_{\text{Pref}}\)= 1.03 {[}0.04, 2.31{]} ). Specifically, larval
 parasitoids decreased the probability of observing egg parasitoids at
 high gall midge densities (fig. \ref{fig:EggPtoid_Selection}). Note
 however that this trait-fitness relationship did not translate into a
 significant difference in selection (contrast \(\beta_{\text{Pref}}\)=
-0.24 {[}-0.09, 0.62{]} ). This was likely because there was a tendency
+0.25 {[}-0.09, 0.64{]} ). This was likely because there was a tendency
 (albeit not statistically signficant) for a lower probability of
 egg-parasitoid survival in complex vs.~simple food webs (contrast=0.1
-{[} -0.08, 0.31{]}), which masks this trait-fitness relationship. We
+{[} -0.09, 0.32{]}), which masks this trait-fitness relationship. We
 also observed two other interesting trends, although neither
 significantly differed between treatments. Specifically, there was a
 tendency for the impact of larval parasitoids to increase nonlinearly at
 higher gall midge densities (fig. \ref{fig:EggPtoid_Selection}; complex
-\(\alpha_{\text{Pref:Pref}}\)= -0.49 {[}-1.08, -0.1{]}; but contrast
-\(\alpha_{\text{Pref:Pref}}\)= 0.46 {[}-0.03, 1.1{]}). There was also a
+\(\alpha_{\text{Pref:Pref}}\)= -0.49 {[}-1.04, -0.13{]}; but contrast
+\(\alpha_{\text{Pref:Pref}}\)= 0.46 {[}0.02, 1.07{]}). There was also a
 tendency for egg parasitoids to obtain a refuge in large gall chambers
 at high gall midge densities (complex \(\alpha_{\text{Pref:Diam}}\)=
-0.25 {[}0.02, 0.5{]}; but contrast \(\alpha_{\text{Pref:Diam}}\)= -0.25
-{[}-0.57, 0.04{]}).
+0.25 {[}0.01, 0.54{]}; but contrast \(\alpha_{\text{Pref:Diam}}\)= -0.25
+{[}-0.6, 0.05{]}).
 
 \begin{figure}
 \centering
@@ -857,30 +883,30 @@ consequences of not only direct effects of selection, but indirect
 effects on genetic constraints that are shaped by the community context.
 
 The generality of our results likely depends on the relative abundance
-and functional differences between consumers in a community. In the
-simplest case, when consumers do not differ from each other, then we do
-not expect changes in food-web complexity to modify selective
-constraints. Also, many consumers may be at too low of abundances to
-impose selection on their resources. Rank abundance curves
-\citep{Preston1948} and the disproportionate number of weak interactions
-in diverse communities \citep{Paine1992} support this notion. When
-consumers are abundant though, the effect of food-web complexity will
-depend on whether different species impose conflicting selection
-pressures or select for distinct traits. For example, parisitoids and
-birds impose conflicting selection pressures on the size of galls
-induced by the fly \emph{Eurosta solidaginis}
-\citep{Weis1985, Abrahamson1997, Start2016}. Recent studies in this
-system have shown that decreases in the relative abundance of birds, due
-to either small patch sizes \citep{Start2016} or proximity to urban
-areas \citep{Start2018} causes a shift from neutral to directional
-selection on gall size. On the other hand, different consumers may
-impose selection on different traits, favoring trait integration and
-increasing genetic constraints. Examples of this include strong genetic
-covariances in plant resistance to different insect herbivores
-\citep{Maddox1990, Wise2007, Wise2013}, although there are also examples
-where these covariances are weak \citep{Roche1997, Barbour2015}, or vary
-from year-to-year \citep{Johnson2007}. We suggest that gaining
-predictive insight to the effects of food-web disassembly requires an
+and functional differences between consumers in a community. For
+example, if consumers do not differ from each other, then we do not
+expect changes in food-web complexity to modify selective constraints.
+Also, many consumers may be at too low of abundances to impose selection
+on their resources. Rank abundance curves \citep{Preston1948} and the
+disproportionate number of weak interactions in diverse communities
+\citep{Paine1992} support this notion. When consumers are abundant
+though, the effect of food-web complexity will depend on whether
+different species impose conflicting selection pressures or select for
+distinct traits. For example, parisitoids and birds impose conflicting
+selection pressures on the size of galls induced by the fly
+\emph{Eurosta solidaginis} \citep{Weis1985, Abrahamson1997, Start2016}.
+Recent studies in this system have shown that decreases in the relative
+abundance of birds, due to either small patch sizes \citep{Start2016} or
+proximity to urban areas \citep{Start2018} causes a shift from neutral
+to directional selection on gall size. On the other hand, different
+consumers may impose selection on different traits, favoring trait
+integration and increasing genetic constraints. Examples of this include
+strong genetic covariances in plant resistance to different insect
+herbivores \citep{Maddox1990, Wise2007, Wise2013}, although there are
+also examples where these covariances are weak
+\citep{Roche1997, Barbour2015}, or vary from year-to-year
+\citep{Johnson2007}. We suggest that gaining predictive insight to the
+evolutionary consequences of food-web disassembly requires an
 understanding of the mechanisms governing the assembly of trophic
 interactions.
 
@@ -893,7 +919,7 @@ which could intensify selection on gall midge oviposition preference. A
 growing number of experiments over the past two decades have
 demonstrated the presence and potential importance of indirect
 evolutionary effects that emerge in a community context
-\citep{Juenger1998, Stinchcombe2001, Lankau2007, Walsh2008, Walsh2010, terHorst2010, Sahli2011, Lau2012, terHorst2015, Schiestl2018}.
+\citep{Juenger1998, Stinchcombe2001, Lankau2007, Walsh2008, Walsh2010, terHorst2010, Sahli2011, Lau2012, terHorst2015, Schiestl2018, StartInPress}.
 If indirect evolutionary effects are common \citep{Walsh2013}, then
 predicting evolutionary trajectories resulting from the simplification
 of food webs will require evolutionary studies to explicitly account for
@@ -939,16 +965,7 @@ integration of adaptive landscapes and ecological networks will enhance
 our ability to predict the evolutionary consequences of changes in
 ecological communities.
 
-\section{Acknowledgements}\label{acknowledgements}
-
-We thank the staff of Humboldt Bay National Wildlife Refuge (U.S. Fish
-and Wildlife Service) for facilitating experimental logistics. For
-assistance with fieldwork, we thank Ruthie Espanol and Andrew MacDonald.
-For funding support, we thank the University of British Columbia (James
-Robert Thompson Fellowship and Four-Year Fellowship to M.A.~Barbour),
-NSERC (Discovery grant to Greg Crutsinger), and the Swiss National
-Science Foundation (grant 31003A\_160671 to J. Bascompte).
-
 \bibliography{references}
+
 
 \end{document}

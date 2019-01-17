@@ -33,7 +33,7 @@ citecolor: black
 
 ```{r setup ms, include=FALSE}
 ## Reproduce analyses ----
-rmarkdown::render("analyses/reproduce_analyses.Rmd") 
+knitr::knit("analyses/reproduce_analyses.Rmd") 
 
 ## Get sample size info
 no_larvae <- dim(distinct(gall_selection.df, Gall_Number, Gall_ID))[1]
