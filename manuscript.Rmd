@@ -66,7 +66,7 @@ $^\ast$ Corresponding author; e-mail: matthew.barbour@ieu.uzh.ch
 
 \bigskip
 
-*Manuscript elements*: table 1, figure 1, figure 2, figure 3, figure 4. All figures should be printed in color.
+*Manuscript elements*: table 1, table 2, figure 1, figure 2, figure 3, figure 4. All figures should be printed in color.
 
 \bigskip
 
@@ -169,7 +169,7 @@ All analyses and visualizations were conducted in R [@R2018]. Unless otherwise n
 \indent We found that more gall midge traits experienced directional selection in the simple (3 of 3) vs. complex food-web treatment (1 of 3)(table \ref{Table:Gradients}). For example, we observed directional selection for smaller clutch sizes in the simple food web, but there was no evidence of selection acting on this trait in the complex food web (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}C). This absence of selection appeared to be a result of conflicting selection pressures imposed by each guild of parasitoids. Specifically, when we subset our data to focus on differences between parasitoid guilds, we found that larval parasitoids actually impose directional selection for larger clutch sizes ($\beta_{\text{Clutch}}$=
 `r round(filter(tidy_egglarval_grads, type=="Complex", term=="sc.log.Clutch")$mean,2)` 
 [`r round(filter(tidy_egglarval_grads, type=="Complex", term=="sc.log.Clutch")$conf.low,2)`,
-`r round(filter(tidy_egglarval_grads, type=="Complex", term=="sc.log.Clutch")$conf.high,2)`]). In the simple food web, we also observed clear evidence of directional selection for midges to avoid ovipositing on plants with high densities of conspecifics (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}B); however, this relationship was weaker in complex food webs (table \ref{Table:Gradients}). This was likely a result of larval parasitoids imposing greater mortality on egg parasitoids at high gall midge densities (see Selection on the extended phenotype of egg parasitoids section), and thus a less than additive effect on gall midges. Chamber diameter experienced positive directional selection in both food-web treatments, but selection was `r round(((filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam")$mean - filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$mean) / filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$mean) * 100, 0)`% higher in complex food webs (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}). This was not due to any difference between egg and larval parasitoids (\alpha_{Diam} contrast = 
+`r round(filter(tidy_egglarval_grads, type=="Complex", term=="sc.log.Clutch")$conf.high,2)`]). In the simple food web, we also observed clear evidence of directional selection for midges to avoid ovipositing on plants with high densities of conspecifics (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}B); however, this relationship was weaker in complex food webs (table \ref{Table:Gradients}). This was likely a result of larval parasitoids imposing greater mortality on egg parasitoids at high gall midge densities (see Selection on the extended phenotype of egg parasitoids section), and thus a less than additive effect on gall midges. Chamber diameter experienced positive directional selection in both food-web treatments, but selection was `r round(((filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam")$mean - filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$mean) / filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$mean) * 100, 0)`% higher in complex food webs (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}). This was not due to any difference between egg and larval parasitoids ($\beta_{Diam}$ contrast = 
 `r round(filter(tidy_egglarval_grads, type=="Diff", term=="sc.Diam")$mean,2)` [
 `r round(filter(tidy_egglarval_grads, type=="Diff", term=="sc.Diam")$conf.low,2)`,
 `r round(filter(tidy_egglarval_grads, type=="Diff", term=="sc.Diam")$conf.high,2)`]), but was due to the lower average survival in complex food webs (contrast `r round(filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$mean*-1, 2)`
@@ -347,6 +347,81 @@ knitr::include_graphics("analyses/MV_landscapes.pdf")
 
 ## Selection on the extended phenotype of egg parasitoids
 
+Only gall midge preference influenced the probability of observing egg parasitoids in complex vs. simple food webs (table \ref{Table:ExtendedGradients}). Specifically, the impact of larval parasitoids increased nonlinearly with higher gall midge densities (fig. \ref{fig:EggPtoid_Selection}).  
+
+\bigskip
+
+\begin{table}[h]
+\caption{Standardized selection gradients acting on the extended phenotype of the egg parasitoid \textit{Platygaster} sp.}
+\label{Table:ExtendedGradients}
+\centering
+\begin{tabular}{lc}
+\\ 
+\hline
+\textbf{Selection gradient} & \textbf{Contrast}  \\ 
+\hline
+$\beta_{\text{Diam}}$ & 
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam")$conf.high,2)`] \\
+
+$\beta_{\text{Clutch}}$ & 
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch")$conf.high,2)`] \\
+
+$\beta_{\text{Pref}}$ &
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.high,2)`] \\
+
+$\gamma_{\text{Diam,Diam}}$ &
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.Diam^2)")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.high,2)`] \\
+
+$\gamma_{\text{Clutch,Clutch}}$ & 
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.high,2)`] \\
+
+$\gamma_{\text{Pref,Pref}}$ & 
+
+\textbf{
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`] }\\
+
+$\gamma_{\text{Diam,Clutch}}$ & 
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.high,2)`] \\
+
+$\gamma_{\text{Diam,Pref}}$ & 
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`] \\
+
+$\gamma_{\text{Clutch,Pref}}$ & 
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.high,2)`] \\ 
+\hline
+\end{tabular}
+\bigskip{}
+\\
+{\footnotesize Note: Values in brackets represent 95\% confidence intervals. Bold values indicate that the 95\% CI does not overlap zero. $\beta_{\text{Diam}}$ has been adjusted for bias.}
+\end{table}
+
+<!--
 Gall midge preference influenced the probability of observing egg parasitoids in complex vs. simple food webs (contrast $\alpha_{\text{Pref}}$=
 `r round(filter(tidy_eggegg_alphas, type=="Diff", term=="sc.sqrt.Pref")$mean,2)` 
 [`r round(filter(tidy_eggegg_alphas, type=="Diff", term=="sc.sqrt.Pref")$conf.low,2)`,
@@ -371,7 +446,7 @@ Gall midge preference influenced the probability of observing egg parasitoids in
 `r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` 
 [`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
 `r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`]).
-
+-->
 
 ```{r EggPtoid_Selection, echo=FALSE, fig.pos="H", fig.cap="\\label{fig:EggPtoid_Selection}Selection imposed by larval parasitoids on the extended phenotype of egg parasitoids (*Platygaster* sp.). The bold line represents the average difference in the probability of observing the egg parasitoid in complex vs. simple food webs as a function of gall midge oviposition preference. Thin lines represent bootstrapped replicates to show the uncertainty in selection. For clarity, we only display 100 bootstraps even though inferences are based on 1,000 replicates. The decrease in the probability of observing egg parasitoids at high gall-midge densities indicate that larval parasitoids impose nonlinear selection on the extended phenotype of egg parasitoids."}
 knitr::include_graphics("analyses/selection_on_Platygaster.pdf")
