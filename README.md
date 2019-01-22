@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/108833263.svg)](https://zenodo.org/badge/latestdoi/108833263)
+
 # complexity_selection
 This repository contains data and code to reproduce analyses reported in the manuscript "Phenotypic evolution is more constrained in simpler food webs".
 
