@@ -421,32 +421,6 @@ $\gamma_{\text{Clutch,Pref}}$ &
 {\footnotesize Note: Values in brackets represent 95\% confidence intervals. Bold values indicate that the 95\% CI does not overlap zero. $\beta_{\text{Diam}}$ has been adjusted for bias.}
 \end{table}
 
-<!--
-Gall midge preference influenced the probability of observing egg parasitoids in complex vs. simple food webs (contrast $\alpha_{\text{Pref}}$=
-`r round(filter(tidy_eggegg_alphas, type=="Diff", term=="sc.sqrt.Pref")$mean,2)` 
-[`r round(filter(tidy_eggegg_alphas, type=="Diff", term=="sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_eggegg_alphas, type=="Diff", term=="sc.sqrt.Pref")$conf.high,2)`]
-). Specifically, larval parasitoids decreased the probability of observing egg parasitoids at high gall midge densities (fig. \ref{fig:EggPtoid_Selection}). Note however that this trait-fitness relationship did not translate into a significant difference in selection (contrast $\beta_{\text{Pref}}$=
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$mean,2)` 
-[`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.high,2)`]
-). This was likely because there was a tendency (albeit not statistically signficant) for a lower probability of egg-parasitoid survival in complex vs. simple food webs 
-(contrast=`r round(filter(tidy_eggegg_alphas, type=="Diff", term=="(Intercept)")$mean,2)` [
-`r round(filter(tidy_eggegg_alphas, type=="Diff", term=="(Intercept)")$conf.low,2)`,
-`r round(filter(tidy_eggegg_alphas, type=="Diff", term=="(Intercept)")$conf.high,2)`]), which masks this trait-fitness relationship. We also observed two other interesting trends, although neither significantly differed between treatments. Specifically, there was a tendency for the impact of larval parasitoids to increase nonlinearly at higher gall midge densities (fig. \ref{fig:EggPtoid_Selection}; complex $\alpha_{\text{Pref:Pref}}$=
-`r round(filter(tidy_eggegg_grads, type=="Complex", term=="I(sc.sqrt.Pref^2)")$mean,2)` 
-[`r round(filter(tidy_eggegg_grads, type=="Complex", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Complex", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`]; but contrast $\alpha_{\text{Pref:Pref}}$=
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$mean,2)` 
-[`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`]). There was also a tendency for egg parasitoids to obtain a refuge in large gall chambers at high gall midge densities (complex $\alpha_{\text{Pref:Diam}}$=
-`r round(filter(tidy_eggegg_grads, type=="Complex", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` 
-[`r round(filter(tidy_eggegg_grads, type=="Complex", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Complex", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`]; but contrast $\alpha_{\text{Pref:Diam}}$=
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` 
-[`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`]).
--->
 
 ```{r EggPtoid_Selection, echo=FALSE, fig.pos="H", fig.cap="\\label{fig:EggPtoid_Selection}Selection imposed by larval parasitoids on the extended phenotype of egg parasitoids (*Platygaster* sp.). The bold line represents the average difference in the probability of observing the egg parasitoid in complex vs. simple food webs as a function of gall midge oviposition preference. Thin lines represent bootstrapped replicates to show the uncertainty in selection. For clarity, we only display 100 bootstraps even though inferences are based on 1,000 replicates. The decrease in the probability of observing egg parasitoids at high gall-midge densities indicate that larval parasitoids impose nonlinear selection on the extended phenotype of egg parasitoids."}
 knitr::include_graphics("analyses/selection_on_Platygaster.pdf")
