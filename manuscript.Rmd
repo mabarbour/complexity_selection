@@ -352,7 +352,7 @@ Only gall midge preference influenced the probability of observing egg parasitoi
 \bigskip
 
 \begin{table}[h]
-\caption{Standardized selection gradients acting on the extended phenotype of the egg parasitoid \textit{Platygaster} sp.}
+\caption{Standardized selection gradients acting on the extended phenotype of egg parasitoids (\textit{Platygaster} sp.)}
 \label{Table:ExtendedGradients}
 \centering
 \begin{tabular}{lc}
