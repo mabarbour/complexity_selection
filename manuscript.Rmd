@@ -169,12 +169,12 @@ All analyses and visualizations were conducted in R [@R2018]. Unless otherwise n
 \indent We found that more gall midge traits experienced directional selection in the simple (3 of 3) vs. complex food-web treatment (1 of 3)(table \ref{Table:Gradients}). For example, we observed directional selection for smaller clutch sizes in the simple food web, but there was no evidence of selection acting on this trait in the complex food web (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}C). This absence of selection appeared to be a result of conflicting selection pressures imposed by each guild of parasitoids. Specifically, when we subset our data to focus on differences between parasitoid guilds, we found that larval parasitoids actually impose directional selection for larger clutch sizes ($\beta_{\text{Clutch}}$=
 `r round(filter(tidy_egglarval_grads, type=="Complex", term=="sc.log.Clutch")$mean,2)` 
 [`r round(filter(tidy_egglarval_grads, type=="Complex", term=="sc.log.Clutch")$conf.low,2)`,
-`r round(filter(tidy_egglarval_grads, type=="Complex", term=="sc.log.Clutch")$conf.high,2)`]). In the simple food web, we also observed clear evidence of directional selection for midges to avoid ovipositing on plants with high densities of conspecifics (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}B); however, this relationship was weaker in complex food webs (table \ref{Table:Gradients}). This was likely a result of larval parasitoids imposing greater mortality on egg parasitoids at high gall midge densities (see Selection on the extended phenotype of egg parasitoids section), and thus a less than additive effect on gall midges. Chamber diameter experienced positive directional selection in both food-web treatments, but selection was `r round(((filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam")$mean - filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$mean) / filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$mean) * 100, 0)`% higher in complex food webs (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}). This was not due to any difference between egg and larval parasitoids ($\beta_{Diam}$ contrast = 
-`r round(filter(tidy_egglarval_grads, type=="Diff", term=="sc.Diam")$mean,2)` [
-`r round(filter(tidy_egglarval_grads, type=="Diff", term=="sc.Diam")$conf.low,2)`,
-`r round(filter(tidy_egglarval_grads, type=="Diff", term=="sc.Diam")$conf.high,2)`]), but was due to the lower average survival in complex food webs (contrast `r round(filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$mean*-1, 2)`
-[`r round(filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$conf.low*-1, 2)`,
-`r round(filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$conf.high*-1, 2)`]). 
+`r round(filter(tidy_egglarval_grads, type=="Complex", term=="sc.log.Clutch")$conf.high,2)`]). In the simple food web, we also observed clear evidence of directional selection for midges to avoid ovipositing on plants with high densities of conspecifics (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}B); however, this relationship was weaker in complex food webs (table \ref{Table:Gradients}). This was likely a result of larval parasitoids imposing greater mortality on egg parasitoids at high gall midge densities (see Selection on the extended phenotype of egg parasitoids section), and thus a less than additive effect on gall midges. Chamber diameter experienced positive directional selection in both food-web treatments, but selection was `r round(((filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam")$mean - filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$mean) / filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$mean) * 100, 0)`% higher in complex food webs (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}). This was not due to any difference between egg and larval parasitoids ($\beta_{\text{Diam}}$ contrast = 
+`r round(-1*filter(tidy_egglarval_grads, type=="Diff", term=="sc.Diam")$mean,2)` [
+`r round(-1*filter(tidy_egglarval_grads, type=="Diff", term=="sc.Diam")$conf.low,2)`,
+`r round(-1*filter(tidy_egglarval_grads, type=="Diff", term=="sc.Diam")$conf.high,2)`]), but was due to the lower average survival in complex food webs ($\bar W$ contrast `r round(-1*filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$mean, 2)`
+[`r round(-1*filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$conf.low, 2)`,
+`r round(-1*filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$conf.high, 2)`]). 
 
 \bigskip
 
@@ -197,9 +197,9 @@ $\beta_{\text{Diam}}$ &
 `r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$conf.low,2)`,
 `r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam")$conf.high,2)`] }& 
 \textbf{
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam")$conf.high,2)`] }\\
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam")$mean,2)` [
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam")$conf.low,2)`,
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam")$conf.high,2)`] }\\
 
 $\beta_{\text{Clutch}}$ & 
 `r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.log.Clutch")$mean,2)` [
@@ -210,9 +210,9 @@ $\beta_{\text{Clutch}}$ &
 `r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.log.Clutch")$conf.low,2)`,
 `r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.log.Clutch")$conf.high,2)`] }& 
 \textbf{
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch")$conf.high,2)`] }\\
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch")$mean,2)` [
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch")$conf.low,2)`,
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch")$conf.high,2)`] }\\
 
 $\beta_{\text{Pref}}$ &
 `r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.sqrt.Pref")$mean,2)` [
@@ -223,9 +223,9 @@ $\beta_{\text{Pref}}$ &
 `r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.sqrt.Pref")$conf.low,2)`,
 `r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.sqrt.Pref")$conf.high,2)`] }& 
 
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.sqrt.Pref")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.high,2)`] \\
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="sc.sqrt.Pref")$mean,2)` [
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.low,2)`,
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.high,2)`] \\
 
 $\gamma_{\text{Diam,Diam}}$ &
 `r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.Diam^2)")$mean,2)` [
@@ -236,9 +236,9 @@ $\gamma_{\text{Diam,Diam}}$ &
 `r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.Diam^2)")$conf.low,2)`,
 `r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.Diam^2)")$conf.high,2)`] & 
 
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.Diam^2)")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.high,2)`] \\
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.Diam^2)")$mean,2)` [
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.low,2)`,
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.high,2)`] \\
 
 $\gamma_{\text{Clutch,Clutch}}$ & 
 `r round(filter(tidy_foodweb_grads, type=="Complex", term=="I(sc.log.Clutch^2)")$mean,2)` [
@@ -249,9 +249,9 @@ $\gamma_{\text{Clutch,Clutch}}$ &
 `r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.log.Clutch^2)")$conf.low,2)`,
 `r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.log.Clutch^2)")$conf.high,2)`] & 
 
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.high,2)`] \\
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$mean,2)` [
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.low,2)`,
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.high,2)`] \\
 
 $\gamma_{\text{Pref,Pref}}$ & 
 \textbf{
@@ -263,9 +263,9 @@ $\gamma_{\text{Pref,Pref}}$ &
 `r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
 `r round(filter(tidy_foodweb_grads, type=="Simple", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`] & 
 \textbf{
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`] }\\
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$mean,2)` [
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`] }\\
 
 $\gamma_{\text{Diam,Clutch}}$ & 
 `r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam:sc.log.Clutch")$mean,2)` [
@@ -276,9 +276,9 @@ $\gamma_{\text{Diam,Clutch}}$ &
 `r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam:sc.log.Clutch")$conf.low,2)`,
 `r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam:sc.log.Clutch")$conf.high,2)`] & 
 
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.high,2)`] \\
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$mean,2)` [
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.low,2)`,
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.high,2)`] \\
 
 $\gamma_{\text{Diam,Pref}}$ & 
 `r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` [
@@ -289,9 +289,9 @@ $\gamma_{\text{Diam,Pref}}$ &
 `r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
 `r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`] & 
 
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`] \\
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` [
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`] \\
 
 $\gamma_{\text{Clutch,Pref}}$ & 
 `r round(filter(tidy_foodweb_grads, type=="Complex", term=="sc.log.Clutch:sc.sqrt.Pref")$mean,2)` [
@@ -302,9 +302,9 @@ $\gamma_{\text{Clutch,Pref}}$ &
 `r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.low,2)`,
 `r round(filter(tidy_foodweb_grads, type=="Simple", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.high,2)`] & 
 
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$mean,2)` [
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.high,2)`] \\ 
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$mean,2)` [
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.low,2)`,
+`r round(-1*filter(tidy_foodweb_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.high,2)`] \\ 
 \hline
 \end{tabular}
 \bigskip{}
@@ -358,62 +358,62 @@ Only gall midge preference influenced the probability of observing egg parasitoi
 \begin{tabular}{lc}
 \\ 
 \hline
-\textbf{Selection gradient} & \textbf{Contrast}  \\ 
+\textbf{Selection gradient} & \textbf{Contrast = Complex - Simple}  \\ 
 \hline
 $\beta_{\text{Diam}}$ & 
 
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam")$mean,2)` [
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam")$conf.high,2)`] \\
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam")$mean,2)` [
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam")$conf.low,2)`,
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam")$conf.high,2)`] \\
 
 $\beta_{\text{Clutch}}$ & 
 
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch")$mean,2)` [
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch")$conf.high,2)`] \\
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch")$mean,2)` [
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch")$conf.low,2)`,
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch")$conf.high,2)`] \\
 
 $\beta_{\text{Pref}}$ &
 
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$mean,2)` [
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.high,2)`] \\
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$mean,2)` [
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.low,2)`,
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.high,2)`] \\
 
 $\gamma_{\text{Diam,Diam}}$ &
 
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.Diam^2)")$mean,2)` [
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.high,2)`] \\
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.Diam^2)")$mean,2)` [
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.low,2)`,
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.high,2)`] \\
 
 $\gamma_{\text{Clutch,Clutch}}$ & 
 
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$mean,2)` [
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.high,2)`] \\
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$mean,2)` [
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.low,2)`,
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.high,2)`] \\
 
 $\gamma_{\text{Pref,Pref}}$ & 
 
 \textbf{
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$mean,2)` [
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`] }\\
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$mean,2)` [
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`] }\\
 
 $\gamma_{\text{Diam,Clutch}}$ & 
 
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$mean,2)` [
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.high,2)`] \\
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$mean,2)` [
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.low,2)`,
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.high,2)`] \\
 
 $\gamma_{\text{Diam,Pref}}$ & 
 
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` [
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`] \\
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` [
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`] \\
 
 $\gamma_{\text{Clutch,Pref}}$ & 
 
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$mean,2)` [
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.high,2)`] \\ 
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$mean,2)` [
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.low,2)`,
+`r round(-1*filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.high,2)`] \\ 
 \hline
 \end{tabular}
 \bigskip{}
