@@ -49,7 +49,7 @@ no_genotypes <- dim(distinct(gall_selection.df, Genotype))[1]
 
 \bigskip
 
-<!-- Remove author info for double-blind peer review; Keep for bioRxiv submission -->
+<!-- Remove author info for double-blind peer review; Keep for bioRxiv submission 
 \begin{center} \large Matthew A. Barbour$^{1,2,\ast}$, Christopher J. Greyson-Gaito$^{2,3}$, Arezoo Sootodeh$^{2}$, Brendan Locke$^{4}$, Jordi Bascompte$^{1}$ \normalsize \end{center}
 
 \bigskip
@@ -65,7 +65,7 @@ no_genotypes <- dim(distinct(gall_selection.df, Genotype))[1]
 $^\ast$ Corresponding author; e-mail: matthew.barbour@ieu.uzh.ch
 
 \bigskip
-
+-->
 *Manuscript elements*: table 1, table 2, figure 1, figure 2, figure 3, figure 4. All figures should be printed in color.
 
 \bigskip
@@ -124,7 +124,7 @@ We setup our food-web manipulation across 128 plants soon after galls began deve
 
 ## Measuring Phenotypic Traits
 
-We collected data on three different traits that we expected to influence larval survival based on our previous work [@Barbour2016] and other work with gall midges [@Weis1983; @Heath2018]. First, we measured gall diameter as the size of each gall chamber to the nearest 0.01 mm at its maximum diameter (perpendicular to the direction of plant tissue growth). Our previous work has shown that larger galls are associated with higher survival [@Barbour2016]. Second, we measured clutch size by counting the number of chambers in each gall [@Weis1983; @Heath2018]. All larvae collected from the same multi-chambered gall were scored with the same clutch size. Third, we measured oviposition preference as the density of larvae observed on a plant in an independent survey. We did this by randomly sampling five branches per tree and counting the number of individual gall chambers (number of larvae). We then converted these counts to a measure of larval density per 100 shoots by counting the number of shoots on the last branch we sampled. All larvae collected from the same plant were scored with the same oviposition preference. Measuring larval densities on plants in the field is a common method for measuring oviposition preference [@Gripenberg2010]; however, caution must be taken in inferring 'preference' as larval densities can be influenced by processes other than preference [@Singer1986]. Fortunately, a couple features of our study system suggest that larval densities may be a good proxy for oviposition preference. For example, since our data comes from a randomized placement of plant genotypes in a common garden, there is no consistent bias in which plant genotypes females are exposed to while searching for oviposition sites. Also, egg predation is a minor source of mortality for galling insects in general [@Hawkins1997]; therefore, we do not expect any prior egg predation to bias our estimates of observed larval densities. 
+We collected data on three different traits that we expected to influence larval survival based on previous work in this system [@Barbour2016] and other work with gall midges [@Weis1983; @Heath2018]. First, we measured gall diameter as the size of each gall chamber to the nearest 0.01 mm at its maximum diameter (perpendicular to the direction of plant tissue growth). Previous work in this system has shown that larger galls are associated with higher survival [@Barbour2016]. Second, we measured clutch size by counting the number of chambers in each gall [@Weis1983; @Heath2018]. All larvae collected from the same multi-chambered gall were scored with the same clutch size. Third, we measured oviposition preference as the density of larvae observed on a plant in an independent survey. We did this by randomly sampling five branches per tree and counting the number of individual gall chambers (number of larvae). We then converted these counts to a measure of larval density per 100 shoots by counting the number of shoots on the last branch we sampled. All larvae collected from the same plant were scored with the same oviposition preference. Measuring larval densities on plants in the field is a common method for measuring oviposition preference [@Gripenberg2010]; however, caution must be taken in inferring 'preference' as larval densities can be influenced by processes other than preference [@Singer1986]. Fortunately, a couple features of our study system suggest that larval densities may be a good proxy for oviposition preference. For example, since our data comes from a randomized placement of plant genotypes in a common garden, there is no consistent bias in which plant genotypes females are exposed to while searching for oviposition sites. Also, egg predation is a minor source of mortality for galling insects in general [@Hawkins1997]; therefore, we do not expect any prior egg predation to bias our estimates of observed larval densities. 
 
 ## Quantifying the Adaptive Landscape
 
@@ -160,7 +160,7 @@ Rather than imposing selection, parasitoids may influence the expression of herb
 
 Once parasitized, the gall phenotype becomes the extended phenotype of the egg parasitoid. This extended phenotype may influence the egg parasitoid's survival in the face of larval parasitoids, and thus experiences selection. Our food-web manipulation allows us to measure selection imposed by larval parasitoids on the extended phenotype of egg parasitoids. Using the same models as described above, we substituted egg parasitism as our response variable to quantify trait-fitness relationships and selection gradients acting on the egg parasitoid. Note that we cannot test the effect of food-web complexity on the egg parasitoid's adaptive landscape ---we can only estimate the selection imposed by larval parasitoids. This comparison is still useful though in determining the extent to which the community context may have indirect evolutionary effects by altering selection on multiple interacting populations.
 
-All analyses and visualizations were conducted in R [@R2018]. Unless otherwise noted, we report mean estimates of trait-fitness relationships and selection gradients with 95% confidence intervals in brackets. Note that for visualizing the adaptive landscape we restrict trait axes to $\pm 1$ SD of the mean trait value. This emphasizes the fact that we can only reliably estimate the shape of the adaptive landscape near the mean phenotype of the population [@Arnold2001]. We also plot mean larval survival on a natural log scale to accurately reflect the mathematical definition of the adaptive landscape [@Arnold2003]. All data and code to reproduce the reported results are publically available on GitHub (https://github.com/mabarbour/complexity_selection) and have been archived on Zenodo (https://zenodo.org/badge/latestdoi/108833263).
+All analyses and visualizations were conducted in R [@R2018]. Unless otherwise noted, we report mean estimates of trait-fitness relationships and selection gradients with 95% confidence intervals in brackets. Note that for visualizing the adaptive landscape we restrict trait axes to $\pm 1$ SD of the mean trait value. This emphasizes the fact that we can only reliably estimate the shape of the adaptive landscape near the mean phenotype of the population [@Arnold2001]. We also plot mean larval survival on a natural log scale to accurately reflect the mathematical definition of the adaptive landscape [@Arnold2003]. All data and code to reproduce the reported results are publically available on GitHub <!--(https://github.com/mabarbour/complexity_selection)-->and have been archived on Zenodo (links are available from the journal office)<!--(https://zenodo.org/badge/latestdoi/108833263)-->.
 
 # Results 
 
@@ -450,11 +450,11 @@ There is a growing number of theoretical studies on adaptation to directional en
 <!-- Conclusions -->
 Our study gives insight to how local extinctions, and concomitant decreases in food-web complexity, increase evolutionary constraints. This hints at a potential insidious effect of local extinctions that compromises the robustness of remaining populations to future environmental change. Our work also highlights some key challenges for predicting phenotypic evolution in the face of global change. First, the simplification of ecological communities may actually reduce the predictability of phenotypic evolution, because knowledge is required of both selective and genetic constraints, rather than potentially just genetic constraints in more complex systems. Second, many theoretical models of eco-evolutionary dynamics focus on phenotypic change in a single trait, yet our results highlight that the number of traits under selection may change with the community context. Importantly, while the net effects of selection in complex communities may be dampened, we still found that different species/guilds imposed different selection pressures. Knowing these hidden selection pressures is critical for prediction, because the trajectory of evolution will depend on the nature of change in the community context. We expect that a continued integration of adaptive landscapes and ecological networks will enhance our ability to predict the evolutionary consequences of changes in ecological communities. 
 
-<!-- Remove for double-blind peer review process-->
+<!-- Remove for double-blind peer review process
 # Acknowledgements
 
 We thank the staff of Humboldt Bay National Wildlife Refuge (U.S. Fish and Wildlife Service) for facilitating experimental logistics. For assistance with fieldwork, we thank Ruthie Espanol and Andrew MacDonald. For funding support, we thank the University of British Columbia (James Robert Thompson Fellowship and Four-Year Fellowship to M.A. Barbour), NSERC (Discovery grant to Greg Crutsinger), and the Swiss National Science Foundation (grant 31003A_160671 to J. Bascompte). 
-
+-->
 <!-- TABLE NOT REFERENCED IN RESULTS
 
 \begin{table}[h]
