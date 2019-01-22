@@ -450,11 +450,10 @@ There is a growing number of theoretical studies on adaptation to directional en
 <!-- Conclusions -->
 Our study gives insight to how local extinctions, and concomitant decreases in food-web complexity, increase evolutionary constraints. This hints at a potential insidious effect of local extinctions that compromises the robustness of remaining populations to future environmental change. Our work also highlights some key challenges for predicting phenotypic evolution in the face of global change. First, the simplification of ecological communities may actually reduce the predictability of phenotypic evolution, because knowledge is required of both selective and genetic constraints, rather than potentially just genetic constraints in more complex systems. Second, many theoretical models of eco-evolutionary dynamics focus on phenotypic change in a single trait, yet our results highlight that the number of traits under selection may change with the community context. Importantly, while the net effects of selection in complex communities may be dampened, we still found that different species/guilds imposed different selection pressures. Knowing these hidden selection pressures is critical for prediction, because the trajectory of evolution will depend on the nature of change in the community context. We expect that a continued integration of adaptive landscapes and ecological networks will enhance our ability to predict the evolutionary consequences of changes in ecological communities. 
 
-<!-- Remove for double-blind peer review process
+<!-- Remove for double-blind peer review process-->
 # Acknowledgements
 
 We thank the staff of Humboldt Bay National Wildlife Refuge (U.S. Fish and Wildlife Service) for facilitating experimental logistics. For assistance with fieldwork, we thank Ruthie Espanol and Andrew MacDonald. For funding support, we thank the University of British Columbia (James Robert Thompson Fellowship and Four-Year Fellowship to M.A. Barbour), NSERC (Discovery grant to Greg Crutsinger), and the Swiss National Science Foundation (grant 31003A_160671 to J. Bascompte). 
--->
 
 <!-- TABLE NOT REFERENCED IN RESULTS
 
