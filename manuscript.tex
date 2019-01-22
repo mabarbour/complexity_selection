@@ -144,8 +144,8 @@ Sciences, Arcata, CA 95521, USA.
 
 \bigskip
 
-\emph{Manuscript elements}: table 1, figure 1, figure 2, figure 3,
-figure 4. All figures should be printed in color.
+\emph{Manuscript elements}: table 1, table 2, figure 1, figure 2, figure
+3, figure 4. All figures should be printed in color.
 
 \bigskip
 
@@ -154,7 +154,7 @@ eco-evolutionary dynamics, natural selection, host-parasitoid.
 
 \bigskip
 
-\emph{Number of words}: 5075
+\emph{Number of words}: 5069
 
 \bigskip
 
@@ -299,7 +299,7 @@ National Wildlife Refuge (HBNWR) (40 40'53``N, 124 12'4''W) near Loleta,
 California, USA. This common garden consists of 26 different willow
 genotypes that were collected from a single population of willows
 growing around Humboldt Bay. Stem cuttings of each genotype (25
-replicates per genotypes) were planted in a completely randomized design
+replicates per genotype) were planted in a completely randomized design
 in two hectares of a former cattle pasture at HBNWR. Willows at our
 study site begin flowering in February and reach their peak growth in
 early August. During this study, willows had reached 5 - 9m in height.
@@ -362,8 +362,8 @@ on plants in the field is a common method for measuring oviposition
 preference \citep{Gripenberg2010}; however, caution must be taken in
 inferring `preference' as larval densities can be influenced by
 processes other than preference \citep{Singer1986}. Fortunately, a
-couple of features of our study system suggest that larval densities may
-be a good proxy for oviposition preference. For example, since our data
+couple features of our study system suggest that larval densities may be
+a good proxy for oviposition preference. For example, since our data
 comes from a randomized placement of plant genotypes in a common garden,
 there is no consistent bias in which plant genotypes females are exposed
 to while searching for oviposition sites. Also, egg predation is a minor
@@ -374,7 +374,7 @@ estimates of observed larval densities.
 \subsection{Quantifying the Adaptive
 Landscape}\label{quantifying-the-adaptive-landscape}
 
-Our analyses consisted of three parts. First, we used generalized linear
+Our analysis consisted of three parts. First, we used generalized linear
 mixed models (GLMM) to quantify selection surfaces \textemdash linear
 and nonlinear relationships between absolute fitness (\(W\)) and
 phenotypic traits (\(z_i\)) of individuals \textemdash in each food-web
@@ -525,7 +525,10 @@ fact that we can only reliably estimate the shape of the adaptive
 landscape near the mean phenotype of the population \citep{Arnold2001}.
 We also plot mean larval survival on a natural log scale to accurately
 reflect the mathematical definition of the adaptive landscape
-\citep{Arnold2003}.
+\citep{Arnold2003}. All data and code to reproduce the reported results
+are publically available on GitHub
+(\url{https://github.com/mabarbour/complexity_selection}) and have been
+archived on Zenodo (\url{https://zenodo.org/badge/latestdoi/108833263}).
 
 \section{Results}\label{results}
 
@@ -539,14 +542,13 @@ selection for smaller clutch sizes in the simple food web, but there was
 no evidence of selection acting on this trait in the complex food web
 (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}C). This
 absence of selection appeared to be a result of conflicting selection
-pressures imposed by each guild of parasitoids (fig.
-\ref{fig:UV_Landscape}). Specifically, when we subset our data to focus
-on differences between parasitoid guilds, we found that larval
-parasitoids actually impose directional selection for larger clutch
-sizes (\(\beta_{\text{Clutch}}\)= 0.13 {[}0.04, 0.24{]}). In the simple
-food web, we also observed clear evidence of directional selection for
-midges to avoid ovipositing on plants with high densities of
-conspecifics (table \ref{Table:Gradients}; fig.
+pressures imposed by each guild of parasitoids. Specifically, when we
+subset our data to focus on differences between parasitoid guilds, we
+found that larval parasitoids actually impose directional selection for
+larger clutch sizes (\(\beta_{\text{Clutch}}\)= 0.13 {[}0.04, 0.24{]}).
+In the simple food web, we also observed clear evidence of directional
+selection for midges to avoid ovipositing on plants with high densities
+of conspecifics (table \ref{Table:Gradients}; fig.
 \ref{fig:UV_Landscape}B); however, this relationship was weaker in
 complex food webs (table \ref{Table:Gradients}). This was likely a
 result of larval parasitoids imposing greater mortality on egg
@@ -556,9 +558,9 @@ effect on gall midges. Chamber diameter experienced positive directional
 selection in both food-web treatments, but selection was 66\% higher in
 complex food webs (table \ref{Table:Gradients}; fig.
 \ref{fig:UV_Landscape}). This was not due to any difference between egg
-and larval parasitoids (fig. \ref{fig:UV_Landscape}), but was due to the
-lower average survival in complex food webs (contrast -0.27 {[}-0.11,
--0.42{]}).
+and larval parasitoids (\(\beta_{\text{Diam}}\) contrast = 0.01 {[}
+0.15, -0.11{]}), but was due to the lower average survival in complex
+food webs (\(\bar W\) contrast -0.27 {[}-0.11, -0.42{]}).
 
 \bigskip
 
@@ -580,10 +582,10 @@ $\beta_{\text{Diam}}$ &
 0.21 [
 0.12,
 0.31] }& 
-
--0.14 [
--0.27,
-0] \\
+\textbf{
+0.14 [
+0.27,
+0] }\\
 
 $\beta_{\text{Clutch}}$ & 
 0.06 [
@@ -594,9 +596,9 @@ $\beta_{\text{Clutch}}$ &
 -0.17,
 -0.01] }& 
 \textbf{
--0.15 [
--0.29,
--0.03] }\\
+0.15 [
+0.29,
+0.03] }\\
 
 $\beta_{\text{Pref}}$ &
 -0.13 [
@@ -607,9 +609,9 @@ $\beta_{\text{Pref}}$ &
 -0.26,
 -0.06] }& 
 
--0.03 [
--0.21,
-0.15] \\
+0.03 [
+0.21,
+-0.15] \\
 
 $\gamma_{\text{Diam,Diam}}$ &
 0.13 [
@@ -620,9 +622,9 @@ $\gamma_{\text{Diam,Diam}}$ &
 -0.02,
 0.23] & 
 
--0.03 [
--0.27,
-0.2] \\
+0.03 [
+0.27,
+-0.2] \\
 
 $\gamma_{\text{Clutch,Clutch}}$ & 
 -0.05 [
@@ -633,9 +635,9 @@ $\gamma_{\text{Clutch,Clutch}}$ &
 -0.28,
 0.03] & 
 
--0.06 [
--0.32,
-0.2] \\
+0.06 [
+0.32,
+-0.2] \\
 
 $\gamma_{\text{Pref,Pref}}$ & 
 \textbf{
@@ -647,9 +649,9 @@ $\gamma_{\text{Pref,Pref}}$ &
 -0.14,
 0.18] & 
 \textbf{
--0.32 [
--0.64,
--0.01] }\\
+0.32 [
+0.64,
+0.01] }\\
 
 $\gamma_{\text{Diam,Clutch}}$ & 
 -0.04 [
@@ -660,9 +662,9 @@ $\gamma_{\text{Diam,Clutch}}$ &
 -0.15,
 0.02] & 
 
--0.02 [
--0.17,
-0.12] \\
+0.02 [
+0.17,
+-0.12] \\
 
 $\gamma_{\text{Diam,Pref}}$ & 
 -0.13 [
@@ -673,9 +675,9 @@ $\gamma_{\text{Diam,Pref}}$ &
 -0.1,
 0.07] & 
 
-0.12 [
--0.05,
-0.3] \\
+-0.12 [
+0.05,
+-0.3] \\
 
 $\gamma_{\text{Clutch,Pref}}$ & 
 0.03 [
@@ -686,9 +688,9 @@ $\gamma_{\text{Clutch,Pref}}$ &
 -0.07,
 0.07] & 
 
--0.03 [
--0.18,
-0.12] \\ 
+0.03 [
+0.18,
+-0.12] \\ 
 \hline
 \end{tabular}
 \bigskip{}
@@ -774,40 +776,95 @@ Each panel corresponds to a different combination of phenotypic traits:
 clutch size and chamber diameter (A); clutch size and oviposition
 preference (B); oviposition preference and chamber diameter (C). Arrows
 represent mean estimates of directional selection gradients, while
-contours represent predicted larval survival of the mean phenotype
-(i.e., all traits = 0) in each food-web treatment. Notice that arrows
-point more toward a corner of the adaptive landscape for each
-combination of traits in the simple vs.~complex food-web treatment. This
-indicates that trait integration (covariance) is more strongly favored
-in simpler vs.~more complex food webs. Note that mean larval survival is
-plotted on a natural log scale to reflect the mathematical definition of
-the adaptive landscape.}
+contours represent predicted larval survival of the mean phenotype in
+each food-web treatment. Notice that arrows point more toward a corner
+of the adaptive landscape for each combination of traits in the simple
+vs.~complex food-web treatment. This indicates that trait integration
+(covariance) is more strongly favored in simpler vs.~more complex food
+webs. Note that mean larval survival is plotted on a natural log scale
+to reflect the mathematical definition of the adaptive landscape.}
 \end{figure}
 
 \subsection{Selection on the extended phenotype of egg
 parasitoids}\label{selection-on-the-extended-phenotype-of-egg-parasitoids}
 
-Gall midge preference influenced the probability of observing egg
-parasitoids in complex vs.~simple food webs (contrast
-\(\alpha_{\text{Pref}}\)= 1.03 {[}0.04, 2.31{]} ). Specifically, larval
-parasitoids decreased the probability of observing egg parasitoids at
-high gall midge densities (fig. \ref{fig:EggPtoid_Selection}). Note
-however that this trait-fitness relationship did not translate into a
-significant difference in selection (contrast \(\beta_{\text{Pref}}\)=
-0.25 {[}-0.09, 0.64{]} ). This was likely because there was a tendency
-(albeit not statistically signficant) for a lower probability of
-egg-parasitoid survival in complex vs.~simple food webs (contrast=0.1
-{[} -0.09, 0.32{]}), which masks this trait-fitness relationship. We
-also observed two other interesting trends, although neither
-significantly differed between treatments. Specifically, there was a
-tendency for the impact of larval parasitoids to increase nonlinearly at
-higher gall midge densities (fig. \ref{fig:EggPtoid_Selection}; complex
-\(\alpha_{\text{Pref:Pref}}\)= -0.49 {[}-1.04, -0.13{]}; but contrast
-\(\alpha_{\text{Pref:Pref}}\)= 0.46 {[}0.02, 1.07{]}). There was also a
-tendency for egg parasitoids to obtain a refuge in large gall chambers
-at high gall midge densities (complex \(\alpha_{\text{Pref:Diam}}\)=
-0.25 {[}0.01, 0.54{]}; but contrast \(\alpha_{\text{Pref:Diam}}\)= -0.25
-{[}-0.6, 0.05{]}).
+Only gall midge preference influenced the probability of observing egg
+parasitoids in complex vs.~simple food webs (table
+\ref{Table:ExtendedGradients}). Specifically, the impact of larval
+parasitoids increased nonlinearly with higher gall midge densities (fig.
+\ref{fig:EggPtoid_Selection}).
+
+\bigskip
+
+\begin{table}[h]
+\caption{Standardized selection gradients acting on the extended phenotype of egg parasitoids (\textit{Platygaster} sp.)}
+\label{Table:ExtendedGradients}
+\centering
+\begin{tabular}{lc}
+\\ 
+\hline
+\textbf{Selection gradient} & \textbf{Contrast = Complex - Simple}  \\ 
+\hline
+$\beta_{\text{Diam}}$ & 
+
+-0.03 [
+0.25,
+-0.3] \\
+
+$\beta_{\text{Clutch}}$ & 
+
+0.07 [
+0.38,
+-0.26] \\
+
+$\beta_{\text{Pref}}$ &
+
+-0.25 [
+0.09,
+-0.64] \\
+
+$\gamma_{\text{Diam,Diam}}$ &
+
+-0.05 [
+0.33,
+-0.43] \\
+
+$\gamma_{\text{Clutch,Clutch}}$ & 
+
+-0.21 [
+0.26,
+-0.68] \\
+
+$\gamma_{\text{Pref,Pref}}$ & 
+
+\textbf{
+-0.46 [
+-0.02,
+-1.07] }\\
+
+$\gamma_{\text{Diam,Clutch}}$ & 
+
+0 [
+0.27,
+-0.29] \\
+
+$\gamma_{\text{Diam,Pref}}$ & 
+
+0.25 [
+0.6,
+-0.05] \\
+
+$\gamma_{\text{Clutch,Pref}}$ & 
+
+-0.18 [
+0.12,
+-0.52] \\ 
+\hline
+\end{tabular}
+\bigskip{}
+\\
+{\footnotesize Note: Values in brackets represent 95\% confidence intervals. Bold values indicate that the 95\% CI does not overlap zero. $\beta_{\text{Diam}}$ has been adjusted for bias.}
+\end{table}
 
 \begin{figure}
 \centering
@@ -894,8 +951,8 @@ though, the effect of food-web complexity will depend on whether
 different species impose conflicting selection pressures or select for
 distinct traits. For example, parisitoids and birds impose conflicting
 selection pressures on the size of galls induced by the fly
-\emph{Eurosta solidaginis} \citep{Weis1985, Abrahamson1997, Start2016}.
-Recent studies in this system have shown that decreases in the relative
+\emph{Eurosta solidaginis} \citep{Weis1985, Abrahamson1997}. Recent
+studies in this system have shown that decreases in the relative
 abundance of birds, due to either small patch sizes \citep{Start2016} or
 proximity to urban areas \citep{Start2018} causes a shift from neutral
 to directional selection on gall size. On the other hand, different
