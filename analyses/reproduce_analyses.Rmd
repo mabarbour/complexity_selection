@@ -456,6 +456,77 @@ tidy_foodweb_grads %>%
 
 \  
 
+```{r Curvature, echo=FALSE}
+# Calculate curvatures for complex food web
+foodweb_complex_raw_curvs <- foodweb_complex_raw_gradients %>%
+  transmute(`FoodwebComplex:C.Diam` = `FoodwebComplex:I(sc.Diam^2)` - `FoodwebComplex:sc.Diam`*`FoodwebComplex:sc.Diam`,
+         `FoodwebComplex:C.Clutch` = `FoodwebComplex:I(sc.log.Clutch^2)` - `FoodwebComplex:sc.log.Clutch`*`FoodwebComplex:sc.log.Clutch`,
+         `FoodwebComplex:C.Pref` = `FoodwebComplex:I(sc.sqrt.Pref^2)` - `FoodwebComplex:sc.sqrt.Pref`*`FoodwebComplex:sc.sqrt.Pref`,
+         `FoodwebComplex:C.Diam:Clutch` = `FoodwebComplex:sc.Diam:sc.log.Clutch` - `FoodwebComplex:sc.Diam`*`FoodwebComplex:sc.log.Clutch`,
+         `FoodwebComplex:C.Diam:Pref` = `FoodwebComplex:sc.Diam:sc.sqrt.Pref` - `FoodwebComplex:sc.Diam`*`FoodwebComplex:sc.sqrt.Pref`,
+         `FoodwebComplex:C.Clutch:Pref` = `FoodwebComplex:sc.log.Clutch:sc.sqrt.Pref` - `FoodwebComplex:sc.log.Clutch`*`FoodwebComplex:sc.sqrt.Pref`)
+
+# Calculate curvatures for simple food web
+foodweb_simple_raw_curvs <- foodweb_simple_raw_gradients %>%
+  transmute(`FoodwebSimple:C.Diam` = `FoodwebSimple:I(sc.Diam^2)` - `FoodwebSimple:sc.Diam`*`FoodwebSimple:sc.Diam`,
+         `FoodwebSimple:C.Clutch` = `FoodwebSimple:I(sc.log.Clutch^2)` - `FoodwebSimple:sc.log.Clutch`*`FoodwebSimple:sc.log.Clutch`,
+         `FoodwebSimple:C.Pref` = `FoodwebSimple:I(sc.sqrt.Pref^2)` - `FoodwebSimple:sc.sqrt.Pref`*`FoodwebSimple:sc.sqrt.Pref`,
+         `FoodwebSimple:C.Diam:Clutch` = `FoodwebSimple:sc.Diam:sc.log.Clutch` - `FoodwebSimple:sc.Diam`*`FoodwebSimple:sc.log.Clutch`,
+         `FoodwebSimple:C.Diam:Pref` = `FoodwebSimple:sc.Diam:sc.sqrt.Pref` - `FoodwebSimple:sc.Diam`*`FoodwebSimple:sc.sqrt.Pref`,
+         `FoodwebSimple:C.Clutch:Pref` = `FoodwebSimple:sc.log.Clutch:sc.sqrt.Pref` - `FoodwebSimple:sc.log.Clutch`*`FoodwebSimple:sc.sqrt.Pref`)
+         
+
+# Calculate differences between food-web treatments, then estimate means and confidence intervals
+foodweb_curvs <- bind_cols(foodweb_complex_raw_curvs, foodweb_simple_raw_curvs) %>%
+  mutate(`FoodwebDiff:C.Diam` = `FoodwebSimple:C.Diam` - `FoodwebComplex:C.Diam`,
+         `FoodwebDiff:C.Clutch` = `FoodwebSimple:C.Clutch` - `FoodwebComplex:C.Clutch`,
+         `FoodwebDiff:C.Pref` = `FoodwebSimple:C.Pref` - `FoodwebComplex:C.Pref`,
+         `FoodwebDiff:C.Diam:Clutch` = `FoodwebSimple:C.Diam:Clutch` - `FoodwebComplex:C.Diam:Clutch`,
+         `FoodwebDiff:C.Diam:Pref` = `FoodwebSimple:C.Diam:Pref` - `FoodwebComplex:C.Diam:Pref`,
+         `FoodwebDiff:C.Clutch:Pref` = `FoodwebSimple:C.Clutch:Pref` - `FoodwebComplex:C.Clutch:Pref`) %>%
+  summarise_all(funs(mean, conf.high, conf.low))
+
+
+# Tidy up estimates
+tidy_foodweb_curvs <- foodweb_curvs %>%
+  t() %>%
+  as.data.frame() %>%
+  transmute(rows = rownames(.), value=V1) %>%
+  separate(col = rows, into = c("term","estimate"), sep="_") %>%
+  separate(col = term, into = c("type","term_1","term_2"), sep=":", extra="drop") %>%
+  mutate(term = ifelse(is.na(term_2), term_1, paste(term_1,term_2,sep=":"))) %>%
+  separate(col = type, into = c("extra","type"), sep = 7) %>%
+  select(type, term, estimate, value) %>%
+  spread(estimate, value) %>%
+  mutate(P_cutoff = ifelse(conf.high*conf.low < 0, "","*"))#,
+         #gradient_type = ifelse(grepl("\\^2", .$term)==TRUE, "Quadratic",
+         #                       ifelse(grepl(":", .$term)==TRUE, "Correlational","Directional")),
+         #mean = ifelse(gradient_type=="Quadratic", 2*mean, mean),
+         #conf.low = ifelse(gradient_type=="Quadratic", 2*conf.low, conf.low),
+         #conf.high = ifelse(gradient_type=="Quadratic", 2*conf.high, conf.high))
+```
+
+\ 
+
+```{r Table of food web curvatures, echo=FALSE}
+tidy_foodweb_curvs %>%
+  filter(type != "Diff") %>%
+  select(term, type, mean, conf.low, conf.high, P_cutoff) %>%
+  mutate(mean = round(mean, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%
+knitr::kable(., caption = "Table of curvatures on gall traits in each food-web treatment.")
+```
+
+\  
+
+```{r Table of differences in curvatures between food-web treatments, echo=FALSE}
+tidy_foodweb_curvs %>%
+  filter(type == "Diff") %>%
+  select(term, mean, conf.low, conf.high, P_cutoff) %>%
+  mutate(mean = round(mean, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%
+  knitr::kable(., caption = "Table of differences in curvatures on gall traits between food-web treatment.")
+```
+
+
 Now visualize the table output as a figure.
 
 ```{r Plot food-web gradients, fig.cap="Plot of selection gradients in each food-web treatment. Asterisks denote significant differences (*P* < 0.05) between food-web treatments."}
