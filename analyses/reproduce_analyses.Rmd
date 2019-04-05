@@ -206,6 +206,7 @@ foodweb_model <- glmer(
   family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
 summary(foodweb_model)
 car::vif(foodweb_model) # higher VIF than I anticipated
+car::vif(foodweb_model) 
 ```
 
 
