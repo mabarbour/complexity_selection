@@ -107,7 +107,21 @@ Read and tidy data for analyses.
 
 ```{r read and tidy data}
 
-gall_selection.df <- read_csv("../data/gall_selection_manuscript_dataset.csv") %>%
+full_df <- read_csv("../data/gall_selection_manuscript_dataset.csv") %>%
+  mutate(gall_survival = as.numeric(ifelse(pupa > 0, 1, 0)), # there were a couple of times where two pupa were found in a single chamber. I set these to 1 to permit an analysis with a binomial model
+         egg.ptoid = as.numeric(ifelse(egg.ptoid > 0, 1, 0)), # there were a couple occassions where two egg parasitoids were found in a single chamber. I set these to 1 to permit an analysis with a binomial model.
+         unknown_mortality = ifelse(rowSums(select(., pupa:early.larval.death)) < 1, 1, 0))
+
+# all sources of mortality
+mean(full_df$gall_survival) + mean(full_df$egg.ptoid) + mean(full_df$larval.ptoid) + mean(full_df$early.larval.death) + mean(full_df$unknown_mortality)
+
+mean(full_df$gall_survival) # 40% survival
+mean(full_df$egg.ptoid) # 26% egg parasitism
+mean(full_df$larval.ptoid) # 11% larval parasitism
+mean(full_df$early.larval.death) # 17% early larval death
+mean(full_df$unknown_mortality) # 7% unknown
+
+gall_selection.df <- full_df %>%
   # convert appropriate variables to characters instead of integers
   mutate(Plant_Position = as.character(Plant_Position),
          Gall_Number = as.character(Gall_Number)) %>%
