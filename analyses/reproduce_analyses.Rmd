@@ -1011,7 +1011,8 @@ uni_breaks <- c(0.1,0.5,1.0)
 AF_uni_Diam <- RF_Diam$absolute_fitness %>% 
   select(-sc.log.Clutch, -sc.sqrt.Pref) %>%
   gather(ID, absolute_fitness, -sc.Diam, -Foodweb) %>%
-  mutate(ID_group = ifelse(ID == "average", "average", "replicate")) %>% 
+  mutate(ID_group = ifelse(ID == "average", "average", "replicate"),
+         Foodweb = factor(ifelse(Foodweb == "Complex", "Intact", "Extinction"), levels = c("Intact", "Extinction"))) %>% 
   ggplot(., aes(x=sc.Diam, y=absolute_fitness, group=interaction(ID,Foodweb), color=Foodweb, alpha=ID_group, size=ID_group)) +
   geom_line() +
   scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
@@ -1227,15 +1228,20 @@ my_breaks <- c(0.2,0.4,0.6,0.8)
 breaks <- predict(foodweb_model, newdata=data.frame(sc.Diam = c(0,0), sc.log.Clutch = c(0,0), sc.sqrt.Pref = c(0,0), Foodweb = c("Complex","Simple")), type="response", re.form=~0)
 names(breaks) <- c("Complex","Simple")
 
+labels_2D <- list("Complex"="Intact", "Simple"="Extinction")
+labeller_2D <- function(variable, value) {
+  return(labels_2D[value])
+}
+
 # Size x Clutch
-AF_plot_Diam.Clutch <- RF_Diam.Clutch$absolute_fitness %>% 
+AF_plot_Diam.Clutch <- RF_Diam.Clutch$absolute_fitness %>%
   filter(Foodweb == "Complex") %>%
   ggplot(., aes(x=sc.Diam, y=sc.log.Clutch)) +
   geom_raster(aes(fill=average)) +
   stat_contour(aes(z = average), breaks = breaks["Complex"], linetype = "dotted", color = "black") +
   geom_raster(data = filter(RF_Diam.Clutch$absolute_fitness, Foodweb == "Simple"), aes(fill=average)) +
   stat_contour(data = filter(RF_Diam.Clutch$absolute_fitness, Foodweb == "Simple"), aes(z = average), breaks = breaks["Simple"], linetype = "dotted", color = "black") +
-  facet_wrap(~Foodweb) +
+  facet_wrap(~Foodweb, labeller = labeller_2D) +
   xlab("Gall diameter (SDs)") +
   ylab("Clutch size (SDs)") +
   scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
@@ -1252,7 +1258,7 @@ AF_plot_Diam.Pref <- RF_Diam.Pref$absolute_fitness %>%
   stat_contour(aes(z = average), breaks = breaks["Complex"], linetype = "dotted", color = "black") +
   geom_raster(data = filter(RF_Diam.Pref$absolute_fitness, Foodweb == "Simple"), aes(fill=average)) +
   stat_contour(data = filter(RF_Diam.Pref$absolute_fitness, Foodweb == "Simple"), aes(z = average), breaks = breaks["Simple"], linetype = "dotted", color = "black") +
-  facet_wrap(~Foodweb) +
+  facet_wrap(~Foodweb, labeller = labeller_2D) +
   xlab("Chamber diameter (SDs)") +
   ylab("Oviposition preference (SDs)") +
   scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
@@ -1269,7 +1275,7 @@ AF_plot_Clutch.Pref <- RF_Clutch.Pref$absolute_fitness %>%
   stat_contour(aes(z = average), breaks = breaks["Complex"], linetype = "dotted", color = "black") +
   geom_raster(data = filter(RF_Clutch.Pref$absolute_fitness, Foodweb == "Simple"), aes(fill=average)) +
   stat_contour(data = filter(RF_Clutch.Pref$absolute_fitness, Foodweb == "Simple"), aes(z = average), breaks = breaks["Simple"], linetype = "dotted", color = "black") +
-  facet_wrap(~Foodweb) +
+  facet_wrap(~Foodweb, labeller = labeller_2D) +
   xlab("Oviposition preference (SDs)") +
   ylab("Clutch size (SDs)") +
   scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
@@ -1816,7 +1822,7 @@ eggptoid_selection_plot <- eggptoid_plot_df %>%
   scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
   scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
   xlab("Gall midge preference (SDs)") + 
-  ylab(expression(paste(Delta," egg parasitoid survival (complex - simple)"))) +
+  ylab(expression(paste(Delta," egg parasitoid survival (intact - extinction)"))) +
   scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
   geom_hline(yintercept=0, linetype="dotted") +
   theme_cowplot(font_size = 12)
