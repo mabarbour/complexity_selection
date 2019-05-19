@@ -1,25 +1,23 @@
 ---
-title: "Reproduce analyses reported in: *Phenotypic evolution is more constrained in simpler food webs*"
-author: "Matthew A. Barbour"
+title: "Consumer extinctions constrain phenotypic evolution in the resulting food web"
+subtitle: "Supplementary information"
+author: "Code author: Matthew A. Barbour"
 date: "`r Sys.Date()`"
-output:  
-  prettydoc::html_pretty:
-    theme: architect
-    highlight: github
-fontsize: 11pt
+output: 
+  tufte::tufte_html:
+    toc: true
+#fontsize: 11pt
 ---
 
-## Setup
+This document presents a hybrid summary of the code used to reproduce these analyses. It is intended to give the reader a higher-level picture of the analyses, but does not display more minor code related to aesthetics. The underlying code for this document is provided in *reproduce_analyses.Rmd* and is available at https://github.com/mabarbour/complexity_selection. 
 
-Suppress messages, warnings, and errors for document aesthetics.
-
-```{r setup}
-knitr::opts_chunk$set(message=FALSE, warning=FALSE, error=FALSE)
+```{r setup, include=FALSE}
+# Suppress messages, warnings, and errors for document aesthetics.
+knitr::opts_chunk$set(message=FALSE, warning=FALSE, error=FALSE, echo=FALSE, dev="png")
 ```
 
-Load required libraries.
-
 ```{r required libraries, results='hide'}
+# Load required libraries.
 library(car)        # for homogeneity of variance test
 library(tidyverse)  # for managing data
 library(cowplot)    # pretty default ggplots
@@ -31,9 +29,9 @@ library(stringr)
 library(MVN)        # assessing multivariate normality assumption
 ```
 
-Write custom functions to avoid repetitive code.
-
 ```{r custom functions}
+## Write custom functions to avoid repetitive code.
+
 # Transform logit to probability
 inverse_logit <- function(x) exp(x)/(1+exp(x))
 
@@ -88,13 +86,15 @@ bootstrap_fitness <- function(logistic_model, newdata, bootstraps, intervals=c(0
 }
 ```
 
-Set parameters for analyses and plots.
+Set number of bootstrap replicates for analyses and plots.
 
-```{r set parameters}
-# Number of bootstrap replicates
+```{r set parameters, echo=TRUE}
 n_boots_analysis <- 1000
 n_boots_plots <- 100
+```
 
+
+```{r color palette}
 # Color-blind friendly palette: http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/; 
 # order: orange, light blue, green, yellow, dark blue, red, pink
 cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#000000", "#999999")
@@ -103,23 +103,14 @@ simple_color <- cbPalette[5]
 treatment_colors <- c(complex_color, simple_color)
 ```
 
-Read and tidy data for analyses.
 
 ```{r read and tidy data}
+## Read and tidy data for analyses.
 
 full_df <- read_csv("../data/gall_selection_manuscript_dataset.csv") %>%
   mutate(gall_survival = as.numeric(ifelse(pupa > 0, 1, 0)), # there were a couple of times where two pupa were found in a single chamber. I set these to 1 to permit an analysis with a binomial model
          egg.ptoid = as.numeric(ifelse(egg.ptoid > 0, 1, 0)), # there were a couple occassions where two egg parasitoids were found in a single chamber. I set these to 1 to permit an analysis with a binomial model.
          unknown_mortality = ifelse(rowSums(select(., pupa:early.larval.death)) < 1, 1, 0))
-
-# all sources of mortality
-mean(full_df$gall_survival) + mean(full_df$egg.ptoid) + mean(full_df$larval.ptoid) + mean(full_df$early.larval.death) + mean(full_df$unknown_mortality)
-
-mean(full_df$gall_survival) # 40% survival
-mean(full_df$egg.ptoid) # 26% egg parasitism
-mean(full_df$larval.ptoid) # 11% larval parasitism
-mean(full_df$early.larval.death) # 17% early larval death
-mean(full_df$unknown_mortality) # 7% unknown
 
 gall_selection.df <- full_df %>%
   # convert appropriate variables to characters instead of integers
@@ -140,33 +131,33 @@ gall_selection.df <- full_df %>%
          sc.log.Clutch = as.numeric(scale(log(clutch.size_individuals))), 
          sc.sqrt.Pref = as.numeric(scale(sqrt(oviposition.preference_individuals.per.100.shoots)))) 
 
-
-
-
-
 ```
 
 \  
 
-## Evaluating assumption of multivariate normality
+## Multivariate normality of phenotypic traits
 
 We used graphical checks to evaluate whether our transformations of trait values resulted in a multivariate normal distribution. The histograms below show that our transformations resulted in approximately normal distributions for each phenotypic trait. Note also that in the multivariate quantile-quantile (Q-Q) plot, most points fall along the expected line, suggesting that our transformations provide a reasonable approximation of a multivariate normal distribution. 
 
-```{r Univariate_histograms, fig.cap="\\label{fig:Univariate_histograms}Histograms of each phenotypic trait after transformation. The red line illustrates a normal distribution."}
-mvn_univariate_hist <- mvn(select(gall_selection.df, sc.Diam, sc.log.Clutch, sc.sqrt.Pref), univariatePlot = "histogram")
-```
+\ 
 
-```{r Multivariate_QQ, fig.cap="Multivariate quantile-quantile (Q-Q) plot to assess deviations from multivariate normality (black line)."}
-mvn_multivariate_qq <- mvn(select(gall_selection.df, sc.Diam, sc.log.Clutch, sc.sqrt.Pref), multivariatePlot = "qq")
+```{r Univariate_histograms,  fig.cap="Histograms of each phenotypic trait after transformation. The red line illustrates a normal distribution."}
+mvn_univariate_hist <- mvn(select(gall_selection.df, sc.Diam, sc.log.Clutch, sc.sqrt.Pref), univariatePlot = "histogram")
 ```
 
 \ 
 
-## Gall trait-fitness relationships: effect of food-web treatment
+```{r Multivariate_QQ, fig.show = 'asis', fig.cap="Multivariate quantile-quantile (Q-Q) plot to assess deviations from multivariate normality (black line)."}
+mvn_multivariate_qq <- mvn(select(gall_selection.df, sc.Diam, sc.log.Clutch, sc.sqrt.Pref), multivariatePlot = "qq")  
+```
+
+\ 
+
+## Selection surfaces on gall midges: food-web treatments
 
 We write the model in a way that independently estimates the effect of food-web treatment, each trait, and all two-way and three-way statistical interactions, on larval survival. The resulting estimates and confidence intervals are useful for determining whether trait-fitness relationships differ from zero, but not whether they differ between food-web treatments. For the later, we calculate the differences between each food-web treatment from the bootstrapped samples.
 
-```{r Food-web model, cache=TRUE}
+```{r Food-web model, cache=TRUE, echo=TRUE}
 foodweb_model <- glmer(
   gall_survival ~ 
     -1 + Foodweb + 
@@ -178,15 +169,19 @@ foodweb_model <- glmer(
   family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
 ```
 
+\ 
+
 We used parametric bootstrapping to calculate 95% confidence intervals of trait-fitness relationships.
 
-```{r Bootstrap food-web model, cache=TRUE}
+```{r Bootstrap food-web model, cache=TRUE, echo=TRUE}
 boot_foodweb_model <- bootMer(foodweb_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32, seed=34)
 ```
 
+\ 
+
 In order to reliably quantify linear trait-fitness relationships, we remove all higher-order terms from the model [Stinchcombe et al. 2008](https://onlinelibrary.wiley.com/doi/full/10.1111/j.1558-5646.2008.00449.x).
 
-```{r Linear food-web model, cache=TRUE}
+```{r Linear food-web model, cache=TRUE, echo=TRUE}
 linear_foodweb_model <- glmer(
   gall_survival ~ 
     -1 + Foodweb + 
@@ -196,15 +191,19 @@ linear_foodweb_model <- glmer(
   family = binomial(link = logit), control=glmerControl(optimizer = "bobyqa"))
 ```
 
+\ 
+
 And refit using parametric bootstrapping.
 
-```{r Bootstrap linear food-web model, cache=TRUE}
+```{r Bootstrap linear food-web model, cache=TRUE, echo=TRUE}
 boot_linear_foodweb_model <- bootMer(linear_foodweb_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32, seed=34)
 ```
 
+\ 
+
 Chamber diameter, but not the other phenotypes, could be influenced by parasitism itself rather than being under natural selection. To estimate this potential bias, we subset our data to only include multi-chambered galls where there was variability in larval survival. We then fit a reduced model to estimate the bias in the logistic regression coefficient of chamber diameter in each food web.
 
-```{r Bias in food-web model, cache=TRUE}
+```{r Bias in food-web model, cache=TRUE, echo=TRUE}
 
 # Subset data
 biased_foodweb_df <- gall_selection.df %>%
@@ -225,18 +224,20 @@ biased_foodweb_model <- glmer(
 biased_foodweb_confint <- tidy(biased_foodweb_model, conf.int=TRUE) %>% filter(group=="fixed")
 ```
 
+\ 
+
 ```{r biased foodweb table, echo=FALSE}
 # Print table
 biased_foodweb_confint %>%
   select(term, estimate, conf.low, conf.high) %>%
   filter(term %in% c("FoodwebComplex:sc.Diam","FoodwebSimple:sc.Diam")) %>%
   mutate(estimate = round(estimate, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%
-  knitr::kable(., caption = "Estimates of bias in trait-fitness relationship of chamber diameter in each food-web treatment.")
+  knitr::kable(., caption = "Estimates of bias in selection surface of chamber diameter in each food-web treatment.")
 ```
 
 \ 
 
-We gather regression coefficients from the full and reduced model to display trait-fitness relationships. For chamber diameter, we subtracted the coefficient due to bias to better approximate the trait-fitness relationship. We also used the bootstrapped samples to calculate the differences in estimates between treatments (labelled **Diff**). 
+We gather regression coefficients from the full and reduced model to display trait-fitness relationships. For chamber diameter, we subtracted the coefficient due to bias to better approximate the trait-fitness relationship. <!--We also used the bootstrapped samples to calculate the differences in estimates between treatments (labelled **Diff**).--> 
 
 ```{r Food-web alpha coefficients}
 foodweb_bind <- bind_cols(
@@ -284,22 +285,22 @@ tidy_foodweb_alphas <- foodweb_alphas %>%
 
 \  
 
-```{r Table of food web coefficients, echo=FALSE}
+```{r Table of food web coefficients}
 tidy_foodweb_alphas %>%
   filter(type != "Diff") %>%
-  select(term, coefficient_type, type, mean, conf.low, conf.high, P_cutoff) %>%
-  mutate(mean = round(mean, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%
+  select(Term = term, type, mean, conf.low, conf.high) %>% # coefficient_type, P_cutoff
+  mutate(Term = term, Treatment = type, Estimate = round(mean, 3), `2.5%` = round(conf.low, 3), `97.5%` = round(conf.high, 3)) %>%
  knitr::kable(., caption = "Table of mean fitness and trait-fitness relationships in each food-web treatment.")
 ```
 
 \  
 
-```{r Table of differences in food web coefficients, echo=FALSE}
+```{r Table of differences in food web coefficients, include=FALSE}
 tidy_foodweb_alphas %>%
   filter(type == "Diff") %>%
-  select(term, coefficient_type, mean, conf.low, conf.high, P_cutoff) %>%
-  mutate(mean = round(mean, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%
- knitr::kable(., caption = "Table of differences in mean fitness and trait-fitness relationships between food-web treatments.")
+  select(Term = term, mean, conf.low, conf.high) %>% # coefficient_type, P_cutoff
+  mutate(Estimate = round(mean, 3), `2.5%` = round(conf.low, 3), `97.5%` = round(conf.high, 3)) %>%
+ knitr::kable(., caption = "Table of differences in mean fitness and selection surfaces between food-web treatments.")
 ```
 
 \  
@@ -389,11 +390,11 @@ figure_foodweb_coefs
 
 \  
 
-## Gall trait selection gradients
+## Selection gradients on gall midges: food-web treatments
 
-Using the methods proposed by [Janzen and Stern, 1998](https://onlinelibrary.wiley.com/doi/10.1111/j.1558-5646.1998.tb02237.x), we estimated selection gradients from our trait-fitness relationships.
+Using the methods proposed by [Janzen and Stern, 1998](https://onlinelibrary.wiley.com/doi/10.1111/j.1558-5646.1998.tb02237.x), we estimated selection gradients from our selection surfaces.
 
-```{r Food-web selection gradients}
+```{r Food-web selection gradients, echo=TRUE}
 
 # Estimate mean fitness and mean "brackets" for each food-web treatment (see Janzen and Stern 1998 equation 4 for details about "brackets")
 foodweb_complex_predict <- predict(foodweb_model, newdata=filter(gall_selection.df, Foodweb=="Complex"), type="response")
@@ -412,7 +413,10 @@ foodweb_complex_raw_gradients <- select(foodweb_adj_Diam, starts_with("FoodwebCo
 
 foodweb_simple_raw_gradients <- select(foodweb_adj_Diam, starts_with("FoodwebSimple:")) %>%
   transmute_all(funs(foodweb_simple_gradient))
+```
 
+
+```{r Tidy up selection gradients}
 # Calculate differences between food-web treatments, then estimate means and confidence intervals
 foodweb_grads <- bind_cols(foodweb_complex_raw_gradients, foodweb_simple_raw_gradients) %>%
   mutate(`FoodwebDiff:sc.Diam` = `FoodwebSimple:sc.Diam` - `FoodwebComplex:sc.Diam`,
@@ -450,27 +454,27 @@ tidy_foodweb_grads <- foodweb_grads %>%
 
 Reproduce numbers reported in **Table 1** of the manuscript.
 
-```{r Table of food web selection gradients, echo=FALSE}
+```{r Table of food web selection gradients}
 tidy_foodweb_grads %>%
   filter(type != "Diff") %>%
-  select(term, gradient_type, type, mean, conf.low, conf.high, P_cutoff) %>%
+  select(term, type, mean, conf.low, conf.high) %>% # gradient_type, P_cutoff
   mutate(mean = round(mean, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%
 knitr::kable(., caption = "Table of selection gradients acting on gall traits in each food-web treatment.")
 ```
 
 \  
 
-```{r Table of differences in selection gradients between food-web treatments, echo=FALSE}
+```{r Table of differences in selection gradients between food-web treatments, include=FALSE}
 tidy_foodweb_grads %>%
   filter(type == "Diff") %>%
-  select(term, gradient_type, mean, conf.low, conf.high, P_cutoff) %>%
+  select(term, mean, conf.low, conf.high) %>% # gradient_type, P_cutoff
   mutate(mean = round(mean, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%
   knitr::kable(., caption = "Table of differences in selection gradients acting on gall traits between food-web treatment.")
 ```
 
 \  
 
-```{r Curvature, echo=FALSE}
+```{r Curvature, include=FALSE}
 # Calculate curvatures for complex food web
 foodweb_complex_raw_curvs <- foodweb_complex_raw_gradients %>%
   transmute(`FoodwebComplex:C.Diam` = `FoodwebComplex:I(sc.Diam^2)` - `FoodwebComplex:sc.Diam`*`FoodwebComplex:sc.Diam`,
@@ -522,17 +526,17 @@ tidy_foodweb_curvs <- foodweb_curvs %>%
 
 \ 
 
-```{r Table of food web curvatures, echo=FALSE}
+```{r Table of food web curvatures, include=FALSE}
 tidy_foodweb_curvs %>%
   filter(type != "Diff") %>%
-  select(term, type, mean, conf.low, conf.high, P_cutoff) %>%
+  select(term, type, mean, conf.low, conf.high, P_cutoff) %>% 
   mutate(mean = round(mean, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%
 knitr::kable(., caption = "Table of curvatures on gall traits in each food-web treatment.")
 ```
 
 \  
 
-```{r Table of differences in curvatures between food-web treatments, echo=FALSE}
+```{r Table of differences in curvatures between food-web treatments, include=FALSE}
 tidy_foodweb_curvs %>%
   filter(type == "Diff") %>%
   select(term, mean, conf.low, conf.high, P_cutoff) %>%
@@ -612,17 +616,19 @@ plot_foodweb_grads <- plot_grid(
 plot_legend_foodweb_grads <- ggdraw(plot_foodweb_grads) + draw_grob(legend_foodweb_grads, x = 0.7, y=-0.2)
 y_title_foodweb_grads <- ggdraw() + draw_label("Selection gradient (SDs)", angle = 90)
 
+plot_grid(y_title_foodweb_grads, plot_legend_foodweb_grads, ncol=2, rel_widths = c(0.05,1))
+
 figure_foodweb_grads <- plot_grid(y_title_foodweb_grads, plot_legend_foodweb_grads, ncol=2, rel_widths = c(0.05,1)) 
 figure_foodweb_grads
 ```
 
 \  
 
-## Gall trait-fitness relationships: contribution of egg and larval parasitoids
+## Selection surfaces on gall midges: egg vs. larval parasitoids
 
 Our simple food-web treatment allows us to estimate the unique contribution of egg parasitoids to selection on *Iteomyia* traits. To estimate the unique contribution of larval parasitoids, we subset our data so that our complex food-web treatment only contained attack by larval parasitoids (and gall survival). We then fit the same models as previously, including one to estimate bias.
 
-```{r Egg vs. larval ptoid model, cache=TRUE}
+```{r Egg vs. larval ptoid model, cache=TRUE, echo=TRUE}
 # excludes cases of egg-parasitism from Complex food web
 egglarval_df <- filter(gall_selection.df, Foodweb == "Simple" | Foodweb == "Complex" & egg.ptoid < 1) 
 
@@ -640,25 +646,33 @@ biased_egglarval_df <- egglarval_df %>%
 biased_egglarval_model <- update(biased_foodweb_model, data=biased_egglarval_df)
 ```
 
+\ 
+
 Parametric bootstrapping to estimate confidence intervals.
 
-```{r Bootstrap egg vs. larval ptoid model, cache=TRUE}
+```{r Bootstrap egg vs. larval ptoid model, cache=TRUE, echo=TRUE}
 boot_egglarval_model <- bootMer(egglarval_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32, seed=34)
 ```
 
+\ 
+
 Fit a reduced model to reliably estimate linear trait-fitness relationships.
 
-```{r Linear egg vs. larval ptoid model, cache=TRUE}
+```{r Linear egg vs. larval ptoid model, cache=TRUE, echo=TRUE}
 linear_egglarval_model <- update(linear_foodweb_model, data=egglarval_df)
 ```
 
+\ 
+
 Parametric bootstrapping to estimate confidence intervals.
 
-```{r Bootstrap linear egg vs. larval model, cache=TRUE}
+```{r Bootstrap linear egg vs. larval model, cache=TRUE, echo=TRUE}
 boot_linear_egglarval_model <- bootMer(linear_egglarval_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32, seed=34)
 ```
 
-Tidy trait-fitness relationships for egg and larval parasitoids from above models.
+\ 
+
+Tidy selection surfaces imposed by egg and larval parasitoids from above models.
 
 ```{r Egg vs. larval ptoid alpha coefficients}
 egglarval_bind <- bind_cols(
@@ -706,19 +720,19 @@ tidy_egglarval_alphas <- egglarval_alphas %>%
 
 \  
 
-```{r Table of egg vs. larval coefficients, echo=FALSE}
+```{r Table of egg vs. larval coefficients}
 tidy_egglarval_alphas %>%
   filter(type != "Diff") %>%
-  select(term, coefficient_type, type, mean, conf.low, conf.high, P_cutoff) %>%
-  mutate(mean = round(mean, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%   knitr::kable(., caption = "Table of gall trait-fitness relationships imposed by egg and larval parasitoids. Note that type = Simple = Egg parasitoid and Complex = Larval parasitoid.")
+  select(term, type, mean, conf.low, conf.high) %>% # coefficient_type, P_cutoff
+  mutate(mean = round(mean, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%   knitr::kable(., caption = "Table of gall selection surfaces imposed by egg and larval parasitoids. Note that type = Simple = Egg parasitoid and Complex = Larval parasitoid.")
 ```
 
 \ 
 
-```{r Table of differences in egg vs. larval coefficients, echo=FALSE}
+```{r Table of differences in egg vs. larval coefficients, include=FALSE}
 tidy_egglarval_alphas %>%
   filter(type == "Diff") %>%
-  select(term, coefficient_type, mean, conf.low, conf.high, P_cutoff) %>%
+  select(term, mean, conf.low, conf.high) %>% # coefficient_type, P_cutoff
   mutate(mean = round(mean, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%   knitr::kable(., caption = "Table of differences in gall trait-fitness relationships between egg and larval parasitoids.")
 ```
 
@@ -809,9 +823,9 @@ figure_egglarval_coefs
 
 \ 
 
-## Selection gradients acting on gall traits due to egg and larval parasitoids
+## Selection gradients on gall midges: egg vs. larval parasitoids
 
-```{r Egg vs. larval ptoid selection gradients}
+```{r Egg vs. larval ptoid selection gradients, echo=TRUE}
 
 # Estimate mean fitness and mean "brackets" for each food-web treatment (see Janzen and Stern 1998 equation 4 for details about "brackets")
 egglarval_complex_predict <- predict(egglarval_model, newdata=filter(egglarval_df, Foodweb=="Complex"), type="response")
@@ -830,7 +844,10 @@ egglarval_complex_raw_gradients <- select(egglarval_adj_Diam, starts_with("Foodw
 
 egglarval_simple_raw_gradients <- select(egglarval_adj_Diam, starts_with("FoodwebSimple:")) %>%
   transmute_all(funs(egglarval_simple_gradient))
+```
 
+
+```{r Tidy egg vs. larval ptoid selection gradients}
 # Calculate differences between food-web treatments, then estimate means and confidence intervals
 egglarval_grads <- bind_cols(egglarval_complex_raw_gradients, egglarval_simple_raw_gradients) %>%
   mutate(`FoodwebDiff:sc.Diam` = `FoodwebSimple:sc.Diam` - `FoodwebComplex:sc.Diam`,
@@ -865,20 +882,20 @@ tidy_egglarval_grads <- egglarval_grads %>%
 
 \  
 
-```{r Egg vs. larval selection gradients, echo=FALSE}
+```{r Egg vs. larval selection gradients}
 tidy_egglarval_grads %>%
   filter(type != "Diff") %>%
-  select(term, gradient_type, type, mean, conf.low, conf.high, P_cutoff) %>%
+  select(term, type, mean, conf.low, conf.high) %>% # gradient_type, P_cutoff
   mutate(mean = round(mean, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%
 knitr::kable(., caption = "Table of selection gradients imposed by egg and larval parasitoids.")
 ```
 
 \  
 
-```{r Table of differences in selection gradients between egg and larval parasitoids, echo=FALSE}
+```{r Table of differences in selection gradients between egg and larval parasitoids, include=FALSE}
 tidy_egglarval_grads %>%
   filter(type == "Diff") %>%
-  select(term, gradient_type, mean, conf.low, conf.high, P_cutoff) %>%
+  select(term, gradient_type, mean, conf.low, conf.high) %>% # gradient_type, P_cutoff
   mutate(mean = round(mean, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%
   knitr::kable(., caption = "Table of differences in selection gradients imposed by egg and larval parasitoids.")
 ```
@@ -966,6 +983,7 @@ figure_egglarval_grads
 
 Use the fitted model to generate predicted estimates of mean fitness for changes in the mean trait value of a population. I restrict these predictions to +/- 1 SD because we can only reliably estimate the shape of the adaptive landscape near the mean phenotype of the population [Arnold et al., 2001](https://link.springer.com/article/10.1023/A:1013373907708). Other trait values are held constant at the mean phenotype (i.e. trait = 0).
 
+
 ```{r Get Gall Diameter Relative Fitness Landscape, cache=TRUE}
 newdata_Diam <- bind_rows(
   expand.grid(Foodweb = "Complex", sc.Diam = seq(-1,1,length.out=1000), sc.log.Clutch = 0, sc.sqrt.Pref = 0),
@@ -977,6 +995,7 @@ RF_Diam <- bootstrap_fitness(
   bootstraps=n_boots_plots)
 
 ```
+
 
 ```{r Get Clutch Size Fitness Landscape, cache=TRUE}
 newdata_Clutch <- bind_rows(
@@ -990,6 +1009,7 @@ RF_Clutch <- bootstrap_fitness(
 
 ```
 
+
 ```{r Get Oviposition preference Fitness Landscape, cache=TRUE}
 
 newdata_Pref <- bind_rows(
@@ -1002,9 +1022,10 @@ RF_Pref <- bootstrap_fitness(
   bootstraps=n_boots_plots)
 ```
 
-Create plots for each panel of Figure 2 in main text.
 
 ```{r Plot Univariate Landscapes}
+## Create plots for each panel of Figure 2 in main text.
+
 uni_breaks <- c(0.1,0.5,1.0)
 
 # Gall size 
@@ -1012,7 +1033,7 @@ AF_uni_Diam <- RF_Diam$absolute_fitness %>%
   select(-sc.log.Clutch, -sc.sqrt.Pref) %>%
   gather(ID, absolute_fitness, -sc.Diam, -Foodweb) %>%
   mutate(ID_group = ifelse(ID == "average", "average", "replicate"),
-         Foodweb = factor(ifelse(Foodweb == "Complex", "Intact", "Extinction"), levels = c("Intact", "Extinction"))) %>% 
+         Foodweb = factor(ifelse(Foodweb == "Complex", "Original", "Extinction"), levels = c("Original", "Extinction"))) %>% 
   ggplot(., aes(x=sc.Diam, y=absolute_fitness, group=interaction(ID,Foodweb), color=Foodweb, alpha=ID_group, size=ID_group)) +
   geom_line() +
   scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
@@ -1057,9 +1078,10 @@ AF_uni_Clutch <- RF_Clutch$absolute_fitness %>%
   coord_cartesian(ylim=c(0.07,1))
 ```
 
-Fit plots together to reproduce Figure 2.
 
 ```{r Univariate-Fitness-Landscapes, fig.cap="Adaptive landscapes of gall phenotypes in complex and simple food webs."}
+## Fit plots together to reproduce Figure 2.
+
 
 # Get legend
 AF_uni_legend <- get_legend(AF_uni_Diam + theme(legend.title.align = 0.5)) 
@@ -1079,7 +1101,7 @@ save_plot(filename = "UV_landscapes.pdf", plot = AF_gradients, base_height = 5, 
 
 \  
 
-## Replot adaptive landscapes of gall traits in terms of relative fitness
+## Replot gall midge adaptive landscapes in terms of relative fitness
 
 ```{r Plot Univariate RF Landscapes, fig.cap="Adaptive landscapes of gall phenotypes in terms of relative fitness."}
 
@@ -1188,6 +1210,7 @@ RF_Clutch.Pref <- bootstrap_fitness(
 
 ```
 
+
 ```{r Get Gall Diameter x Clutch Size Landscape, cache=TRUE}
 
 newdata_Diam.Clutch <- bind_rows(
@@ -1200,6 +1223,7 @@ RF_Diam.Clutch <- bootstrap_fitness(
   bootstraps=NULL)
 
 ```
+
 
 ```{r Get Gall Diameter x Oviposition preference Landscape, cache=TRUE}
 
@@ -1214,9 +1238,9 @@ RF_Diam.Pref <- bootstrap_fitness(
 
 ```
 
-Create plots for each panel.
 
 ```{r Get plots of multivariate adaptive landscape}
+## Create plots for each panel.
 
 # Plot helpers
 AF_range <- bind_rows(RF_Clutch.Pref$absolute_fitness, RF_Diam.Clutch$absolute_fitness, RF_Diam.Pref$absolute_fitness) %>%
@@ -1228,7 +1252,7 @@ my_breaks <- c(0.2,0.4,0.6,0.8)
 breaks <- predict(foodweb_model, newdata=data.frame(sc.Diam = c(0,0), sc.log.Clutch = c(0,0), sc.sqrt.Pref = c(0,0), Foodweb = c("Complex","Simple")), type="response", re.form=~0)
 names(breaks) <- c("Complex","Simple")
 
-labels_2D <- list("Complex"="Intact", "Simple"="Extinction")
+labels_2D <- list("Complex"="Original", "Simple"="Extinction")
 labeller_2D <- function(variable, value) {
   return(labels_2D[value])
 }
@@ -1286,9 +1310,10 @@ AF_plot_Clutch.Pref <- RF_Clutch.Pref$absolute_fitness %>%
 
 ```
 
-Fit plots together to reproduce Figure 3.
 
 ```{r Figure-Multivariate-Landscapes, fig.cap="Multivariate adaptive landscapes of gall phenotypes in complex and simple food webs. Dotted lines denote fitness for the mean phenotype. Arrows represent the vector of directional selection gradients acting on each phenotype."}
+
+## Fit plots together to reproduce Figure 3.
 
 # Get legend
 AF_landscape_legend <- get_legend(AF_plot_Diam.Pref + theme(legend.text = element_text(size=10)))
@@ -1455,9 +1480,9 @@ $$\textbf{C}_{\text{Simple}} = \begin{pmatrix}
 
 \  
 
-## Trait-fitness relationships of the extended phenotype of the egg parasitoid *Platygaster* sp.
+## Selection surfaces of the egg parasitoid *Platygaster* sp.
 
-```{r Egg vs. egg ptoid model, cache=TRUE}
+```{r Egg vs. egg ptoid model, cache=TRUE, echo=TRUE}
 
 # convert "gall_survival" to egg parasitoid survival. Note that both Iteomyia pupa and larva parasitoids result in 0. We do not change the name of the response variable to make clear that we are using the same statistical models as for Iteomyia.
 eggegg_df <- mutate(gall_selection.df, gall_survival = ifelse(egg.ptoid==1,1,0))
@@ -1476,17 +1501,23 @@ biased_eggegg_df <- eggegg_df %>%
 biased_eggegg_model <- update(biased_foodweb_model, data=biased_eggegg_df)
 ```
 
-Use parametric bootstrapping to calculating 95% confidence intervals of trait-fitness relationships.
+\ 
+
+Use parametric bootstrapping to calculating 95% confidence intervals of selection surfaces.
 
 ```{r Bootstrap egg vs. egg ptoid model, cache=TRUE, include=FALSE}
 boot_eggegg_model <- bootMer(eggegg_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32, seed=34)
 ```
 
-Remove all higher-order terms to quantify linear trait-fitness relationships.
+\ 
+
+Remove all higher-order terms to quantify linear selection surfaces.
 
 ```{r Linear egg vs. egg ptoid model, cache=TRUE}
 linear_eggegg_model <- update(linear_foodweb_model, data=eggegg_df)
 ```
+
+\ 
 
 And refit using parametric bootstrapping.
 
@@ -1494,7 +1525,9 @@ And refit using parametric bootstrapping.
 boot_linear_eggegg_model <- bootMer(linear_eggegg_model, FUN = fixef, nsim=n_boots_analysis, parallel="multicore", ncpus=32, seed=34)
 ```
 
-Gather regression coefficients to display trait-fitness relationships.
+\
+
+Gather regression coefficients to display selection surfaces.
 
 ```{r Egg vs. egg ptoid alpha coefficients}
 eggegg_bind <- bind_cols(
@@ -1542,20 +1575,20 @@ tidy_eggegg_alphas <- eggegg_alphas %>%
 
 \  
 
-```{r Egg ptoid coefficients in each food-web treatment, echo=FALSE}
+```{r Egg ptoid coefficients in each food-web treatment}
 tidy_eggegg_alphas %>%
   filter(type != "Diff") %>%
-  select(term, coefficient_type, type, mean, conf.low, conf.high, P_cutoff) %>%
+  select(term, type, mean, conf.low, conf.high) %>% # coefficient_type, P_cutoff
   mutate(mean = round(mean, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%
 knitr::kable(., caption = "Table of trait-fitness relationships of extended phenotype of egg parasitoids in complex and simple food webs.")
 ```
 
 \  
 
-```{r Table of differences in egg parasitoid coefficients between food-web treatments, echo=FALSE}
+```{r Table of differences in egg parasitoid coefficients between food-web treatments, include=FALSE}
 tidy_eggegg_alphas %>%
   filter(type == "Diff") %>%
-  select(term, coefficient_type, mean, conf.low, conf.high, P_cutoff) %>%
+  select(term, mean, conf.low, conf.high) %>% # coefficient_type, P_cutoff
   mutate(mean = round(mean, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%
   knitr::kable(., caption = "Table of differences in trait-fitness relationships of egg parasitoids between food-web treatment.")
 ```
@@ -1647,9 +1680,9 @@ figure_eggegg_coefs
 
 \  
 
-## Selection gradients acting on extended phenotype of the egg parasitoid
+## Selection gradients acting on the egg parasitoid
 
-```{r Egg vs. egg ptoid selection gradients}
+```{r Egg vs. egg ptoid selection gradients, echo=TRUE}
 
 # Estimate mean fitness and mean "brackets" for each food-web treatment (see Janzen and Stern 1998 equation 4 for details about "brackets")
 eggegg_complex_predict <- predict(eggegg_model, newdata=filter(eggegg_df, Foodweb=="Complex"), type="response")
@@ -1668,7 +1701,10 @@ eggegg_complex_raw_gradients <- select(eggegg_adj_Diam, starts_with("FoodwebComp
 
 eggegg_simple_raw_gradients <- select(eggegg_adj_Diam, starts_with("FoodwebSimple:")) %>%
   transmute_all(funs(eggegg_simple_gradient))
+```
 
+
+```{r Tidy egg vs. egg ptoid selection gradients}
 # Calculate differences between food-web treatments, then estimate means and confidence intervals
 eggegg_grads <- bind_cols(eggegg_complex_raw_gradients, eggegg_simple_raw_gradients) %>%
   mutate(`FoodwebDiff:sc.Diam` = `FoodwebSimple:sc.Diam` - `FoodwebComplex:sc.Diam`,
@@ -1703,20 +1739,20 @@ tidy_eggegg_grads <- eggegg_grads %>%
 
 \  
 
-```{r Egg vs. ptoid selection gradients, echo=FALSE}
+```{r Egg vs. ptoid selection gradients}
 tidy_eggegg_grads %>%
   filter(type != "Diff") %>%
-  select(term, gradient_type, type, mean, conf.low, conf.high, P_cutoff) %>%
+  select(term, type, mean, conf.low, conf.high) %>% # gradient_type, P_cutoff
   mutate(mean = round(mean, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%
-knitr::kable(., caption = "Table of selection gradients acting on extended phenotype of egg parasitoids in complex and simple food webs.")
+knitr::kable(., caption = "Table of selection gradients acting on egg parasitoids in complex and simple food webs.")
 ```
 
 \  
 
-```{r Table of differences in selection gradients acting on egg parasitoids between food-web treatment, echo=FALSE}
+```{r Table of differences in selection gradients acting on egg parasitoids between food-web treatment, include=FALSE}
 tidy_eggegg_grads %>%
   filter(type == "Diff") %>%
-  select(term, gradient_type, mean, conf.low, conf.high, P_cutoff) %>%
+  select(term, mean, conf.low, conf.high) %>% # gradient_type, P_cutoff
   mutate(mean = round(mean, 3), conf.low = round(conf.low, 3), conf.high = round(conf.high, 3)) %>%
   knitr::kable(., caption = "Table of differences in selection gradients acting on egg parasitoids between food-web treatment.")
 ```
@@ -1822,7 +1858,7 @@ eggptoid_selection_plot <- eggptoid_plot_df %>%
   scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
   scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
   xlab("Gall midge preference (SDs)") + 
-  ylab(expression(paste(Delta," egg parasitoid survival (intact - extinction)"))) +
+  ylab(expression(paste(Delta," egg parasitoid survival (original - extinction)"))) +
   scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
   geom_hline(yintercept=0, linetype="dotted") +
   theme_cowplot(font_size = 12)
