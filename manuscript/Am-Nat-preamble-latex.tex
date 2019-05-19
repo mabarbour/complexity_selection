@@ -1,0 +1,14 @@
+%%% Modified from Latex Template for Am. Nat., many other details aren't necessary because they are specified in YAML header of Rmarkdown document.
+\usepackage{fullpage}
+\linespread{1.7}
+\usepackage{lineno}
+
+% code below is important for holding figure positions in main text. Make sure to set fig.pos="H" in code chunk for figure.
+\usepackage{float}
+\let\origfigure\figure
+\let\endorigfigure\endfigure
+\renewenvironment{figure}[1][2] {
+    \expandafter\origfigure\expandafter[H]
+} {
+    \endorigfigure
+}
