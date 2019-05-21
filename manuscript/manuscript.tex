@@ -109,28 +109,8 @@
 
 \bigskip
 
-\begin{center} \large Matthew A. Barbour$^{1,2,\ast}$, Christopher J. Greyson-Gaito$^{2,3}$, Arezoo Sootodeh$^{2}$, Brendan Locke$^{4}$, Jordi Bascompte$^{1}$ \normalsize \end{center}
-
-\bigskip
-
-\noindent 1. University of Zurich, Department of Evolutionary Biology
-and Environmental Studies, Zurich, 8057 ZH, Switzerland;
-
-\noindent 2. University of British Columbia, Department of Zoology,
-Vancouver, BC V6T 1Z4, Canada;
-
-\noindent 3. University of Guelph, Department of Integrative Biology,
-Guelph, ON N1G 2W1, Canada;
-
-\noindent 4. Humboldt State University, Department of Biological
-Sciences, Arcata, CA 95521, USA.
-
-\(^\ast\) Corresponding author; e-mail:
-\href{mailto:matthew.barbour@ieu.uzh.ch}{\nolinkurl{matthew.barbour@ieu.uzh.ch}}
-
-\bigskip
-<!----> \emph{Manuscript elements}: table 1, table 2, figure 1, figure
-2, figure 3, figure 4. All figures should be printed in color.
+\emph{Manuscript elements}: table 1, table 2, figure 1, figure 2, figure
+3, figure 4. All figures should be printed in color.
 
 \bigskip
 
@@ -140,7 +120,7 @@ complexity.
 
 \bigskip
 
-\emph{Number of words}: 3109
+\emph{Number of words}: 3108
 
 \bigskip
 
@@ -205,16 +185,16 @@ Ecological networks, such as food webs describing who-eats-whom in
 ecological communities, provide an explicit representation of the
 community context \citep{Bascompte2014, McCann2012}. Here, we integrate
 ecological networks and adaptive landscapes to understand how the
-community context constrains evolutionary change \citep{Arnold1992}.
-Different aspects of evolutionary constraints can be inferred by
-quantifying the slope and curvature of the adaptive landscape. For
-example, the slope is determined by directional selection gradients
-acting on each phenotypic trait and influences the trajectory of
-evolutionary change \citep{Lande1979, Arnold1992}. Selective constraints
-on evolution increase with the number of traits under directional
-selection, as this diminishes the number of optimal solutions
-\citep{Arnold2003}. The curvature of the adaptive landscape can also
-constrain evolution through its indirect effect on genetic constraints
+community context constrains evolutionary change. Different aspects of
+evolutionary constraints can be inferred by quantifying the slope and
+curvature of the adaptive landscape \citep{Arnold1992}. For example, the
+slope is determined by directional selection gradients acting on each
+phenotypic trait and influences the trajectory of evolutionary change
+\citep{Lande1979, Arnold1992}. Selective constraints on evolution
+increase with the number of traits under directional selection, as this
+diminishes the number of optimal solutions \citep{Arnold2003}. The
+curvature of the adaptive landscape can also constrain evolution through
+its indirect effect on genetic constraints
 \citep{Arnold1992, Hansen2008}. Genetic constraints are largely governed
 by a population's \textbf{G}-matrix ---the additive genetic variances
 and covariances between traits \citep{Hansen2008}. In general, genetic
@@ -224,8 +204,8 @@ variance in those traits \citep{Hansen2008}. Genetic constraints may
 also increase with the number of trait combinations under correlational
 selection, as this type of selection decreases the evolutionary
 independence of traits \citep{Hansen2008}. If we want to predict how the
-community context constrains evolutionary change, we must understand how
-ecological networks shape the adaptive landscape.
+community context constrains phenotypic evolution, we must understand
+how ecological networks shape the adaptive landscape.
 
 Global change is altering the structure of ecological networks, which
 may influence evolutionary constraints in a number of ways. For example,
@@ -243,18 +223,18 @@ galls when they feed on the developing leaves of willow trees
 \citep[\emph{Salix} sp.,][]{Russo2006}. These galls protect larva from
 attack by generalist predators (e.g.~ants, spiders), but they suffer
 high mortality from egg and larval parasitoids \citep{Barbour2016}. We
-manipulated food-web structure by either excluding or allowing the guild
-of larval parasitoids to impose selection on gall midge and egg
-parasitoid traits (fig. \ref{fig:Conceptual}). We then applied modern
-statistical methods to quantify how changes in food-web structure
-altered the slope and curvature of the adaptive landscape of the gall
-midge and egg parasitoid. Taken together, our study gives insight to how
-local extinctions may constrain the evolution of interacting
-populations.
+manipulated food-web structure by either excluding the guild of larval
+parasitoids (extinction food web) or allowing both egg and larval
+parasitoids to impose selection on gall midge traits (original food web,
+fig. \ref{fig:Conceptual}). We then applied modern statistical methods
+to quantify how changes in food-web structure altered the slope and
+curvature of the gall midge's adaptive landscape. Taken together, our
+study gives insight to how local extinctions may constrain the evolution
+of interacting populations.
 
 \begin{figure}
 \centering
-\includegraphics{analyses/complex_simple_foodwebs_v2.jpeg}
+\includegraphics{../analyses/complex_simple_foodwebs_v3.jpeg}
 \caption{\label{fig:Conceptual}Experimental manipulation of food-web
 structure associated with a leaf-galling midge (\emph{Iteomyia
 salicisverruca}) feeding on the willow \emph{Salix hookeriana}. Black
@@ -666,7 +646,7 @@ $\gamma_{\text{Pref:Pref}}$ &
 0.63] }& 
 
 0.02 [
--0.14,
+-0.15,
 0.18] \\%& 
 %\textbf{
 %0.32 [
@@ -740,7 +720,7 @@ magnified by the lower average survival in complex food webs.
 
 \begin{figure}
 \centering
-\includegraphics{analyses/UV_landscapes.pdf}
+\includegraphics{../analyses/UV_landscapes.pdf}
 \caption{\label{fig:UV_Landscape}Adaptive landscape of gall midge
 phenotypes in the original food web and with the extinction of larval
 parasitoids. Each panel corresponds to a different phenotypic trait:
@@ -776,7 +756,7 @@ otherwise we set estimates of selection to zero (non-bold values in
 table \ref{Table:Gradients}) prior to our calculation. We found that the
 curvatures of the adaptive landscape exhibited the following structures:
 
-\[\textbf{Curvature}_{\text{Original}} = \begin{pmatrix} 
+\[\textbf{Curvature}_{\text{original}} = \begin{pmatrix} 
 0 &  &  \\  
 0 & 0 &  \\  
 0 & 0 & 0.34 \end{pmatrix} - \begin{pmatrix} 
@@ -784,12 +764,12 @@ curvatures of the adaptive landscape exhibited the following structures:
 0\cdot0.34 & 0\cdot0 &  \\  
 0\cdot0.34 & 0\cdot0 & 0\cdot0 \end{pmatrix}\]
 
-\[\textbf{Curvature}_{\text{Original}} = \begin{pmatrix} 
+\[\textbf{Curvature}_{\text{original}} = \begin{pmatrix} 
 -0.12 &  &  \\  
 0 & 0 &  \\  
 0 & 0 & 0.34 \end{pmatrix}\]
 
-\[\textbf{Curvature}_{\text{Extinction}} = \begin{pmatrix} 
+\[\textbf{Curvature}_{\text{extinction}} = \begin{pmatrix} 
 0 &  &  \\  
 0 & 0 &  \\  
 0 & 0 & 0 \end{pmatrix} - \begin{pmatrix} 
@@ -797,7 +777,7 @@ curvatures of the adaptive landscape exhibited the following structures:
 -0.09\cdot0.21 & -0.09\cdot-0.09 &  \\  
 -0.16\cdot0.21 & -0.16\cdot-0.09 & -0.16\cdot-0.16 \end{pmatrix}\]
 
-\[\textbf{Curvature}_{\text{Extinction}} = \begin{pmatrix} 
+\[\textbf{Curvature}_{\text{extinction}} = \begin{pmatrix} 
 -0.04 &  &  \\  
 0.02 & -0.01 &  \\  
 0.03 & -0.01 & -0.03 \end{pmatrix}\]
@@ -824,7 +804,7 @@ trait integration along any axis in the original food web (fig.
 
 \begin{figure}
 \centering
-\includegraphics{analyses/MV_landscapes.pdf}
+\includegraphics{../analyses/MV_landscapes.pdf}
 \caption{\label{fig:MV_Landscape}Two dimensional view of adaptive
 landscapes of gall midge phenotypes in the original food web and with
 the extinction of larval parasitoids. Each panel corresponds to a
@@ -844,7 +824,7 @@ the mathematical definition of the adaptive landscape.}
 \subsection{Selection on egg
 parasitoids}\label{selection-on-egg-parasitoids}
 
-The exctinction of larval parasitoids only altered the relationship
+The extinction of larval parasitoids only altered the relationship
 between gall midge preference and the probability of observing egg
 parasitoids (table \ref{Table:ExtendedGradients}). Specifically, the
 impact of larval parasitoids increased nonlinearly with higher gall
@@ -863,58 +843,58 @@ midge densities (fig. \ref{fig:EggPtoid_Selection}).
 \hline
 $\beta_{\text{Diam}}$ & 
 
--0.03 [
-0.25,
--0.3] \\
+0.03 [
+0.3,
+-0.25] \\
 
 $\beta_{\text{Clutch}}$ & 
 
-0.07 [
-0.38,
--0.26] \\
+-0.07 [
+0.26,
+-0.39] \\
 
 $\beta_{\text{Pref}}$ &
 
--0.25 [
-0.09,
--0.64] \\
+0.25 [
+0.64,
+-0.09] \\
 
 $\gamma_{\text{Diam:Diam}}$ &
 
--0.05 [
-0.33,
--0.43] \\
+0.05 [
+0.43,
+-0.33] \\
 
 $\gamma_{\text{Clutch:Clutch}}$ & 
 
--0.21 [
-0.26,
--0.68] \\
+0.21 [
+0.68,
+-0.26] \\
 
 $\gamma_{\text{Pref:Pref}}$ & 
 
 \textbf{
--0.46 [
--0.02,
--1.07] }\\
+0.46 [
+1.07,
+0.02] }\\
 
 $\gamma_{\text{Diam:Clutch}}$ & 
 
 0 [
-0.27,
--0.29] \\
+0.29,
+-0.27] \\
 
 $\gamma_{\text{Diam:Pref}}$ & 
 
-0.25 [
-0.6,
--0.05] \\
+-0.25 [
+0.04,
+-0.6] \\
 
 $\gamma_{\text{Clutch:Pref}}$ & 
 
--0.18 [
-0.12,
--0.52] \\ 
+0.18 [
+0.52,
+-0.12] \\ 
 \hline
 \end{tabular}
 \bigskip{}
@@ -924,7 +904,7 @@ $\gamma_{\text{Clutch:Pref}}$ &
 
 \begin{figure}
 \centering
-\includegraphics{analyses/selection_on_Platygaster.pdf}
+\includegraphics{../analyses/selection_on_Platygaster.pdf}
 \caption{\label{fig:EggPtoid_Selection}Selection imposed by larval
 parasitoids on egg parasitoids (\emph{Platygaster} sp.). The bold line
 represents the average difference in the probability of observing the
@@ -1032,10 +1012,11 @@ preference. A growing number of experiments over the past two decades
 have demonstrated the presence and potential importance of indirect
 evolutionary effects that emerge in a community context
 \citep{Pilson1996, Juenger1998, Stinchcombe2001, Lankau2007, Walsh2008, Walsh2010, terHorst2010, Sahli2011, Lau2012, terHorst2015, Schiestl2018, Start2019}.
-If indirect evolutionary effects are common \citep{Walsh2013}, then
-predicting evolutionary trajectories resulting from consumer extinctions
-will require evolutionary studies to explicitly account for the
-ecological networks that species are embedded in.
+If indirect evolutionary effects are common
+\citep{Miller1996, Walsh2013}, then predicting evolutionary trajectories
+resulting from consumer extinctions will require evolutionary studies to
+explicitly account for the ecological networks that species are embedded
+in.
 
 There is a growing number of theoretical studies on adaptation to
 directional environmental change that incorporate species interactions
@@ -1056,21 +1037,21 @@ how the distribution of different interaction types affects adaptation
 to environmental change in species-rich communities.
 
 Our study has some limitations to consider when relating our findings to
-the effects of consumer extinctions on evolutionary constraints more
+the effect of consumer extinctions on evolutionary constraints more
 generally. First, we removed other sources of mortality prior to our
 analyses. While this was necessary to avoid confounding estimates of
 selection with effects on phenotypic expression, we may be
-overestimating the effects of selection due to parasitoids. Second, our
+overestimating the effects of selection due to consumers. Second, our
 metrics of evolutionary constraints do not account for variation in the
-magnitude of selection pressures. While quantitative metrics are
-possible \citep{Hansen2008}, we felt they were not appropriate to apply
-here as our experimental removal of larval parasitoids results in a
-transient dynamic in the strength (but not direction) of selection. Such
-transient dynamics may be common in short-term experimental studies of
-natural selection, but they can be detected by using natural history
-information and dissecting the sources of selection (e.g.~quantifying
-selection surfaces and treatment effects on mean fitness) as we did
-here.
+magnitude of selection pressures. While metrics that incorporate the
+magnitude of selection are possible \citep{Hansen2008}, they were not
+appropriate for our study as our experimental removal of larval
+parasitoids artificially increased the mean fitness of gall midges (in
+the short term), which dampens the magnitude of selection gradients in
+this treatment \citep{Hunter2018}. This is why we used more qualitative
+metrics of evolutionary constraints, which are robust to this artificial
+effect and simply require sufficient sample sizes to detect evidence of
+selection.
 
 Our study gives insight to how consumer extinctions alter evolutionary
 constraints on remaining populations. In particular, it hints at a
