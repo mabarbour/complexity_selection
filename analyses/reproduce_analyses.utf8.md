@@ -2,7 +2,7 @@
 title: "Consumer extinctions constrain phenotypic evolution in the resulting food web"
 subtitle: "Supplementary information"
 author: "Code author: Matthew A. Barbour"
-date: "2019-05-21"
+date: "2019-05-22"
 output: 
   tufte::tufte_html:
     toc: true
