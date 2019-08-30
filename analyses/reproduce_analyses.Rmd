@@ -21,6 +21,7 @@ knitr::opts_chunk$set(message=FALSE, warning=FALSE, error=FALSE, echo=FALSE, dev
 
 ```{r required libraries, results='hide'}
 # Load required libraries.
+library(evolqg)     # calculate evolvability
 library(car)        # for homogeneity of variance test
 library(tidyverse)  # for managing data
 library(cowplot)    # pretty default ggplots
@@ -533,23 +534,32 @@ tidy_foodweb_grads %>%
 
 
 ```{r Curvature, include=FALSE}
+# Get mean estimates for directional selection gradients
+foodweb_original_mean_sc.Diam <- filter(tidy_foodweb_grads, type == "Original", term == "sc.Diam")$mean
+foodweb_original_mean_sc.log.Clutch <- filter(tidy_foodweb_grads, type == "Original", term == "sc.log.Clutch")$mean
+foodweb_original_mean_sc.sqrt.Pref <- filter(tidy_foodweb_grads, type == "Original", term == "sc.sqrt.Pref")$mean
+
+foodweb_extinction_mean_sc.Diam <- filter(tidy_foodweb_grads, type == "Extinction", term == "sc.Diam")$mean
+foodweb_extinction_sc.log.Clutch <- filter(tidy_foodweb_grads, type == "Extinction", term == "sc.log.Clutch")$mean
+foodweb_extinction_sc.sqrt.Pref <- filter(tidy_foodweb_grads, type == "Extinction", term == "sc.sqrt.Pref")$mean
+
 # Calculate curvatures for original food web
 foodweb_original_raw_curvs <- foodweb_original_raw_gradients %>%
-  transmute(`FoodwebOriginal:C.Diam` = `FoodwebOriginal:I(sc.Diam^2)` - `FoodwebOriginal:sc.Diam`*`FoodwebOriginal:sc.Diam`,
-         `FoodwebOriginal:C.Clutch` = `FoodwebOriginal:I(sc.log.Clutch^2)` - `FoodwebOriginal:sc.log.Clutch`*`FoodwebOriginal:sc.log.Clutch`,
-         `FoodwebOriginal:C.Pref` = `FoodwebOriginal:I(sc.sqrt.Pref^2)` - `FoodwebOriginal:sc.sqrt.Pref`*`FoodwebOriginal:sc.sqrt.Pref`,
-         `FoodwebOriginal:C.Diam:Clutch` = `FoodwebOriginal:sc.Diam:sc.log.Clutch` - `FoodwebOriginal:sc.Diam`*`FoodwebOriginal:sc.log.Clutch`,
-         `FoodwebOriginal:C.Diam:Pref` = `FoodwebOriginal:sc.Diam:sc.sqrt.Pref` - `FoodwebOriginal:sc.Diam`*`FoodwebOriginal:sc.sqrt.Pref`,
-         `FoodwebOriginal:C.Clutch:Pref` = `FoodwebOriginal:sc.log.Clutch:sc.sqrt.Pref` - `FoodwebOriginal:sc.log.Clutch`*`FoodwebOriginal:sc.sqrt.Pref`)
+  transmute(`FoodwebOriginal:C.Diam` = `FoodwebOriginal:I(sc.Diam^2)` - foodweb_original_mean_sc.Diam*foodweb_original_mean_sc.Diam, #`FoodwebOriginal:sc.Diam`*`FoodwebOriginal:sc.Diam`,
+         `FoodwebOriginal:C.Clutch` = `FoodwebOriginal:I(sc.log.Clutch^2)` - foodweb_original_mean_sc.log.Clutch*foodweb_original_mean_sc.log.Clutch, # `FoodwebOriginal:sc.log.Clutch`*`FoodwebOriginal:sc.log.Clutch`,
+         `FoodwebOriginal:C.Pref` = `FoodwebOriginal:I(sc.sqrt.Pref^2)` - foodweb_original_mean_sc.sqrt.Pref*foodweb_original_mean_sc.sqrt.Pref, #`FoodwebOriginal:sc.sqrt.Pref`*`FoodwebOriginal:sc.sqrt.Pref`,
+         `FoodwebOriginal:C.Diam:Clutch` = `FoodwebOriginal:sc.Diam:sc.log.Clutch` - foodweb_original_mean_sc.Diam*foodweb_original_mean_sc.log.Clutch, # `FoodwebOriginal:sc.Diam`*`FoodwebOriginal:sc.log.Clutch`,
+         `FoodwebOriginal:C.Diam:Pref` = `FoodwebOriginal:sc.Diam:sc.sqrt.Pref` - foodweb_original_mean_sc.Diam*foodweb_original_mean_sc.sqrt.Pref, # `FoodwebOriginal:sc.Diam`*`FoodwebOriginal:sc.sqrt.Pref`,
+         `FoodwebOriginal:C.Clutch:Pref` = `FoodwebOriginal:sc.log.Clutch:sc.sqrt.Pref` - foodweb_original_mean_sc.log.Clutch*foodweb_extinction_sc.sqrt.Pref) # `FoodwebOriginal:sc.log.Clutch`*`FoodwebOriginal:sc.sqrt.Pref`)
 
 # Calculate curvatures for extinction food web
 foodweb_extinction_raw_curvs <- foodweb_extinction_raw_gradients %>%
-  transmute(`FoodwebExtinction:C.Diam` = `FoodwebExtinction:I(sc.Diam^2)` - `FoodwebExtinction:sc.Diam`*`FoodwebExtinction:sc.Diam`,
-         `FoodwebExtinction:C.Clutch` = `FoodwebExtinction:I(sc.log.Clutch^2)` - `FoodwebExtinction:sc.log.Clutch`*`FoodwebExtinction:sc.log.Clutch`,
-         `FoodwebExtinction:C.Pref` = `FoodwebExtinction:I(sc.sqrt.Pref^2)` - `FoodwebExtinction:sc.sqrt.Pref`*`FoodwebExtinction:sc.sqrt.Pref`,
-         `FoodwebExtinction:C.Diam:Clutch` = `FoodwebExtinction:sc.Diam:sc.log.Clutch` - `FoodwebExtinction:sc.Diam`*`FoodwebExtinction:sc.log.Clutch`,
-         `FoodwebExtinction:C.Diam:Pref` = `FoodwebExtinction:sc.Diam:sc.sqrt.Pref` - `FoodwebExtinction:sc.Diam`*`FoodwebExtinction:sc.sqrt.Pref`,
-         `FoodwebExtinction:C.Clutch:Pref` = `FoodwebExtinction:sc.log.Clutch:sc.sqrt.Pref` - `FoodwebExtinction:sc.log.Clutch`*`FoodwebExtinction:sc.sqrt.Pref`)
+  transmute(`FoodwebExtinction:C.Diam` = `FoodwebExtinction:I(sc.Diam^2)` - foodweb_extinction_mean_sc.Diam*foodweb_extinction_mean_sc.Diam, #`FoodwebExtinction:sc.Diam`*`FoodwebExtinction:sc.Diam`,
+         `FoodwebExtinction:C.Clutch` = `FoodwebExtinction:I(sc.log.Clutch^2)` - foodweb_extinction_sc.log.Clutch*foodweb_extinction_sc.log.Clutch, # `FoodwebExtinction:sc.log.Clutch`*`FoodwebExtinction:sc.log.Clutch`,
+         `FoodwebExtinction:C.Pref` = `FoodwebExtinction:I(sc.sqrt.Pref^2)` - foodweb_extinction_sc.sqrt.Pref*foodweb_extinction_sc.sqrt.Pref,# `FoodwebExtinction:sc.sqrt.Pref`*`FoodwebExtinction:sc.sqrt.Pref`,
+         `FoodwebExtinction:C.Diam:Clutch` = `FoodwebExtinction:sc.Diam:sc.log.Clutch` - foodweb_extinction_mean_sc.Diam*foodweb_extinction_sc.log.Clutch, # `FoodwebExtinction:sc.Diam`*`FoodwebExtinction:sc.log.Clutch`,
+         `FoodwebExtinction:C.Diam:Pref` = `FoodwebExtinction:sc.Diam:sc.sqrt.Pref` - foodweb_extinction_mean_sc.Diam*foodweb_extinction_sc.sqrt.Pref,# `FoodwebExtinction:sc.Diam`*`FoodwebExtinction:sc.sqrt.Pref`,
+         `FoodwebExtinction:C.Clutch:Pref` = `FoodwebExtinction:sc.log.Clutch:sc.sqrt.Pref` - foodweb_extinction_sc.log.Clutch*foodweb_extinction_sc.sqrt.Pref)# `FoodwebExtinction:sc.log.Clutch`*`FoodwebExtinction:sc.sqrt.Pref`)
          
 
 # Calculate differences between food-web treatments, then estimate means and confidence intervals
@@ -589,7 +599,7 @@ tidy_foodweb_curvs %>%
   filter(type != "Diff") %>%
   select(term, type, mean, conf.low, conf.high, P_cutoff) %>% 
   mutate(mean = round(mean, 2), conf.low = round(conf.low, 2), conf.high = round(conf.high, 2)) %>%
-knitr::kable(., caption = "Table of curvatures on gall traits in each food-web treatment.")
+  knitr::kable(., caption = "Table of curvatures on gall traits in each food-web treatment.")
 ```
 
 
@@ -672,6 +682,228 @@ y_title_foodweb_grads <- ggdraw() + draw_label("Selection gradient (SDs)", angle
 
 figure_foodweb_grads <- plot_grid(y_title_foodweb_grads, plot_legend_foodweb_grads, ncol=2, rel_widths = c(0.05,1)) 
 figure_foodweb_grads
+```
+
+\ 
+
+## Long-term selection gradients for the gall midge: food-web treatments
+
+```{r Long-term food-web selection gradients, echo=TRUE}
+
+# Nothing changes for the original food web
+
+# use mean fitness from original food-web treatment to approximate long-term fitness of Extinction food web
+# once egg parasitoids increase in abundance after being released from intraguild predation
+foodweb_long_extinction_gradient <- function(x) foodweb_extinction_mean_brackets * x / foodweb_original_mean_fitness
+
+foodweb_long_extinction_raw_gradients <- select(foodweb_adj_Diam, starts_with("FoodwebExtinction:")) %>%
+  transmute_all(funs(foodweb_long_extinction_gradient))
+```
+
+
+```{r Tidy up long-term selection gradients}
+# Calculate differences between food-web treatments, then estimate means and confidence intervals
+foodweb_long_grads <- bind_cols(foodweb_original_raw_gradients, foodweb_long_extinction_raw_gradients) %>%
+  mutate(`FoodwebDiff:sc.Diam` = `FoodwebExtinction:sc.Diam` - `FoodwebOriginal:sc.Diam`,
+         `FoodwebDiff:sc.log.Clutch` = `FoodwebExtinction:sc.log.Clutch` - `FoodwebOriginal:sc.log.Clutch`,
+         `FoodwebDiff:sc.sqrt.Pref` = `FoodwebExtinction:sc.sqrt.Pref` - `FoodwebOriginal:sc.sqrt.Pref`,
+         `FoodwebDiff:I(sc.Diam^2)` = `FoodwebExtinction:I(sc.Diam^2)` - `FoodwebOriginal:I(sc.Diam^2)`,
+         `FoodwebDiff:I(sc.log.Clutch^2)` = `FoodwebExtinction:I(sc.log.Clutch^2)` - `FoodwebOriginal:I(sc.log.Clutch^2)`,
+         `FoodwebDiff:I(sc.sqrt.Pref^2)` = `FoodwebExtinction:I(sc.sqrt.Pref^2)` - `FoodwebOriginal:I(sc.sqrt.Pref^2)`,
+         `FoodwebDiff:sc.Diam:sc.log.Clutch` = `FoodwebExtinction:sc.Diam:sc.log.Clutch` - `FoodwebOriginal:sc.Diam:sc.log.Clutch`,
+         `FoodwebDiff:sc.Diam:sc.sqrt.Pref` = `FoodwebExtinction:sc.Diam:sc.sqrt.Pref` - `FoodwebOriginal:sc.Diam:sc.sqrt.Pref`,
+         `FoodwebDiff:sc.log.Clutch:sc.sqrt.Pref` = `FoodwebExtinction:sc.log.Clutch:sc.sqrt.Pref` - `FoodwebOriginal:sc.log.Clutch:sc.sqrt.Pref`) %>%
+  summarise_all(funs(mean, conf.high, conf.low))
+
+
+# Tidy up estimates
+tidy_foodweb_long_grads <- foodweb_long_grads %>%
+  t() %>%
+  as.data.frame() %>%
+  transmute(rows = rownames(.), value=V1) %>%
+  separate(col = rows, into = c("term","estimate"), sep="_") %>%
+  separate(col = term, into = c("type","term_1","term_2"), sep=":", extra="drop") %>%
+  mutate(term = ifelse(is.na(term_2), term_1, paste(term_1,term_2,sep=":"))) %>%
+  separate(col = type, into = c("extra","type"), sep = 7) %>%
+  select(type, term, estimate, value) %>%
+  mutate(type = factor(type, levels = c("Original", "Extinction", "Diff"))) %>%
+  spread(estimate, value) %>%
+  mutate(P_cutoff = ifelse(conf.high*conf.low < 0, "","*"),
+         gradient_type = ifelse(grepl("\\^2", .$term)==TRUE, "Quadratic",
+                                ifelse(grepl(":", .$term)==TRUE, "Correlational","Directional")),
+         mean = ifelse(gradient_type=="Quadratic", 2*mean, mean),
+         conf.low = ifelse(gradient_type=="Quadratic", 2*conf.low, conf.low),
+         conf.high = ifelse(gradient_type=="Quadratic", 2*conf.high, conf.high))
+```
+
+We then calculate selection gradients and 95% confidence intervals.
+
+```{r Table of long-term food web selection gradients}
+tidy_foodweb_long_grads %>%
+  filter(type != "Diff") %>%
+  #select(term, type, mean, conf.low, conf.high) %>% # gradient_type, P_cutoff
+  transmute(Term = term, Treatment = type, Estimate = round(mean, 2), `2.5%` = round(conf.low, 2), `97.5%` = round(conf.high, 2)) %>%
+  arrange(desc(Term)) %>%
+  knitr::kable(., caption = "Table of long-term standardized selection gradients acting on gall midges in each food-web treatment.")
+```
+
+
+```{r Table of differences in long-term selection gradients between food-web treatments}
+tidy_foodweb_long_grads %>%
+  filter(type == "Diff") %>%
+  #select(term, mean, conf.low, conf.high) %>% # gradient_type, P_cutoff
+  transmute(Term = term, Treatment = type, Estimate = round(mean, 2), `2.5%` = round(conf.low, 2), `97.5%` = round(conf.high, 2)) %>%
+  knitr::kable(., caption = "Table of differences in long-term selection gradients acting on gall traits between food-web treatment.")
+```
+
+
+```{r Curvature long-term, include=FALSE}
+# Get mean estimates for directional selection gradients
+# Note we already have the mean estimates for the original food web
+
+foodweb_long_extinction_mean_sc.Diam <- filter(tidy_foodweb_long_grads, type == "Extinction", term == "sc.Diam")$mean
+foodweb_long_extinction_sc.log.Clutch <- filter(tidy_foodweb_long_grads, type == "Extinction", term == "sc.log.Clutch")$mean
+foodweb_long_extinction_sc.sqrt.Pref <- filter(tidy_foodweb_long_grads, type == "Extinction", term == "sc.sqrt.Pref")$mean
+
+# Calculate curvatures for original food web
+foodweb_original_raw_curvs <- foodweb_original_raw_gradients %>%
+  transmute(`FoodwebOriginal:C.Diam` = `FoodwebOriginal:I(sc.Diam^2)` - foodweb_original_mean_sc.Diam*foodweb_original_mean_sc.Diam, # `FoodwebOriginal:sc.Diam`*`FoodwebOriginal:sc.Diam`,
+         `FoodwebOriginal:C.Clutch` = `FoodwebOriginal:I(sc.log.Clutch^2)` - foodweb_original_mean_sc.log.Clutch*foodweb_original_mean_sc.log.Clutch, #`FoodwebOriginal:sc.log.Clutch`*`FoodwebOriginal:sc.log.Clutch`,
+         `FoodwebOriginal:C.Pref` = `FoodwebOriginal:I(sc.sqrt.Pref^2)` - foodweb_original_mean_sc.sqrt.Pref*foodweb_original_mean_sc.sqrt.Pref, #`FoodwebOriginal:sc.sqrt.Pref`*`FoodwebOriginal:sc.sqrt.Pref`,
+         `FoodwebOriginal:C.Diam:Clutch` = `FoodwebOriginal:sc.Diam:sc.log.Clutch` - foodweb_original_mean_sc.Diam*foodweb_original_mean_sc.log.Clutch, #`FoodwebOriginal:sc.Diam`*`FoodwebOriginal:sc.log.Clutch`,
+         `FoodwebOriginal:C.Diam:Pref` = `FoodwebOriginal:sc.Diam:sc.sqrt.Pref` - foodweb_original_mean_sc.Diam*foodweb_original_mean_sc.sqrt.Pref, #`FoodwebOriginal:sc.Diam`*`FoodwebOriginal:sc.sqrt.Pref`,
+         `FoodwebOriginal:C.Clutch:Pref` = `FoodwebOriginal:sc.log.Clutch:sc.sqrt.Pref` - foodweb_original_mean_sc.log.Clutch*foodweb_original_mean_sc.sqrt.Pref)# `FoodwebOriginal:sc.log.Clutch`*`FoodwebOriginal:sc.sqrt.Pref`)
+
+# Calculate long-term curvatures for extinction food web
+foodweb_long_extinction_raw_curvs <- foodweb_long_extinction_raw_gradients %>%
+  transmute(`FoodwebExtinction:C.Diam` = `FoodwebExtinction:I(sc.Diam^2)` - foodweb_long_extinction_mean_sc.Diam*foodweb_long_extinction_mean_sc.Diam, #`FoodwebExtinction:sc.Diam`*`FoodwebExtinction:sc.Diam`,
+         `FoodwebExtinction:C.Clutch` = `FoodwebExtinction:I(sc.log.Clutch^2)` - foodweb_long_extinction_sc.log.Clutch*foodweb_long_extinction_sc.log.Clutch, # `FoodwebExtinction:sc.log.Clutch`*`FoodwebExtinction:sc.log.Clutch`,
+         `FoodwebExtinction:C.Pref` = `FoodwebExtinction:I(sc.sqrt.Pref^2)` - foodweb_long_extinction_sc.sqrt.Pref*foodweb_long_extinction_sc.sqrt.Pref, # `FoodwebExtinction:sc.sqrt.Pref`*`FoodwebExtinction:sc.sqrt.Pref`,
+         `FoodwebExtinction:C.Diam:Clutch` = `FoodwebExtinction:sc.Diam:sc.log.Clutch` - foodweb_long_extinction_mean_sc.Diam*foodweb_long_extinction_sc.log.Clutch, #`FoodwebExtinction:sc.Diam`*`FoodwebExtinction:sc.log.Clutch`,
+         `FoodwebExtinction:C.Diam:Pref` = `FoodwebExtinction:sc.Diam:sc.sqrt.Pref` - foodweb_long_extinction_mean_sc.Diam*foodweb_long_extinction_sc.sqrt.Pref, #`FoodwebExtinction:sc.Diam`*`FoodwebExtinction:sc.sqrt.Pref`,
+         `FoodwebExtinction:C.Clutch:Pref` = `FoodwebExtinction:sc.log.Clutch:sc.sqrt.Pref` - foodweb_long_extinction_sc.log.Clutch*foodweb_long_extinction_sc.sqrt.Pref) # `FoodwebExtinction:sc.log.Clutch`*`FoodwebExtinction:sc.sqrt.Pref`)
+         
+
+# Calculate differences between food-web treatments, then estimate means and confidence intervals
+foodweb_long_curvs <- bind_cols(foodweb_original_raw_curvs, foodweb_long_extinction_raw_curvs) %>%
+  mutate(`FoodwebDiff:C.Diam` = `FoodwebExtinction:C.Diam` - `FoodwebOriginal:C.Diam`,
+         `FoodwebDiff:C.Clutch` = `FoodwebExtinction:C.Clutch` - `FoodwebOriginal:C.Clutch`,
+         `FoodwebDiff:C.Pref` = `FoodwebExtinction:C.Pref` - `FoodwebOriginal:C.Pref`,
+         `FoodwebDiff:C.Diam:Clutch` = `FoodwebExtinction:C.Diam:Clutch` - `FoodwebOriginal:C.Diam:Clutch`,
+         `FoodwebDiff:C.Diam:Pref` = `FoodwebExtinction:C.Diam:Pref` - `FoodwebOriginal:C.Diam:Pref`,
+         `FoodwebDiff:C.Clutch:Pref` = `FoodwebExtinction:C.Clutch:Pref` - `FoodwebOriginal:C.Clutch:Pref`) %>%
+  summarise_all(funs(mean, conf.high, conf.low))
+
+
+# Tidy up estimates
+tidy_foodweb_long_curvs <- foodweb_long_curvs %>%
+  t() %>%
+  as.data.frame() %>%
+  transmute(rows = rownames(.), value=V1) %>%
+  separate(col = rows, into = c("term","estimate"), sep="_") %>%
+  separate(col = term, into = c("type","term_1","term_2"), sep=":", extra="drop") %>%
+  mutate(term = ifelse(is.na(term_2), term_1, paste(term_1,term_2,sep=":"))) %>%
+  separate(col = type, into = c("extra","type"), sep = 7) %>%
+  select(type, term, estimate, value) %>%
+  mutate(type = factor(type, levels = c("Original", "Extinction", "Diff"))) %>%
+  spread(estimate, value) %>%
+  mutate(P_cutoff = ifelse(conf.high*conf.low < 0, "","*"))#,
+         #gradient_type = ifelse(grepl("\\^2", .$term)==TRUE, "Quadratic",
+         #                       ifelse(grepl(":", .$term)==TRUE, "Correlational","Directional")),
+         #mean = ifelse(gradient_type=="Quadratic", 2*mean, mean),
+         #conf.low = ifelse(gradient_type=="Quadratic", 2*conf.low, conf.low),
+         #conf.high = ifelse(gradient_type=="Quadratic", 2*conf.high, conf.high))
+```
+
+
+```{r Table of long-term food web curvatures}
+tidy_foodweb_long_curvs %>%
+  filter(type != "Diff") %>%
+  select(term, type, mean, conf.low, conf.high, P_cutoff) %>% 
+  mutate(mean = round(mean, 2), conf.low = round(conf.low, 2), conf.high = round(conf.high, 2)) %>%
+  knitr::kable(., caption = "Table of long-term curvatures on gall traits in each food-web treatment.")
+```
+
+
+```{r Table of differences in long-term curvatures between food-web treatments, include=FALSE}
+tidy_foodweb_long_curvs %>%
+  filter(type == "Diff") %>%
+  select(term, mean, conf.low, conf.high, P_cutoff) %>%
+  mutate(mean = round(mean, 2), conf.low = round(conf.low, 2), conf.high = round(conf.high, 2)) %>%
+  knitr::kable(., caption = "Table of differences in long-term curvatures on gall traits between food-web treatment.")
+```
+
+
+As before, we can visualize the table output as a figure.
+
+```{r Plot long-term food-web gradients, fig.cap="Plot of long-term standardized selection gradients acting on gall midges in each food-web treatment."}
+
+# Plot helpers
+dodge_width <- position_dodge(width=0.5)
+y_limits_foodweb_long_grads <- c(min(filter(tidy_foodweb_long_grads, type!="Diff")$conf.low), 
+                            max(filter(tidy_foodweb_long_grads, type!="Diff")$conf.high))
+P_asterisk_foodweb_grads <- 0.5
+P_size <- 8
+legend_foodweb_long_labels <- c("Original","Extinction-Long")
+legend_foodweb_title <- "Food web"
+point.size <- 3
+
+# Plot directional selection gradients
+plot_foodweb_long_directional_grads <- tidy_foodweb_long_grads %>%
+  filter(type!="Diff", term %in% c("sc.Diam","sc.log.Clutch","sc.sqrt.Pref")) %>%
+  ggplot(., aes(x=term)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  #geom_text(data=filter(tidy_foodweb_grads, type=="Diff", term %in% c("sc.Diam","sc.log.Clutch","sc.sqrt.Pref")), aes(y=P_asterisk_foodweb_grads, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Gradient", limits=y_limits_foodweb_long_grads) +
+  scale_x_discrete(name="", labels=parse(text=c("beta[Diam]","beta[Clutch]","beta[Pref]"))) +
+  facet_wrap(~gradient_type) +
+  scale_fill_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_long_labels, name=legend_foodweb_title) +
+  scale_color_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_long_labels, name=legend_foodweb_title)
+
+# Plot quadratic selection gradients
+plot_foodweb_long_quadratic_grads <- tidy_foodweb_long_grads %>%
+  filter(type!="Diff", term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.sqrt.Pref^2)")) %>%
+  ggplot(., aes(x=term, color=type)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  #geom_text(data=filter(tidy_foodweb_grads, type=="Diff", term %in% c("I(sc.Diam^2)","I(sc.log.Clutch^2)","I(sc.sqrt.Pref^2)")), aes(y=P_asterisk_foodweb_grads, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Gradient", limits=y_limits_foodweb_long_grads) +
+  scale_x_discrete(name="", labels=parse(text=c("gamma[Diam:Diam]","gamma[Clutch:Clutch]","gamma[Pref:Pref]"))) +
+  facet_wrap(~gradient_type) +
+  scale_fill_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_long_labels, name=legend_foodweb_title) +
+  scale_color_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_long_labels, name=legend_foodweb_title)
+
+# Plot correlational selection gradients
+plot_foodweb_long_correlational_grads <- tidy_foodweb_long_grads %>%
+  filter(type!="Diff", term %in% c("sc.Diam:sc.log.Clutch","sc.Diam:sc.sqrt.Pref","sc.log.Clutch:sc.sqrt.Pref")) %>%
+  ggplot(., aes(x=term, color=type)) +
+  geom_hline(yintercept=0, linetype="dotted") +
+  geom_linerange(aes(ymax=conf.high, ymin=conf.low, color=type), position=dodge_width) +
+  geom_point(aes(y=mean, fill=type), position=dodge_width, shape=21, color="black", size=point.size) +
+  #geom_text(data=filter(tidy_foodweb_grads, type=="Diff", term %in% c("sc.Diam:sc.log.Clutch","sc.Diam:sc.sqrt.Pref","sc.log.Clutch:sc.sqrt.Pref")), aes(y=P_asterisk_foodweb_grads, label=P_cutoff), size=P_size, color="black") +
+  scale_y_continuous(name="Gradient", limits=y_limits_foodweb_long_grads) +
+  scale_x_discrete(name="", labels=parse(text=c("gamma[Diam:Clutch]","gamma[Diam:Pref]","gamma[Clutch:Pref]"))) +
+  facet_wrap(~gradient_type) +
+  scale_fill_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_long_labels, name=legend_foodweb_title) +
+  scale_color_manual(values=cbPalette[c(6,5)], labels=legend_foodweb_long_labels, name=legend_foodweb_title) 
+
+# Get legend
+legend_foodweb_long_grads <- get_legend(plot_foodweb_long_directional_grads)
+
+# Format plots for manuscript
+plot_foodweb_long_grads <- plot_grid(
+  plot_foodweb_long_directional_grads + theme(legend.position = "none", axis.title = element_blank()),
+  plot_foodweb_long_quadratic_grads + theme(legend.position = "none", axis.title = element_blank()),
+  plot_foodweb_long_correlational_grads + theme(legend.position = "none", axis.title = element_blank()), 
+  nrow=2, align="hv", labels = "")
+plot_legend_foodweb_long_grads <- ggdraw(plot_foodweb_long_grads) + draw_grob(legend_foodweb_long_grads, x = 0.7, y=-0.2)
+y_title_foodweb_long_grads <- ggdraw() + draw_label("Selection gradient (SDs)", angle = 90)
+
+figure_foodweb_long_grads <- plot_grid(y_title_foodweb_long_grads, plot_legend_foodweb_long_grads, ncol=2, rel_widths = c(0.05,1)) 
+figure_foodweb_long_grads
 ```
 
 \  
@@ -1682,6 +1914,268 @@ $$\textbf{C}_{\text{Extinction}} = \begin{pmatrix}
 `r round(extinction_curvature["Diam","Diam"],2)` &  &  \\  
 `r round(extinction_curvature["Clutch","Diam"],2)` & `r round(extinction_curvature["Clutch","Clutch"],2)` &  \\  
 `r round(extinction_curvature["Pref","Diam"],2)` & `r round(extinction_curvature["Pref","Clutch"],2)` & `r round(extinction_curvature["Pref","Pref"],2)` \end{pmatrix}$$
+
+\
+
+```{r Genetic constraints, include=F, eval=F}
+bootstrapped_foodweb_curvs <- bind_cols(foodweb_original_raw_curvs, foodweb_extinction_raw_curvs) #%>%
+  #mutate(`FoodwebDiff:C.Diam` = `FoodwebExtinction:C.Diam` - `FoodwebOriginal:C.Diam`,
+  #       `FoodwebDiff:C.Clutch` = `FoodwebExtinction:C.Clutch` - `FoodwebOriginal:C.Clutch`,
+  #       `FoodwebDiff:C.Pref` = `FoodwebExtinction:C.Pref` - `FoodwebOriginal:C.Pref`,
+  #       `FoodwebDiff:C.Diam:Clutch` = `FoodwebExtinction:C.Diam:Clutch` - `FoodwebOriginal:C.Diam:Clutch`,
+  #       `FoodwebDiff:C.Diam:Pref` = `FoodwebExtinction:C.Diam:Pref` - `FoodwebOriginal:C.Diam:Pref`,
+  #       `FoodwebDiff:C.Clutch:Pref` = `FoodwebExtinction:C.Clutch:Pref` - `FoodwebOriginal:C.Clutch:Pref`)
+#bootstrapped_foodweb_curvs
+
+Pmat <- matrix(diag(c(1,1,1)), byrow = T, ncol = 3)#cov(select(gall_selection.df, sc.Diam, sc.log.Clutch, sc.sqrt.Pref))
+Gmat <- 0.3*Pmat # assuming heritability of 0.3
+
+registerDoParallel(cores = 32)
+foodweb_original_genetic_constraints <- c()
+foodweb_extinction_genetic_constraints <- c()
+for(i in 1:dim(bootstrapped_foodweb_curvs)[1]){ # 
+  
+  # original
+  original_C <- matrix(c(bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Diam`[i],bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Diam:Clutch`[i],bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Diam:Pref`[i],
+                    bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Diam:Clutch`[i],bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Clutch`[i],bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Clutch:Pref`[i],
+                    bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Diam:Pref`[i],bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Clutch:Pref`[i],bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Pref`[i]),
+                  byrow = T, ncol = 3)
+  original_new_G <- Gmat + Gmat %*% original_C %*% Gmat
+  original_new_G2 <- original_new_G + original_new_G %*% original_C %*% original_new_G
+  original_new_G3 <- original_new_G2 + original_new_G2 %*% original_C %*% original_new_G2
+  original_new_G4 <- original_new_G3 + original_new_G3 %*% original_C %*% original_new_G3
+  original_new_G5 <- original_new_G4 + original_new_G4 %*% original_C %*% original_new_G4
+  original_new_G6 <- original_new_G5 + original_new_G5 %*% original_C %*% original_new_G5
+  original_new_G7 <- original_new_G6 + original_new_G6 %*% original_C %*% original_new_G6
+  original_new_G8 <- original_new_G7 + original_new_G7 %*% original_C %*% original_new_G7
+  
+  foodweb_original_genetic_constraints[i] <- try(MeanMatrixStatistics(original_new_G, iterations = 1000, parallel = TRUE))["evolvability"]
+
+  
+  # extinction
+  extinction_C <- matrix(c(bootstrapped_foodweb_curvs$`FoodwebExtinction:C.Diam`[i],bootstrapped_foodweb_curvs$`FoodwebExtinction:C.Diam:Clutch`[i],bootstrapped_foodweb_curvs$`FoodwebExtinction:C.Diam:Pref`[i],
+                    bootstrapped_foodweb_curvs$`FoodwebExtinction:C.Diam:Clutch`[i],bootstrapped_foodweb_curvs$`FoodwebExtinction:C.Clutch`[i],bootstrapped_foodweb_curvs$`FoodwebExtinction:C.Clutch:Pref`[i],
+                    bootstrapped_foodweb_curvs$`FoodwebExtinction:C.Diam:Pref`[i],bootstrapped_foodweb_curvs$`FoodwebExtinction:C.Clutch:Pref`[i],bootstrapped_foodweb_curvs$`FoodwebExtinction:C.Pref`[i]),
+                  byrow = T, ncol = 3)
+  extinction_new_G <- Gmat + Gmat %*% extinction_C %*% Gmat
+  extinction_new_G2 <- extinction_new_G + extinction_new_G %*% extinction_C %*% extinction_new_G
+  extinction_new_G3 <- extinction_new_G2 + extinction_new_G2 %*% extinction_C %*% extinction_new_G2
+  extinction_new_G4 <- extinction_new_G3 + extinction_new_G3 %*% extinction_C %*% extinction_new_G3
+  extinction_new_G5 <- extinction_new_G4 + extinction_new_G4 %*% extinction_C %*% extinction_new_G4
+  extinction_new_G6 <- extinction_new_G5 + extinction_new_G5 %*% extinction_C %*% extinction_new_G5
+  extinction_new_G7 <- extinction_new_G6 + extinction_new_G6 %*% extinction_C %*% extinction_new_G6
+  extinction_new_G8 <- extinction_new_G7 + extinction_new_G7 %*% extinction_C %*% extinction_new_G7
+  
+  foodweb_extinction_genetic_constraints[i] <- try(MeanMatrixStatistics(extinction_new_G, iterations = 1000, parallel = TRUE))["evolvability"]
+  
+  # progress
+  print(paste(i/dim(bootstrapped_foodweb_curvs)[1]*100, "% done!"))
+}
+
+## Note that higher values of conditional evolvability indicate less genetic constraints
+
+# heritability does affect constraints
+
+bootstrapped_genetic_constraints <- data.frame(Original = as.numeric(foodweb_original_genetic_constraints), Extinction = as.numeric(foodweb_extinction_genetic_constraints)) %>%
+  mutate(Diff = Original - Extinction) 
+
+bootstrapped_summary_constraints <- bootstrapped_genetic_constraints %>%
+summarise_all(list(~mean(., na.rm = T), ~quantile(., probs=0.975, na.rm = T), ~quantile(., probs=0.025, na.rm = T))) %>%
+  gather(key = type, value = Estimate) %>%
+  separate(col = type, into = c("Foodweb", "Type")) %>%
+  arrange(Foodweb)
+
+sum(bootstrapped_genetic_constraints$Diff > 0) / length(bootstrapped_genetic_constraints$Diff)
+
+bootstrapped_summary_constraints
+
+bootstrapped_genetic_constraints %>%
+  ggplot(., aes(x = Diff)) +
+  geom_histogram() +
+  geom_vline(xintercept = 0, linetype = "dotted")
+```
+
+```{r mean curvature effects on random G-matrices}
+# Generate random G-matrices
+random_Gmats <- RandomMatrix(num.traits = 3, num.matrices = 10000, min.var = 0, max.var = 0.5)
+
+## Get mean estimates for curvature matrix
+
+# Original
+foodweb_original_mean_C.Diam <- filter(tidy_foodweb_curvs, type == "Original", term == "C.Diam")$mean
+foodweb_original_mean_C.Clutch <- filter(tidy_foodweb_curvs, type == "Original", term == "C.Clutch")$mean
+foodweb_original_mean_C.Pref <- filter(tidy_foodweb_curvs, type == "Original", term == "C.Pref")$mean
+foodweb_original_mean_C.Diam.Clutch <- filter(tidy_foodweb_curvs, type == "Original", term == "C.Diam:Clutch")$mean
+foodweb_original_mean_C.Diam.Pref <- filter(tidy_foodweb_curvs, type == "Original", term == "C.Diam:Pref")$mean
+foodweb_original_mean_C.Clutch.Pref <- filter(tidy_foodweb_curvs, type == "Original", term == "C.Clutch:Pref")$mean
+
+mean_curv_original <- matrix(c(foodweb_original_mean_C.Diam, foodweb_original_mean_C.Diam.Clutch, foodweb_original_mean_C.Diam.Pref,
+                               foodweb_original_mean_C.Diam.Clutch, foodweb_original_mean_C.Clutch, foodweb_original_mean_C.Clutch.Pref,
+                               foodweb_original_mean_C.Diam.Pref, foodweb_original_mean_C.Clutch.Pref, foodweb_original_mean_C.Pref),
+                             byrow = T, ncol = 3)
+
+# Extinction
+foodweb_extinction_mean_C.Diam <- filter(tidy_foodweb_curvs, type == "Extinction", term == "C.Diam")$mean
+foodweb_extinction_mean_C.Clutch <- filter(tidy_foodweb_curvs, type == "Extinction", term == "C.Clutch")$mean
+foodweb_extinction_mean_C.Pref <- filter(tidy_foodweb_curvs, type == "Extinction", term == "C.Pref")$mean
+foodweb_extinction_mean_C.Diam.Clutch <- filter(tidy_foodweb_curvs, type == "Extinction", term == "C.Diam:Clutch")$mean
+foodweb_extinction_mean_C.Diam.Pref <- filter(tidy_foodweb_curvs, type == "Extinction", term == "C.Diam:Pref")$mean
+foodweb_extinction_mean_C.Clutch.Pref <- filter(tidy_foodweb_curvs, type == "Extinction", term == "C.Clutch:Pref")$mean
+
+mean_curv_extinction <- matrix(c(foodweb_extinction_mean_C.Diam, foodweb_extinction_mean_C.Diam.Clutch, foodweb_extinction_mean_C.Diam.Pref,
+                               foodweb_extinction_mean_C.Diam.Clutch, foodweb_extinction_mean_C.Clutch, foodweb_extinction_mean_C.Clutch.Pref,
+                               foodweb_extinction_mean_C.Diam.Pref, foodweb_extinction_mean_C.Clutch.Pref, foodweb_extinction_mean_C.Pref),
+                             byrow = T, ncol = 3)
+
+## Functions to calculate effect of mean curvature on random G-matrices
+curv_original_random_matrices_evolvabilities <- function(x){
+  new_Gmat <- x + x %*% mean_curv_original %*% x
+  MeanMatrixStatistics(new_Gmat, iterations = 1000, parallel = TRUE)["evolvability"]
+}
+
+curv_extinction_random_matrices_evolvabilities <- function(x){
+  new_Gmat <- x + x %*% mean_curv_extinction %*% x
+  MeanMatrixStatistics(new_Gmat, iterations = 1000, parallel = TRUE)["evolvability"]
+}
+
+original_evolvability_list <- plyr::ldply(lapply(X = random_Gmats, FUN = curv_original_random_matrices_evolvabilities)) %>%
+  select(Original = evolvability)
+
+extinction_evolvability_list <- plyr::ldply(lapply(X = random_Gmats, FUN = curv_extinction_random_matrices_evolvabilities)) %>% 
+  select(Extinction = evolvability)
+
+random_evolvabilities <- bind_cols(original_evolvability_list, extinction_evolvability_list) %>%
+  mutate(Diff = Extinction - Original)
+```
+
+We see that for our best estimates of the curvature matrix, that the extinction food web tends to decrease evolvability (`r sum(random_evolvabilities$Diff < 0) / length(random_evolvabilities$Diff)`) of the gall midge population.
+
+```{r Delta evolvability, fig.cap = "Change in evolvability for 10,000 random G-matrices"}
+delta_evolvability_plot <- ggplot(random_evolvabilities, aes(x = Diff)) +
+  geom_histogram() +
+  geom_vline(xintercept = 0, linetype = "dotted") +
+  xlab(expression(paste(Delta," evolvability (extinction - original)"))) +
+  ylab("Count")
+
+delta_evolvability_plot
+save_plot(filename = "delta_evolvability.pdf", plot = delta_evolvability_plot, base_height = 4) # base_height = 6 is to large for PDF of manuscript
+```
+
+
+```{r full sim random G and bootstrapped curvs, include=F, eval=F}
+bootstrapped_foodweb_curvs <- bind_cols(foodweb_original_raw_curvs, foodweb_extinction_raw_curvs) 
+
+# Generate random G-matrices
+set.seed(34)
+random_Gmats <- RandomMatrix(num.traits = 3, num.matrices = 100, min.var = 0, max.var = 0.5)
+
+registerDoParallel(cores = 32)
+
+bootstrap_curvs_random_Gmats <- function(x){
+
+  foodweb_original_genetic_constraints <- c()
+  foodweb_extinction_genetic_constraints <- c()
+  for(i in 1:dim(bootstrapped_foodweb_curvs)[1]){ # 
+  
+    # original
+    original_C <- matrix(c(bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Diam`[i],bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Diam:Clutch`[i],bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Diam:Pref`[i],
+                      bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Diam:Clutch`[i],bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Clutch`[i],bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Clutch:Pref`[i],
+                      bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Diam:Pref`[i],bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Clutch:Pref`[i],bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Pref`[i]),
+                    byrow = T, ncol = 3)
+    original_new_G <- x + x %*% original_C %*% x
+    
+    foodweb_original_genetic_constraints[i] <- try(MeanMatrixStatistics(original_new_G, iterations = 1000, parallel = TRUE))["evolvability"]
+  
+    
+    # extinction
+    extinction_C <- matrix(c(bootstrapped_foodweb_curvs$`FoodwebExtinction:C.Diam`[i],bootstrapped_foodweb_curvs$`FoodwebExtinction:C.Diam:Clutch`[i],bootstrapped_foodweb_curvs$`FoodwebExtinction:C.Diam:Pref`[i],
+                      bootstrapped_foodweb_curvs$`FoodwebExtinction:C.Diam:Clutch`[i],bootstrapped_foodweb_curvs$`FoodwebExtinction:C.Clutch`[i],bootstrapped_foodweb_curvs$`FoodwebExtinction:C.Clutch:Pref`[i],
+                      bootstrapped_foodweb_curvs$`FoodwebExtinction:C.Diam:Pref`[i],bootstrapped_foodweb_curvs$`FoodwebExtinction:C.Clutch:Pref`[i],bootstrapped_foodweb_curvs$`FoodwebExtinction:C.Pref`[i]),
+                    byrow = T, ncol = 3)
+    extinction_new_G <- x + x %*% extinction_C %*% x
+    
+    foodweb_extinction_genetic_constraints[i] <- try(MeanMatrixStatistics(extinction_new_G, iterations = 1000, parallel = TRUE))["evolvability"]
+  }
+  bootstrapped_genetic_constraints <- data.frame(Original = as.numeric(foodweb_original_genetic_constraints), 
+                                                 Extinction = as.numeric(foodweb_extinction_genetic_constraints)) %>%
+    mutate(Diff = Original - Extinction) 
+
+  mean_diff <- mean(bootstrapped_genetic_constraints$Diff, na.rm = T)
+  prop_positive_diff <- sum(bootstrapped_genetic_constraints$Diff > 0, na.rm = T) / length(bootstrapped_genetic_constraints$Diff[!is.na(bootstrapped_genetic_constraints$Diff)])
+  
+  return(data.frame(mean_diff = mean_diff, prop_positive_diff = prop_positive_diff))
+}
+
+# this takes ~1.5 days to run just 100 random Gmats...
+diffs.df <- lapply(X = random_Gmats, FUN = bootstrap_curvs_random_Gmats)
+```
+
+```{r include=F, eval=F}
+# of the 100, none were significant...
+plyr::ldply(diffs.df) %>%
+  mutate(Sig = ifelse(prop_positive_diff > 0.975 | prop_positive_diff < 0.025, 1, 0)) %>%
+  ggplot(., aes(x = mean_diff, fill = factor(Sig))) +
+  geom_histogram() +
+  geom_vline(xintercept = 0, linetype = "dotted")
+
+write_csv(plyr::ldply(diffs.df), "bootstrap_random_Gmat_evolvabilities.csv")
+```
+
+```{r long-term genetic constraints, include=F, eval=F}
+bootstrapped_foodweb_long_curvs <- foodweb_long_extinction_raw_curvs #bind_cols(foodweb_original_raw_curvs, foodweb_long_extinction_raw_curvs) #%>%
+  #mutate(`FoodwebDiff:C.Diam` = `FoodwebExtinction:C.Diam` - `FoodwebOriginal:C.Diam`,
+  #       `FoodwebDiff:C.Clutch` = `FoodwebExtinction:C.Clutch` - `FoodwebOriginal:C.Clutch`,
+  #       `FoodwebDiff:C.Pref` = `FoodwebExtinction:C.Pref` - `FoodwebOriginal:C.Pref`,
+  #       `FoodwebDiff:C.Diam:Clutch` = `FoodwebExtinction:C.Diam:Clutch` - `FoodwebOriginal:C.Diam:Clutch`,
+  #       `FoodwebDiff:C.Diam:Pref` = `FoodwebExtinction:C.Diam:Pref` - `FoodwebOriginal:C.Diam:Pref`,
+  #       `FoodwebDiff:C.Clutch:Pref` = `FoodwebExtinction:C.Clutch:Pref` - `FoodwebOriginal:C.Clutch:Pref`)
+#bootstrapped_foodweb_curvs
+
+Pmat <- cov(select(gall_selection.df, sc.Diam, sc.log.Clutch, sc.sqrt.Pref))
+Gmat <- 0.3*Pmat # assuming heritability of 0.3
+
+#registerDoParallel(cores = 32)
+#foodweb_original_genetic_constraints <- c()
+foodweb_long_extinction_genetic_constraints <- c()
+for(i in 1:dim(bootstrapped_foodweb_long_curvs)[1]){ # 
+  
+  # original
+  #original_C <- matrix(c(bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Diam`[i],bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Diam:Clutch`[i],bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Diam:Pref`[i],
+  #                  bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Diam:Clutch`[i],bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Clutch`[i],bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Clutch:Pref`[i],
+  #                  bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Diam:Pref`[i],bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Clutch:Pref`[i],bootstrapped_foodweb_curvs$`FoodwebOriginal:C.Pref`[i]),
+  #                byrow = T, ncol = 3)
+  #original_new_G <- Gmat + Gmat %*% original_C %*% Gmat
+  #foodweb_original_genetic_constraints[i] <- try(MeanMatrixStatistics(original_new_G, iterations = 10000, parallel = TRUE))["conditional.evolvability"]
+
+  
+  # extinction
+  long_extinction_C <- matrix(c(bootstrapped_foodweb_long_curvs$`FoodwebExtinction:C.Diam`[i],bootstrapped_foodweb_long_curvs$`FoodwebExtinction:C.Diam:Clutch`[i],bootstrapped_foodweb_long_curvs$`FoodwebExtinction:C.Diam:Pref`[i],
+                    bootstrapped_foodweb_long_curvs$`FoodwebExtinction:C.Diam:Clutch`[i],bootstrapped_foodweb_long_curvs$`FoodwebExtinction:C.Clutch`[i],bootstrapped_foodweb_long_curvs$`FoodwebExtinction:C.Clutch:Pref`[i],
+                    bootstrapped_foodweb_long_curvs$`FoodwebExtinction:C.Diam:Pref`[i],bootstrapped_foodweb_long_curvs$`FoodwebExtinction:C.Clutch:Pref`[i],bootstrapped_foodweb_long_curvs$`FoodwebExtinction:C.Pref`[i]),
+                  byrow = T, ncol = 3)
+  long_extinction_new_G <- Gmat + Gmat %*% long_extinction_C %*% Gmat
+  foodweb_long_extinction_genetic_constraints[i] <- try(MeanMatrixStatistics(long_extinction_new_G, iterations = 10000, parallel = TRUE))["conditional.evolvability"]
+  
+  # progress
+  print(paste(i/dim(bootstrapped_foodweb_long_curvs)[1]*100, "% done!"))
+}
+
+## Note that higher values of conditional evolvability indicate less genetic constraints
+
+bootstrapped_long_genetic_constraints <- data.frame(Original = as.numeric(foodweb_original_genetic_constraints), Extinction = as.numeric(foodweb_long_extinction_genetic_constraints)) %>%
+  mutate(Diff = Original - Extinction) 
+
+bootstrapped_long_summary_constraints <- bootstrapped_long_genetic_constraints %>%
+summarise_all(list(~mean(., na.rm = T), ~quantile(., probs=0.975, na.rm = T), ~quantile(., probs=0.025, na.rm = T))) %>%
+  gather(key = type, value = Estimate) %>%
+  separate(col = type, into = c("Foodweb", "Type")) %>%
+  arrange(Foodweb)
+
+bootstrapped_long_summary_constraints
+
+hist(bootstrapped_long_genetic_constraints$Diff)
+```
+
 
 \ 
 
