@@ -135,8 +135,8 @@ evolution
 \bigskip
 
 \emph{Keywords}: adaptive landscape, ecological networks,
-eco-evolutionary dynamics, natural selection, host-parasitoid,
-complexity, biodiversity, community context.
+eco-evolutionary dynamics, natural selection, host-parasitoid, community
+context, extinction.
 
 \bigskip
 
@@ -144,7 +144,7 @@ complexity, biodiversity, community context.
 
 \bigskip
 
-\emph{Total Word Count}: 5769
+\emph{Total Word Count}: 5833
 
 \bigskip
 
@@ -241,16 +241,16 @@ diminishes the number of optimal solutions \citep{Arnold2003}. The
 curvature of the adaptive landscape is governed by nonlinear selection
 gradients and acts to indirectly constrain evolution through its effect
 on genetic constraints \citep{Arnold1992, Hansen2008}. Genetic
-constraints are largely governed by a population's \textbf{G}-matrix
----the additive genetic variances and covariances between traits
+constraints are largely governed by a population's G-matrix ---the
+additive genetic variances and covariances between traits
 \citep{Hansen2008}. Stabilizing selection acts to erode genetic variance
 in traits, which can impose a constraint on the ability of those traits
 to respond to future selection \citep{Hansen2008}. Correlational
 selection may alter the genetic covariance between traits, which may
-facilitate or hinder future adaptation depending on pattern of selection
-on those traits \citep{Hansen2008}. If we want to predict how ecological
-communities shape phenotypic evolution, we must understand how
-ecological networks shape the adaptive landscape.
+facilitate or hinder future adaptation depending on the pattern of
+selection on those traits \citep{Hansen2008}. If we want to predict how
+ecological communities shape phenotypic evolution, we must understand
+how ecological networks shape the adaptive landscape.
 
 The loss of biodiversity is altering the structure of ecological
 networks, which may influence evolutionary constraints in a number of
@@ -284,7 +284,7 @@ interacting populations.
 
 \begin{figure}
 \centering
-\includegraphics{../analyses/complex_simple_foodwebs_v3.jpeg}
+\includegraphics{../analyses/complex_simple_foodwebs_v4.jpeg}
 \caption{\label{fig:Conceptual}Experimental manipulation of food-web
 structure associated with a leaf-galling midge (\emph{Iteomyia
 salicisverruca}) feeding on the willow \emph{Salix hookeriana}. Black
@@ -342,15 +342,15 @@ bagged galls from each plant, placed them into 30 mL vials and kept them
 in the lab for 4 months at room temperature. We then opened galls under
 a dissecting scope and determined whether larvae survived to pupation
 (our measure of fitness) or were parasitized. We did not include other
-sources of mortality, such as early larval death, as they could
-influence the expression of the gall phenotype and confound estimates of
-selection. For the food-web treatment that excluded larval parasitoids,
-we further restricted our data by removing any incidental instances of
-parasitism by a larval parasitoid. This represented less than 3\% of the
-observations in this food-web treatment and allowed us to focus our
-inferences of selection on those imposed by the egg parasitoid. Our
-final dataset contains survival estimates for 1285 larvae from 613 galls
-and 111 plants.
+sources of mortality in our analyses, such as early larval death, as
+they could influence the expression of the gall phenotype and confound
+estimates of selection. For the food-web treatment that excluded larval
+parasitoids, we further restricted our data by removing any incidental
+instances of parasitism by a larval parasitoid. This represented less
+than 3\% of the observations in this food-web treatment and allowed us
+to focus our inferences of selection on those imposed by the egg
+parasitoid. Our final dataset contains survival estimates for 1285
+larvae from 613 galls and 111 plants.
 
 \subsection{Measuring Phenotypic
 Traits}\label{measuring-phenotypic-traits}
@@ -564,7 +564,7 @@ detected a positive bias in both food-web treatments (original
 \(\alpha_{\text{Diam}}\)= 0.36 {[}0.05, 0.67{]}; removal
 \(\alpha_{\text{Diam}}\)= 0.42 {[}0.01, 0.82{]}), indicating that
 unadjusted relationships would overestimate the strength of selection on
-chamber diameter. To account for this bias, we substracted our mean
+chamber diameter. To account for this bias, we subtracted our mean
 estimates of bias from our estimates with the full dataset prior to
 calculating chamber diameter's selection surface and directional
 selection gradient.
@@ -602,25 +602,25 @@ archived on Zenodo (\url{https://zenodo.org/badge/latestdoi/108833263}).
 
 \section{Results}\label{results}
 
-\subsection{Consumer loss increases selective
-constraints}\label{consumer-loss-increases-selective-constraints}
+\subsection{Consumer removal increases selective
+constraints}\label{consumer-removal-increases-selective-constraints}
 
 \indent We found that the removal of larval parasitoids increased the
 number of gall midge traits under directional selection (3 of 3)
 relative to the original food web (1 of 3)(table \ref{Table:Gradients}).
 For example, we observed directional selection for smaller clutch sizes
-when we excluded larval parasitoids, but there was no evidence of
-selection acting on this trait in the original food web (table
-\ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}C). This absence of
-selection appeared to be a result of conflicting selection pressures
-imposed by each guild of parasitoids. Specifically, when we subset our
-data to focus on differences between parasitoid guilds, we found that
-larval parasitoids actually impose directional selection for larger
-clutch sizes (larval parasitoids \(\beta_{\text{Clutch}}\)= 0.13
-{[}0.04, 0.24{]}). This conflicting selection is likely due to trait
-differences between guilds, as larger clutches may be easier targets for
-egg parasitoids to find, but the more complex gall structure may be more
-difficult for larval parasitoids to oviposit through.
+when we removed larval parasitoids, but there was no evidence of
+selection acting on this trait in the original food web (fig.
+\ref{fig:UV_Landscape}A). This absence of selection appeared to be a
+result of conflicting selection pressures imposed by each guild of
+parasitoids. Specifically, when we subset our data to focus on
+differences between parasitoid guilds, we found that larval parasitoids
+actually impose directional selection for larger clutch sizes (larval
+parasitoids \(\beta_{\text{Clutch}}\)= 0.13 {[}0.04, 0.24{]}). This
+conflicting selection is likely due to trait differences between guilds,
+as larger clutches may be easier targets for egg parasitoids to find,
+but the more complex gall structure may be more difficult for larval
+parasitoids to oviposit through.
 
 \bigskip
 
@@ -760,14 +760,14 @@ $\gamma_{\text{Clutch:Pref}}$ &
 
 We also observed clear evidence of directional selection for midges to
 avoid ovipositing on plants with high densities of conspecifics when we
-excluded larval parasitoids (table \ref{Table:Gradients}; fig.
-\ref{fig:UV_Landscape}B); however, the overall magnitude of selection
-did not differ between treatments (table \ref{Table:Gradients}). Still,
-there was no clear evidence of directional selection on oviposition in
-the original food web (table \ref{Table:Gradients}). Chamber diameter
-experienced positive directional selection in both food-web treatments
-(fig. \ref{fig:UV_Landscape}A). Although the magnitude of selection on
-chamber diameter was relatively higher in the original food web (table
+removed larval parasitoids (fig. \ref{fig:UV_Landscape}B); however, the
+overall magnitude of selection did not differ between treatments (table
+\ref{Table:Gradients}). Still, there was no clear evidence of
+directional selection on oviposition in the original food web (table
+\ref{Table:Gradients}). Chamber diameter experienced positive
+directional selection in both food-web treatments (fig.
+\ref{fig:UV_Landscape}C). Although the magnitude of selection on chamber
+diameter was relatively higher in the original food web (table
 \ref{Table:Gradients}), this was not due to any difference in the
 relationship between chamber diameter and survival (selection surfaces:
 contrast \(\alpha_{\text{Diam}}\)= 0.04 {[}0.55, -0.5{]}), but was
@@ -794,14 +794,16 @@ strongly correlated with an unmeasured trait that is under selection
 \caption{\label{fig:UV_Landscape}Adaptive landscape of gall midge
 phenotypes in the original food web and with the removal of larval
 parasitoids. Each panel corresponds to a different phenotypic trait:
-chamber diameter (A); oviposition preference (B); and clutch size (C).
+clutch size (A); oviposition preference (B); and chamber diameter (C).
 Bold lines represent selection experienced in the original (orange) and
-removal (blue) food webs (orange). Thin lines represent bootstrapped
-replicates to show the uncertainty in selection. For clarity, we only
-display 100 bootstraps even though inferences are based on 1,000
-replicates. Note that mean larval survival is plotted on a natural log
-scale to reflect the mathematical definition of the adaptive landscape.}
+removal (blue) food webs. Thin lines represent bootstrapped replicates
+to show the uncertainty in selection. For clarity, we only display 100
+bootstraps even though inferences are based on 1,000 replicates. Note
+that mean larval survival is plotted on a natural log scale to reflect
+the mathematical definition of the adaptive landscape.}
 \end{figure}
+
+\bigskip
 
 To visualize the multivariate effects of these selective constraints, we
 plotted the adaptive landscape for each trait combination in each
@@ -811,9 +813,9 @@ gradients, while contours represent predicted survival of the mean
 phenotype in each food-web treatment. Notice that arrows point more
 toward a corner of the adaptive landscape for each combination of traits
 with the removal of larval parasitoids compared to the original food
-web. This indicates that the loss of consumers more strongly favored a
-specific combination of traits, rather than allowing for multiple trait
-combinations to have comparable fitness.
+web. This indicates that the removal of consumers more strongly favored
+a specific combination of traits, rather than allowing for multiple
+trait combinations to have comparable fitness.
 
 \begin{figure}
 \centering
@@ -828,14 +830,16 @@ selection gradients, while contours represent predicted larval survival
 of the mean phenotype in each food-web treatment. Notice that arrows
 point more toward a corner of the adaptive landscape for each
 combination of traits with the removal of larval parasitoids compared to
-the original food web. This indicates that the loss of consumers more
+the original food web. This indicates that the removal of consumers more
 strongly favored a specific combination of traits. Note that mean larval
 survival is plotted on a natural log scale to reflect the mathematical
 definition of the adaptive landscape.}
 \end{figure}
 
-\subsection{Consumer loss indirectly increases genetic
-constraints}\label{consumer-loss-indirectly-increases-genetic-constraints}
+\bigskip
+
+\subsection{Consumer removal indirectly increases genetic
+constraints}\label{consumer-removal-indirectly-increases-genetic-constraints}
 
 \indent The curvature of the adaptive landscape indirectly affects
 genetic constraints and is influenced by directional, quadratic, and
@@ -843,20 +847,19 @@ correlational selection gradients. There was no clear evidence of
 correlational selection for any combination of traits in either food-web
 treatment (table \ref{Table:Gradients}). Similarly, there was no clear
 evidence of quadratic selection on chamber diameter or clutch size in
-either food-web treatment (table \ref{Table:Gradients}; fig.
-\ref{fig:UV_Landscape}A,C). In contrast, our food-web treatment did
-alter quadratic selection acting on oviposition preference (table
-\ref{Table:Gradients}). The negative relationship between oviposition
-preference and larval survival dampened at high densities in the
-original food web, but not with the exclusion of larval parasitoids
-(fig. \ref{fig:UV_Landscape}B). This dampened relationship was partly
-due to a trend for nonlinear selection imposed by larval parasitoids
-(\(\gamma_{\text{Pref:Pref}}\)= 0.18 {[}-0.02, 0.42{]}), but was also
-magnified by the lower average survival in complex food webs. This was
-likely a result of larval parasitoids imposing greater mortality on egg
-parasitoids at high gall midge densities (see \textbf{Selection on egg
-parasitoids} section), and thus a less than additive effect on gall
-midges.
+either food-web treatment (table \ref{Table:Gradients}). In contrast,
+our food-web treatment did alter quadratic selection acting on
+oviposition preference (table \ref{Table:Gradients}). The negative
+relationship between oviposition preference and larval survival dampened
+at high densities in the original food web, but not with the removal of
+larval parasitoids (fig. \ref{fig:UV_Landscape}B). This dampened
+relationship was partly due to a trend for nonlinear selection imposed
+by larval parasitoids (\(\gamma_{\text{Pref:Pref}}\)= 0.18 {[}-0.02,
+0.42{]}), but was also magnified by the lower average survival in the
+original food web. This was likely a result of larval parasitoids
+imposing greater mortality on egg parasitoids at high gall midge
+densities (see \textbf{Selection on egg parasitoids} section), and thus
+a less than additive effect on gall midges.
 
 Using our estimates of directional (\(\beta_i\)), quadratic
 (\(\gamma_{ii}\)), and correlation selection (\(\gamma_{ij}\)), we
@@ -887,7 +890,7 @@ original food web.
 0.11\: [-0.06,0.29] & -0.05\: [-0.21,0.1] & \textbf{-0.17\: [-0.33,-0.01]} \end{pmatrix}\]
 
 Interestingly, when we translate the effect of the curvature matrix onto
-genetic constraints in the next generation, we see that the loss of
+genetic constraints in the next generation, we see that the removal of
 consumers had a general tendency to decrease evolvability (fig.
 \ref{fig:Evolvability}). Specifically, the removal food web decreased
 the average evolvability of 71\% of the random G-matrices in our
@@ -898,6 +901,8 @@ they are released from intraguild predation (i.e.~removal
 \(\bar W\)=original \(\bar W\)), then the removal food web decreases the
 average evolvability in 78\% of the G-matrix scenarios.
 
+\bigskip
+
 \begin{figure}
 \centering
 \includegraphics{../analyses/delta_evolvability.pdf}
@@ -906,9 +911,11 @@ average evolvability in 78\% of the G-matrix scenarios.
 matrix for each food-web treatment. We found that the curvature of the
 removal food web decreased evolvability in 71\% of the G-matrices
 (i.e.~the change in evolvability was negative for 71\% of the
-simulations), suggesting that the loss of consumers tended to decrease
-evolutionary potential of traits in our study.}
+simulations), suggesting that the removal of consumers tended to
+decrease evolutionary potential of traits in our study.}
 \end{figure}
+
+\bigskip
 
 \subsection{Selection on egg
 parasitoids}\label{selection-on-egg-parasitoids}
@@ -917,10 +924,12 @@ The removal of larval parasitoids not only had direct effects on gall
 midge fitness, but also imposed indirect effects that would be felt in
 the next generation. For example, the removal of larval parasitoids
 altered the relationship between gall midge preference and the
-probability of observing egg parasitoids (-0.46 {[} -1.07, -0.02{]} \},
-Appendix A), such that the impact of larval parasitoids increased
-nonlinearly with higher gall midge densities (fig.
-\ref{fig:EggPtoid_Selection}).
+probability of observing egg parasitoids
+(\(\gamma_{\text{Pref:Pref}}\)=-0.46 {[} -1.07, -0.02{]}, table S1),
+such that the impact of larval parasitoids increased nonlinearly with
+higher gall midge densities (fig. \ref{fig:EggPtoid_Selection}).
+
+\bigskip
 
 \begin{figure}
 \centering
@@ -937,13 +946,15 @@ parasitoids at high gall-midge densities indicate that larval
 parasitoids impose nonlinear selection on egg parasitoids.}
 \end{figure}
 
+\bigskip
+
 \section{Discussion}\label{discussion}
 
 We found that the removal of larval parasitoids constrained phenotypic
 evolution in gall midges in two key ways. First, more traits contributed
 to the slope of the adaptive landscape in the absence of larval
 parasitoids, suggesting greater constraints on the trajectory of
-phenotypic evolution. Second, excluding larval parasitoids altered the
+phenotypic evolution. Second, removing larval parasitoids altered the
 curvature of the adaptive landscape in such a way that tended to
 decrease the evolvability of associated traits. Assuming these traits
 have other ecological functions, then this decrease in evolvability
@@ -967,7 +978,7 @@ not have observed the effects we did if we had only removed one larval
 parasitoid, because each species had relatively low abundance
 \citep{Barbour2016} and they likely share similar ecological roles. When
 consumers are functionally different and abundant though, the effect of
-consumer loss will depend on whether different species impose
+consumer loss will depend on whether different consumers impose
 conflicting selection pressures or select for distinct traits. When
 consumers impose conflicting selection on traits, as in our study and
 others \citep{Weis1985, Abrahamson1997, Start2016, Start2018}, then
@@ -1003,7 +1014,7 @@ need to explore the evolutionary consequences of not only direct effects
 of selection, but indirect effects on genetic constraints that emerge in
 a network of interacting species.
 
-An important caveat of our study is that we did not due a factorial
+An important caveat of our study is that we did not do a factorial
 manipulation of both parasitoid guilds, making it difficult to conclude
 whether our results would change if we manipulated the presence/absence
 of the dominant egg parasitoid. If we assume that higher-order
@@ -1014,11 +1025,11 @@ selection in our original food-web treatment. When we do this, we see
 the same qualitative effects as we do when we removed larval
 parasitoids. For example, we see clear evidence of all three traits
 being under directional selection (i.e.~greater selective constraints,
-Appendix A) as well as a decrease, albeit smaller, in trait evolvability
-under different G-matrix scenarios (57\%, Appendix A). This suggests
-that our results could be robust to this caveat, which was simply not
+table S2) as well as a decrease, albeit smaller, in trait evolvability
+under different G-matrix scenarios (57\%, fig. S1). This suggests that
+our results could be robust to this caveat, which was simply not
 possible to manipulate given the biology of our system (see
-\emph{Manipulating Food-web Structure} section for explanation).
+\textbf{Manipulating Food-web Structure} section for explanation).
 
 Our results suggest that the loss of consumers may not only directly
 affect connected species, but also result in indirect evolutionary
@@ -1061,7 +1072,8 @@ assistance with fieldwork, we thank Ruthie Espanol and Andrew MacDonald.
 For funding support, we thank the University of British Columbia (James
 Robert Thompson Fellowship and Four-Year Fellowship to M.A.~Barbour),
 NSERC (Discovery grant to Greg Crutsinger), and the Swiss National
-Science Foundation (grant 31003A\_160671 to J. Bascompte).
+Science Foundation (grant 31003A\_160671 to J. Bascompte). The authors
+declare no conflict of interest.
 
 \section{Author Contributions}\label{author-contributions}
 
@@ -1077,193 +1089,6 @@ All data and code to reproduce the reported results are publicly
 available on GitHub
 (\url{https://github.com/mabarbour/complexity_selection}) and have been
 archived on Zenodo (\url{https://zenodo.org/badge/latestdoi/108833263}).
-
-\section{Appendix A}\label{appendix-a}
-
-\bigskip
-
-\begin{table}[h]
-\caption{Standardized selection gradients acting on egg parasitoids (\textit{Platygaster} sp.)}
-\label{Table:ExtendedGradients}
-\centering
-\begin{tabular}{lc}
-\\ 
-\hline
-\textbf{Selection gradient} & \textbf{Contrast = Original - Removal}  \\ 
-\hline
-$\beta_{\text{Diam}}$ & 
-
--0.03 [
--0.3,
-0.25] \\
-
-$\beta_{\text{Clutch}}$ & 
-
-0.07 [
--0.26,
-0.39] \\
-
-$\beta_{\text{Pref}}$ &
-
--0.25 [
--0.64,
-0.09] \\
-
-$\gamma_{\text{Diam:Diam}}$ &
-
--0.05 [
--0.43,
-0.33] \\
-
-$\gamma_{\text{Clutch:Clutch}}$ & 
-
--0.21 [
--0.68,
-0.26] \\
-
-$\gamma_{\text{Pref:Pref}}$ & 
-
-\textbf{
--0.46 [
--1.07,
--0.02] }\\
-
-$\gamma_{\text{Diam:Clutch}}$ & 
-
-0 [
--0.29,
-0.27] \\
-
-$\gamma_{\text{Diam:Pref}}$ & 
-
-0.25 [
--0.04,
-0.6] \\
-
-$\gamma_{\text{Clutch:Pref}}$ & 
-
--0.18 [
--0.52,
-0.12] \\ 
-\hline
-\end{tabular}
-\bigskip{}
-\\
-{\footnotesize Note: Values in brackets represent 95\% confidence intervals. Bold values indicate that the 95\% CI does not overlap zero. $\beta_{\text{Diam}}$ has been adjusted for bias.}
-\end{table}
-
-\bigskip
-
-\begin{table}[h]
-\caption{Standardized selection gradients imposed by larval parasitoids on gall midges in the original food web. This gives insight to selection acting on gall midges in the absence of the dominant egg parasitoid.}
-\label{Table:LarvalGradients}
-\centering
-\begin{tabular}{lc}
-\\ 
-\hline
-\textbf{Selection gradient} & \textbf{Larval Parasitoids} \\ % & \textbf{Original} 
-\hline
-$\beta_{\text{Diam}}$ & 
-%\textbf{
-%0.34 [
-%0.22,
-%0.48] } & 
-\textbf{
-0.23 [
-0.13,
-0.36] } \\
-
-$\beta_{\text{Clutch}}$ & 
-%0.06 [
-%-0.05,
-%0.17] & 
-\textbf{
-0.13 [
-0.04,
-0.24] }\\
-
-$\beta_{\text{Pref}}$ &
-%-0.13 [
-%-0.29,
-%0.05] & 
-\textbf{
--0.17 [
--0.34,
--0.03] } \\
-
-$\gamma_{\text{Diam:Diam}}$ &
-%0.13 [
-%-0.06,
-%0.33] & 
-
-0.06 [
--0.07,
-0.2]  \\
-
-$\gamma_{\text{Clutch:Clutch}}$ & 
-%-0.05 [
-%-0.27,
-%0.18] & 
-
-0.01 [
--0.14,
-0.15] \\
-
-$\gamma_{\text{Pref:Pref}}$ & 
-%\textbf{
-%0.34 [
-%0.07,
-%0.63] }& 
-
-0.18 [
--0.02,
-0.42] \\
-
-$\gamma_{\text{Diam:Clutch}}$ & 
-%-0.04 [
-%-0.16,
-%0.08] & 
-
-0.02 [
--0.07,
-0.11]  \\
-
-$\gamma_{\text{Diam:Pref}}$ & 
-%-0.13 [
-%-0.29,
-%0.02] & 
-
--0.05 [
--0.18,
-0.06]  \\
-
-$\gamma_{\text{Clutch:Pref}}$ & 
-%0.03 [
-%-0.1,
-%0.18] & 
-
--0.04 [
--0.14,
-0.06]  \\ 
-\hline
-\end{tabular}
-\bigskip{}
-\\
-{\footnotesize Note: Values in brackets represent 95\% confidence intervals. Bold values indicate that the 95\% CI does not overlap zero. $\beta_{\text{Diam}}$ has been adjusted for bias.}
-\end{table}
-
-\begin{figure}
-\centering
-\includegraphics{../analyses/larvalptoid_delta_evolvability.pdf}
-\caption{\label{fig:LarvalPtoidEvolvability}Change in average
-evolvability for 10,000 random G-matrices using our best (mean) estimate
-of the curvature matrix for selection in the absence of egg parasitoids
-vs.~the original food web. We found that the curvature imposed by the
-loss of egg parasitoids decreased evolvability in 57\% of the G-matrices
-(i.e.~the change in evolvability was negative for 57\% of the
-simulations), which is smaller in magnitude, but in the same direction,
-as the effects of losing larval parasitoids.}
-\end{figure}
 
 \bibliography{references}
 

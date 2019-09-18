@@ -82,7 +82,8 @@ http://bytesizebio.net/2013/03/11/adding-supplementary-tables-and-figures-in-lat
 
 \newpage
 
-\beginsupplement <!-- start numbering for supplementary material -->
+<!-- start numbering for supplementary material -->
+\beginsupplement 
 
 
 \begin{table}[h]
@@ -257,6 +258,6 @@ $\gamma_{\text{Clutch:Pref}}$ &
 
 \newpage
 
-```{r LarvalPtoid Evolvability, echo=FALSE, fig.pos="h", fig.cap="\\label{fig:LarvalPtoidEvolvability}Change in average evolvability for 10,000 random G-matrices using our best (mean) estimate of the curvature matrix for selection in the absence of egg parasitoids vs. the original food web. We found that the curvature imposed by the loss of egg parasitoids decreased evolvability in 57% of the G-matrices (i.e. the change in evolvability was negative for 57% of the simulations), which is smaller in magnitude, but in the same direction, as the effects of losing larval parasitoids."}
+```{r LarvalPtoid Evolvability, echo=FALSE, fig.pos="h", fig.cap="\\label{fig:LarvalPtoidEvolvability}Change in average evolvability for 10,000 random G-matrices using our best (mean) estimate of the curvature matrix for selection in the absence of egg parasitoids vs. the original food web. We found that the curvature imposed by the simulated removal of egg parasitoids decreased evolvability in 57% of the G-matrices (i.e. the change in evolvability was negative for 57% of the simulations), which is smaller in magnitude, but in the same direction, as the effects of removing larval parasitoids."}
 knitr::include_graphics("../analyses/larvalptoid_delta_evolvability.pdf")
 ```
