@@ -2,7 +2,7 @@
 title: "Consumer extinctions constrain phenotypic evolution in the resulting food web"
 subtitle: "Supplementary information"
 author: "Code author: Matthew A. Barbour"
-date: "2019-05-21"
+date: "2019-09-16"
 output: 
   tufte::tufte_html:
     toc: true
@@ -101,114 +101,114 @@ For our subsequent analyses, we scaled each phenotypic trait (mean = 0, SD = 1) 
  </thead>
 <tbody>
   <tr>
-   <td style="text-align:left;"> Original </td>
+   <td style="text-align:left;"> Extinction </td>
    <td style="text-align:left;"> T </td>
-   <td style="text-align:left;"> 489 </td>
-   <td style="text-align:left;"> 3058 </td>
-   <td style="text-align:left;"> 3058_c </td>
-   <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 2.02 </td>
+   <td style="text-align:left;"> 343 </td>
+   <td style="text-align:left;"> 3277 </td>
+   <td style="text-align:left;"> 3277_b </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> -1.59 </td>
    <td style="text-align:right;"> 0.06 </td>
-   <td style="text-align:right;"> 1.02 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Extinction </td>
-   <td style="text-align:left;"> Z </td>
-   <td style="text-align:left;"> 464 </td>
-   <td style="text-align:left;"> 2897 </td>
-   <td style="text-align:left;"> 2897_b </td>
-   <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 0.63 </td>
-   <td style="text-align:right;"> 0.54 </td>
-   <td style="text-align:right;"> -1.72 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Original </td>
-   <td style="text-align:left;"> X </td>
-   <td style="text-align:left;"> 548 </td>
-   <td style="text-align:left;"> 3055 </td>
-   <td style="text-align:left;"> 3055_e </td>
-   <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> -1.21 </td>
-   <td style="text-align:right;"> 1.21 </td>
-   <td style="text-align:right;"> 0.11 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Extinction </td>
-   <td style="text-align:left;"> L </td>
-   <td style="text-align:left;"> 435 </td>
-   <td style="text-align:left;"> 115 </td>
-   <td style="text-align:left;"> 115_c </td>
-   <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> -0.85 </td>
-   <td style="text-align:right;"> 0.06 </td>
-   <td style="text-align:right;"> 1.05 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Extinction </td>
-   <td style="text-align:left;"> L </td>
-   <td style="text-align:left;"> 409 </td>
-   <td style="text-align:left;"> 3640 </td>
-   <td style="text-align:left;"> 3640_b </td>
-   <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 1.23 </td>
-   <td style="text-align:right;"> -0.61 </td>
-   <td style="text-align:right;"> 0.15 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Original </td>
-   <td style="text-align:left;"> X </td>
-   <td style="text-align:left;"> 484 </td>
-   <td style="text-align:left;"> 2594 </td>
-   <td style="text-align:left;"> 2594_c </td>
-   <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 1.14 </td>
-   <td style="text-align:right;"> 0.91 </td>
-   <td style="text-align:right;"> 0.80 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Original </td>
-   <td style="text-align:left;"> T </td>
-   <td style="text-align:left;"> 101 </td>
-   <td style="text-align:left;"> 5037 </td>
-   <td style="text-align:left;"> 5037_a </td>
-   <td style="text-align:right;"> 0 </td>
    <td style="text-align:right;"> -0.40 </td>
-   <td style="text-align:right;"> -0.61 </td>
-   <td style="text-align:right;"> 0.19 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:left;"> U </td>
+   <td style="text-align:left;"> 15 </td>
+   <td style="text-align:left;"> 2929 </td>
+   <td style="text-align:left;"> 2929_a </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> -0.87 </td>
+   <td style="text-align:right;"> -1.75 </td>
+   <td style="text-align:right;"> -0.02 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Extinction </td>
-   <td style="text-align:left;"> W </td>
-   <td style="text-align:left;"> 634 </td>
-   <td style="text-align:left;"> 653 </td>
-   <td style="text-align:left;"> 653_b </td>
+   <td style="text-align:left;"> T </td>
+   <td style="text-align:left;"> 452 </td>
+   <td style="text-align:left;"> 3875 </td>
+   <td style="text-align:left;"> 3875_b </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 1.33 </td>
-   <td style="text-align:right;"> 1.21 </td>
+   <td style="text-align:right;"> 1.10 </td>
+   <td style="text-align:right;"> 0.06 </td>
    <td style="text-align:right;"> -1.72 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Original </td>
-   <td style="text-align:left;"> T </td>
-   <td style="text-align:left;"> 427 </td>
-   <td style="text-align:left;"> 3580 </td>
-   <td style="text-align:left;"> 3580_a </td>
+   <td style="text-align:left;"> J </td>
+   <td style="text-align:left;"> 618 </td>
+   <td style="text-align:left;"> 3912 </td>
+   <td style="text-align:left;"> 3912_b </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> -1.10 </td>
+   <td style="text-align:right;"> -2.81 </td>
+   <td style="text-align:right;"> -0.61 </td>
+   <td style="text-align:right;"> -0.47 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:left;"> B </td>
+   <td style="text-align:left;"> 438 </td>
+   <td style="text-align:left;"> 3363 </td>
+   <td style="text-align:left;"> 3363_a </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> -0.56 </td>
    <td style="text-align:right;"> 0.54 </td>
-   <td style="text-align:right;"> -0.09 </td>
+   <td style="text-align:right;"> 0.55 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Extinction </td>
    <td style="text-align:left;"> W </td>
-   <td style="text-align:left;"> 218 </td>
-   <td style="text-align:left;"> 3340 </td>
-   <td style="text-align:left;"> 3340_b </td>
+   <td style="text-align:left;"> 357 </td>
+   <td style="text-align:left;"> 3946 </td>
+   <td style="text-align:left;"> 3946_a </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1.09 </td>
+   <td style="text-align:right;"> 0.06 </td>
+   <td style="text-align:right;"> 1.45 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:left;"> W </td>
+   <td style="text-align:left;"> 34 </td>
+   <td style="text-align:left;"> 2425 </td>
+   <td style="text-align:left;"> 2425_a </td>
    <td style="text-align:right;"> 1 </td>
-   <td style="text-align:right;"> 0.15 </td>
+   <td style="text-align:right;"> 0.91 </td>
    <td style="text-align:right;"> -0.61 </td>
-   <td style="text-align:right;"> 1.04 </td>
+   <td style="text-align:right;"> 0.44 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:left;"> B </td>
+   <td style="text-align:left;"> 543 </td>
+   <td style="text-align:left;"> 3790 </td>
+   <td style="text-align:left;"> 3790_b </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 0.74 </td>
+   <td style="text-align:right;"> 0.54 </td>
+   <td style="text-align:right;"> 0.73 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:left;"> X </td>
+   <td style="text-align:left;"> 318 </td>
+   <td style="text-align:left;"> 966 </td>
+   <td style="text-align:left;"> 966_b </td>
+   <td style="text-align:right;"> 1 </td>
+   <td style="text-align:right;"> 0.26 </td>
+   <td style="text-align:right;"> -0.61 </td>
+   <td style="text-align:right;"> -1.72 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:left;"> U </td>
+   <td style="text-align:left;"> 283 </td>
+   <td style="text-align:left;"> 31 </td>
+   <td style="text-align:left;"> 31_b </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 0.04 </td>
+   <td style="text-align:right;"> 0.06 </td>
+   <td style="text-align:right;"> 0.09 </td>
   </tr>
 </tbody>
 </table>
@@ -526,7 +526,90 @@ We then summarize these bootstrapped estimates and 95% confidence intervals as a
 </table>
 
 
-
+<table>
+<caption>Table of differences in mean fitness and selection surfaces for gall midges between food-web treatments.</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> Term </th>
+   <th style="text-align:left;"> Treatment </th>
+   <th style="text-align:right;"> Estimate </th>
+   <th style="text-align:right;"> 2.5% </th>
+   <th style="text-align:right;"> 97.5% </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> (Intercept) </td>
+   <td style="text-align:left;"> Diff </td>
+   <td style="text-align:right;"> 0.27 </td>
+   <td style="text-align:right;"> 0.11 </td>
+   <td style="text-align:right;"> 0.42 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I(sc.Diam^2) </td>
+   <td style="text-align:left;"> Diff </td>
+   <td style="text-align:right;"> 0.05 </td>
+   <td style="text-align:right;"> -0.42 </td>
+   <td style="text-align:right;"> 0.53 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I(sc.log.Clutch^2) </td>
+   <td style="text-align:left;"> Diff </td>
+   <td style="text-align:right;"> -0.21 </td>
+   <td style="text-align:right;"> -0.73 </td>
+   <td style="text-align:right;"> 0.33 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I(sc.sqrt.Pref^2) </td>
+   <td style="text-align:left;"> Diff </td>
+   <td style="text-align:right;"> -0.52 </td>
+   <td style="text-align:right;"> -1.15 </td>
+   <td style="text-align:right;"> 0.09 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.Diam </td>
+   <td style="text-align:left;"> Diff </td>
+   <td style="text-align:right;"> -0.04 </td>
+   <td style="text-align:right;"> -0.55 </td>
+   <td style="text-align:right;"> 0.50 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.Diam:sc.log.Clutch </td>
+   <td style="text-align:left;"> Diff </td>
+   <td style="text-align:right;"> -0.20 </td>
+   <td style="text-align:right;"> -0.79 </td>
+   <td style="text-align:right;"> 0.42 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.Diam:sc.sqrt.Pref </td>
+   <td style="text-align:left;"> Diff </td>
+   <td style="text-align:right;"> 0.36 </td>
+   <td style="text-align:right;"> -0.30 </td>
+   <td style="text-align:right;"> 1.05 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.log.Clutch </td>
+   <td style="text-align:left;"> Diff </td>
+   <td style="text-align:right;"> -0.67 </td>
+   <td style="text-align:right;"> -1.28 </td>
+   <td style="text-align:right;"> -0.17 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.log.Clutch:sc.sqrt.Pref </td>
+   <td style="text-align:left;"> Diff </td>
+   <td style="text-align:right;"> -0.08 </td>
+   <td style="text-align:right;"> -0.66 </td>
+   <td style="text-align:right;"> 0.46 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.sqrt.Pref </td>
+   <td style="text-align:left;"> Diff </td>
+   <td style="text-align:right;"> -0.42 </td>
+   <td style="text-align:right;"> -1.15 </td>
+   <td style="text-align:right;"> 0.27 </td>
+  </tr>
+</tbody>
+</table>
 
 The table is good for details, but it is easier to see the results as a figure.
 
@@ -711,18 +794,754 @@ We then reproduce the estimates of selection gradients and 95% confidence interv
 
 
 
+```r
+# Get mean estimates for directional selection gradients
+foodweb_original_mean_sc.Diam <- filter(tidy_foodweb_grads, type == "Original", term == "sc.Diam")$mean
+foodweb_original_mean_sc.log.Clutch <- filter(tidy_foodweb_grads, type == "Original", term == "sc.log.Clutch")$mean
+foodweb_original_mean_sc.sqrt.Pref <- filter(tidy_foodweb_grads, type == "Original", term == "sc.sqrt.Pref")$mean
+
+foodweb_extinction_mean_sc.Diam <- filter(tidy_foodweb_grads, type == "Extinction", term == "sc.Diam")$mean
+foodweb_extinction_mean_sc.log.Clutch <- filter(tidy_foodweb_grads, type == "Extinction", term == "sc.log.Clutch")$mean
+foodweb_extinction_mean_sc.sqrt.Pref <- filter(tidy_foodweb_grads, type == "Extinction", term == "sc.sqrt.Pref")$mean
+
+# Calculate curvatures for original food web
+foodweb_original_raw_curvs <- foodweb_original_raw_gradients %>%
+  transmute(`FoodwebOriginal:C.Diam` = `FoodwebOriginal:I(sc.Diam^2)` - foodweb_original_mean_sc.Diam*foodweb_original_mean_sc.Diam, #`FoodwebOriginal:sc.Diam`*`FoodwebOriginal:sc.Diam`,
+         `FoodwebOriginal:C.Clutch` = `FoodwebOriginal:I(sc.log.Clutch^2)` - foodweb_original_mean_sc.log.Clutch*foodweb_original_mean_sc.log.Clutch, # `FoodwebOriginal:sc.log.Clutch`*`FoodwebOriginal:sc.log.Clutch`,
+         `FoodwebOriginal:C.Pref` = `FoodwebOriginal:I(sc.sqrt.Pref^2)` - foodweb_original_mean_sc.sqrt.Pref*foodweb_original_mean_sc.sqrt.Pref, #`FoodwebOriginal:sc.sqrt.Pref`*`FoodwebOriginal:sc.sqrt.Pref`,
+         `FoodwebOriginal:C.Diam:Clutch` = `FoodwebOriginal:sc.Diam:sc.log.Clutch` - foodweb_original_mean_sc.Diam*foodweb_original_mean_sc.log.Clutch, # `FoodwebOriginal:sc.Diam`*`FoodwebOriginal:sc.log.Clutch`,
+         `FoodwebOriginal:C.Diam:Pref` = `FoodwebOriginal:sc.Diam:sc.sqrt.Pref` - foodweb_original_mean_sc.Diam*foodweb_original_mean_sc.sqrt.Pref, # `FoodwebOriginal:sc.Diam`*`FoodwebOriginal:sc.sqrt.Pref`,
+         `FoodwebOriginal:C.Clutch:Pref` = `FoodwebOriginal:sc.log.Clutch:sc.sqrt.Pref` - foodweb_original_mean_sc.log.Clutch*foodweb_original_mean_sc.sqrt.Pref) # `FoodwebOriginal:sc.log.Clutch`*`FoodwebOriginal:sc.sqrt.Pref`)
+
+# Calculate curvatures for extinction food web
+foodweb_extinction_raw_curvs <- foodweb_extinction_raw_gradients %>%
+  transmute(`FoodwebExtinction:C.Diam` = `FoodwebExtinction:I(sc.Diam^2)` - foodweb_extinction_mean_sc.Diam*foodweb_extinction_mean_sc.Diam, #`FoodwebExtinction:sc.Diam`*`FoodwebExtinction:sc.Diam`,
+         `FoodwebExtinction:C.Clutch` = `FoodwebExtinction:I(sc.log.Clutch^2)` - foodweb_extinction_mean_sc.log.Clutch*foodweb_extinction_mean_sc.log.Clutch, # `FoodwebExtinction:sc.log.Clutch`*`FoodwebExtinction:sc.log.Clutch`,
+         `FoodwebExtinction:C.Pref` = `FoodwebExtinction:I(sc.sqrt.Pref^2)` - foodweb_extinction_mean_sc.sqrt.Pref*foodweb_extinction_mean_sc.sqrt.Pref,# `FoodwebExtinction:sc.sqrt.Pref`*`FoodwebExtinction:sc.sqrt.Pref`,
+         `FoodwebExtinction:C.Diam:Clutch` = `FoodwebExtinction:sc.Diam:sc.log.Clutch` - foodweb_extinction_mean_sc.Diam*foodweb_extinction_mean_sc.log.Clutch, # `FoodwebExtinction:sc.Diam`*`FoodwebExtinction:sc.log.Clutch`,
+         `FoodwebExtinction:C.Diam:Pref` = `FoodwebExtinction:sc.Diam:sc.sqrt.Pref` - foodweb_extinction_mean_sc.Diam*foodweb_extinction_mean_sc.sqrt.Pref,# `FoodwebExtinction:sc.Diam`*`FoodwebExtinction:sc.sqrt.Pref`,
+         `FoodwebExtinction:C.Clutch:Pref` = `FoodwebExtinction:sc.log.Clutch:sc.sqrt.Pref` - foodweb_extinction_mean_sc.log.Clutch*foodweb_extinction_mean_sc.sqrt.Pref)# `FoodwebExtinction:sc.log.Clutch`*`FoodwebExtinction:sc.sqrt.Pref`)
+         
+
+# Calculate differences between food-web treatments, then estimate means and confidence intervals
+foodweb_curvs <- bind_cols(foodweb_original_raw_curvs, foodweb_extinction_raw_curvs) %>%
+  mutate(`FoodwebDiff:C.Diam` = `FoodwebExtinction:C.Diam` - `FoodwebOriginal:C.Diam`,
+         `FoodwebDiff:C.Clutch` = `FoodwebExtinction:C.Clutch` - `FoodwebOriginal:C.Clutch`,
+         `FoodwebDiff:C.Pref` = `FoodwebExtinction:C.Pref` - `FoodwebOriginal:C.Pref`,
+         `FoodwebDiff:C.Diam:Clutch` = `FoodwebExtinction:C.Diam:Clutch` - `FoodwebOriginal:C.Diam:Clutch`,
+         `FoodwebDiff:C.Diam:Pref` = `FoodwebExtinction:C.Diam:Pref` - `FoodwebOriginal:C.Diam:Pref`,
+         `FoodwebDiff:C.Clutch:Pref` = `FoodwebExtinction:C.Clutch:Pref` - `FoodwebOriginal:C.Clutch:Pref`) %>%
+  summarise_all(funs(mean, conf.high, conf.low))
 
 
+# Tidy up estimates
+tidy_foodweb_curvs <- foodweb_curvs %>%
+  t() %>%
+  as.data.frame() %>%
+  transmute(rows = rownames(.), value=V1) %>%
+  separate(col = rows, into = c("term","estimate"), sep="_") %>%
+  separate(col = term, into = c("type","term_1","term_2"), sep=":", extra="drop") %>%
+  mutate(term = ifelse(is.na(term_2), term_1, paste(term_1,term_2,sep=":"))) %>%
+  separate(col = type, into = c("extra","type"), sep = 7) %>%
+  select(type, term, estimate, value) %>%
+  mutate(type = factor(type, levels = c("Original", "Extinction", "Diff"))) %>%
+  spread(estimate, value) %>%
+  mutate(P_cutoff = ifelse(conf.high*conf.low < 0, "","*"))#,
+         #gradient_type = ifelse(grepl("\\^2", .$term)==TRUE, "Quadratic",
+         #                       ifelse(grepl(":", .$term)==TRUE, "Correlational","Directional")),
+         #mean = ifelse(gradient_type=="Quadratic", 2*mean, mean),
+         #conf.low = ifelse(gradient_type=="Quadratic", 2*conf.low, conf.low),
+         #conf.high = ifelse(gradient_type=="Quadratic", 2*conf.high, conf.high))
+```
 
 
+<table>
+<caption>Table of curvatures on gall traits in each food-web treatment.</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> term </th>
+   <th style="text-align:left;"> type </th>
+   <th style="text-align:right;"> mean </th>
+   <th style="text-align:right;"> conf.low </th>
+   <th style="text-align:right;"> conf.high </th>
+   <th style="text-align:left;"> P_cutoff </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> C.Clutch </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> -0.03 </td>
+   <td style="text-align:right;"> -0.14 </td>
+   <td style="text-align:right;"> 0.09 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Clutch:Pref </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> 0.04 </td>
+   <td style="text-align:right;"> -0.10 </td>
+   <td style="text-align:right;"> 0.18 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> -0.05 </td>
+   <td style="text-align:right;"> -0.15 </td>
+   <td style="text-align:right;"> 0.05 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam:Clutch </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> -0.06 </td>
+   <td style="text-align:right;"> -0.18 </td>
+   <td style="text-align:right;"> 0.06 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam:Pref </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> -0.09 </td>
+   <td style="text-align:right;"> -0.25 </td>
+   <td style="text-align:right;"> 0.06 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Pref </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> 0.15 </td>
+   <td style="text-align:right;"> 0.02 </td>
+   <td style="text-align:right;"> 0.30 </td>
+   <td style="text-align:left;"> * </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Clutch </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> -0.06 </td>
+   <td style="text-align:right;"> -0.15 </td>
+   <td style="text-align:right;"> 0.01 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Clutch:Pref </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> -0.01 </td>
+   <td style="text-align:right;"> -0.09 </td>
+   <td style="text-align:right;"> 0.06 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> 0.01 </td>
+   <td style="text-align:right;"> -0.05 </td>
+   <td style="text-align:right;"> 0.07 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam:Clutch </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> -0.05 </td>
+   <td style="text-align:right;"> -0.13 </td>
+   <td style="text-align:right;"> 0.03 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam:Pref </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> 0.02 </td>
+   <td style="text-align:right;"> -0.07 </td>
+   <td style="text-align:right;"> 0.10 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Pref </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> -0.02 </td>
+   <td style="text-align:right;"> -0.10 </td>
+   <td style="text-align:right;"> 0.06 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+</tbody>
+</table>
 
 
+<table>
+<caption>Table of differences in curvatures on gall traits between food-web treatment.</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> term </th>
+   <th style="text-align:right;"> mean </th>
+   <th style="text-align:right;"> conf.low </th>
+   <th style="text-align:right;"> conf.high </th>
+   <th style="text-align:left;"> P_cutoff </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> C.Clutch </td>
+   <td style="text-align:right;"> -0.03 </td>
+   <td style="text-align:right;"> -0.16 </td>
+   <td style="text-align:right;"> 0.10 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Clutch:Pref </td>
+   <td style="text-align:right;"> -0.05 </td>
+   <td style="text-align:right;"> -0.21 </td>
+   <td style="text-align:right;"> 0.10 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam </td>
+   <td style="text-align:right;"> 0.06 </td>
+   <td style="text-align:right;"> -0.06 </td>
+   <td style="text-align:right;"> 0.18 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam:Clutch </td>
+   <td style="text-align:right;"> 0.02 </td>
+   <td style="text-align:right;"> -0.13 </td>
+   <td style="text-align:right;"> 0.16 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam:Pref </td>
+   <td style="text-align:right;"> 0.11 </td>
+   <td style="text-align:right;"> -0.06 </td>
+   <td style="text-align:right;"> 0.29 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Pref </td>
+   <td style="text-align:right;"> -0.17 </td>
+   <td style="text-align:right;"> -0.33 </td>
+   <td style="text-align:right;"> -0.01 </td>
+   <td style="text-align:left;"> * </td>
+  </tr>
+</tbody>
+</table>
 
 
 As before, we can visualize the table output as a figure.
 
 <div class="figure">
 <p class="caption">Plot of standardized selection gradients acting on gall midges in each food-web treatment.</p><img src="reproduce_analyses_files/figure-html/Plot food-web gradients-1.png" alt="Plot of standardized selection gradients acting on gall midges in each food-web treatment." width="672"  /></div>
+
+\ 
+
+## Long-term selection gradients for the gall midge: food-web treatments
+
+
+```r
+# Nothing changes for the original food web
+
+# use mean fitness from original food-web treatment to approximate long-term fitness of Extinction food web
+# once egg parasitoids increase in abundance after being released from intraguild predation
+foodweb_long_extinction_gradient <- function(x) foodweb_extinction_mean_brackets * x / foodweb_original_mean_fitness
+
+foodweb_long_extinction_raw_gradients <- select(foodweb_adj_Diam, starts_with("FoodwebExtinction:")) %>%
+  transmute_all(funs(foodweb_long_extinction_gradient))
+```
+
+
+
+```r
+# Calculate differences between food-web treatments, then estimate means and confidence intervals
+foodweb_long_grads <- bind_cols(foodweb_original_raw_gradients, foodweb_long_extinction_raw_gradients) %>%
+  mutate(`FoodwebDiff:sc.Diam` = `FoodwebExtinction:sc.Diam` - `FoodwebOriginal:sc.Diam`,
+         `FoodwebDiff:sc.log.Clutch` = `FoodwebExtinction:sc.log.Clutch` - `FoodwebOriginal:sc.log.Clutch`,
+         `FoodwebDiff:sc.sqrt.Pref` = `FoodwebExtinction:sc.sqrt.Pref` - `FoodwebOriginal:sc.sqrt.Pref`,
+         `FoodwebDiff:I(sc.Diam^2)` = `FoodwebExtinction:I(sc.Diam^2)` - `FoodwebOriginal:I(sc.Diam^2)`,
+         `FoodwebDiff:I(sc.log.Clutch^2)` = `FoodwebExtinction:I(sc.log.Clutch^2)` - `FoodwebOriginal:I(sc.log.Clutch^2)`,
+         `FoodwebDiff:I(sc.sqrt.Pref^2)` = `FoodwebExtinction:I(sc.sqrt.Pref^2)` - `FoodwebOriginal:I(sc.sqrt.Pref^2)`,
+         `FoodwebDiff:sc.Diam:sc.log.Clutch` = `FoodwebExtinction:sc.Diam:sc.log.Clutch` - `FoodwebOriginal:sc.Diam:sc.log.Clutch`,
+         `FoodwebDiff:sc.Diam:sc.sqrt.Pref` = `FoodwebExtinction:sc.Diam:sc.sqrt.Pref` - `FoodwebOriginal:sc.Diam:sc.sqrt.Pref`,
+         `FoodwebDiff:sc.log.Clutch:sc.sqrt.Pref` = `FoodwebExtinction:sc.log.Clutch:sc.sqrt.Pref` - `FoodwebOriginal:sc.log.Clutch:sc.sqrt.Pref`) %>%
+  summarise_all(funs(mean, conf.high, conf.low))
+
+
+# Tidy up estimates
+tidy_foodweb_long_grads <- foodweb_long_grads %>%
+  t() %>%
+  as.data.frame() %>%
+  transmute(rows = rownames(.), value=V1) %>%
+  separate(col = rows, into = c("term","estimate"), sep="_") %>%
+  separate(col = term, into = c("type","term_1","term_2"), sep=":", extra="drop") %>%
+  mutate(term = ifelse(is.na(term_2), term_1, paste(term_1,term_2,sep=":"))) %>%
+  separate(col = type, into = c("extra","type"), sep = 7) %>%
+  select(type, term, estimate, value) %>%
+  mutate(type = factor(type, levels = c("Original", "Extinction", "Diff"))) %>%
+  spread(estimate, value) %>%
+  mutate(P_cutoff = ifelse(conf.high*conf.low < 0, "","*"),
+         gradient_type = ifelse(grepl("\\^2", .$term)==TRUE, "Quadratic",
+                                ifelse(grepl(":", .$term)==TRUE, "Correlational","Directional")),
+         mean = ifelse(gradient_type=="Quadratic", 2*mean, mean),
+         conf.low = ifelse(gradient_type=="Quadratic", 2*conf.low, conf.low),
+         conf.high = ifelse(gradient_type=="Quadratic", 2*conf.high, conf.high))
+```
+
+We then calculate selection gradients and 95% confidence intervals.
+
+<table>
+<caption>Table of long-term standardized selection gradients acting on gall midges in each food-web treatment.</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> Term </th>
+   <th style="text-align:left;"> Treatment </th>
+   <th style="text-align:right;"> Estimate </th>
+   <th style="text-align:right;"> 2.5% </th>
+   <th style="text-align:right;"> 97.5% </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> sc.sqrt.Pref </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> -0.13 </td>
+   <td style="text-align:right;"> -0.29 </td>
+   <td style="text-align:right;"> 0.05 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.sqrt.Pref </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> -0.22 </td>
+   <td style="text-align:right;"> -0.36 </td>
+   <td style="text-align:right;"> -0.09 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.log.Clutch:sc.sqrt.Pref </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> 0.03 </td>
+   <td style="text-align:right;"> -0.10 </td>
+   <td style="text-align:right;"> 0.18 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.log.Clutch:sc.sqrt.Pref </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> 0.00 </td>
+   <td style="text-align:right;"> -0.10 </td>
+   <td style="text-align:right;"> 0.10 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.log.Clutch </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> 0.06 </td>
+   <td style="text-align:right;"> -0.05 </td>
+   <td style="text-align:right;"> 0.17 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.log.Clutch </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> -0.12 </td>
+   <td style="text-align:right;"> -0.24 </td>
+   <td style="text-align:right;"> -0.02 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.Diam:sc.sqrt.Pref </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> -0.13 </td>
+   <td style="text-align:right;"> -0.29 </td>
+   <td style="text-align:right;"> 0.02 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.Diam:sc.sqrt.Pref </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> -0.02 </td>
+   <td style="text-align:right;"> -0.14 </td>
+   <td style="text-align:right;"> 0.09 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.Diam:sc.log.Clutch </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> -0.04 </td>
+   <td style="text-align:right;"> -0.16 </td>
+   <td style="text-align:right;"> 0.08 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.Diam:sc.log.Clutch </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> -0.09 </td>
+   <td style="text-align:right;"> -0.21 </td>
+   <td style="text-align:right;"> 0.02 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.Diam </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> 0.34 </td>
+   <td style="text-align:right;"> 0.22 </td>
+   <td style="text-align:right;"> 0.48 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.Diam </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> 0.29 </td>
+   <td style="text-align:right;"> 0.17 </td>
+   <td style="text-align:right;"> 0.43 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I(sc.sqrt.Pref^2) </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> 0.34 </td>
+   <td style="text-align:right;"> 0.07 </td>
+   <td style="text-align:right;"> 0.63 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I(sc.sqrt.Pref^2) </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> 0.02 </td>
+   <td style="text-align:right;"> -0.20 </td>
+   <td style="text-align:right;"> 0.24 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I(sc.log.Clutch^2) </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> -0.05 </td>
+   <td style="text-align:right;"> -0.27 </td>
+   <td style="text-align:right;"> 0.18 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I(sc.log.Clutch^2) </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> -0.16 </td>
+   <td style="text-align:right;"> -0.39 </td>
+   <td style="text-align:right;"> 0.04 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I(sc.Diam^2) </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> 0.13 </td>
+   <td style="text-align:right;"> -0.06 </td>
+   <td style="text-align:right;"> 0.33 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I(sc.Diam^2) </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> 0.14 </td>
+   <td style="text-align:right;"> -0.03 </td>
+   <td style="text-align:right;"> 0.32 </td>
+  </tr>
+</tbody>
+</table>
+
+
+<table>
+<caption>Table of differences in long-term selection gradients acting on gall traits between food-web treatment.</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> Term </th>
+   <th style="text-align:left;"> Treatment </th>
+   <th style="text-align:right;"> Estimate </th>
+   <th style="text-align:right;"> 2.5% </th>
+   <th style="text-align:right;"> 97.5% </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> I(sc.Diam^2) </td>
+   <td style="text-align:left;"> Diff </td>
+   <td style="text-align:right;"> 0.01 </td>
+   <td style="text-align:right;"> -0.26 </td>
+   <td style="text-align:right;"> 0.28 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I(sc.log.Clutch^2) </td>
+   <td style="text-align:left;"> Diff </td>
+   <td style="text-align:right;"> -0.10 </td>
+   <td style="text-align:right;"> -0.39 </td>
+   <td style="text-align:right;"> 0.20 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> I(sc.sqrt.Pref^2) </td>
+   <td style="text-align:left;"> Diff </td>
+   <td style="text-align:right;"> -0.31 </td>
+   <td style="text-align:right;"> -0.66 </td>
+   <td style="text-align:right;"> 0.03 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.Diam </td>
+   <td style="text-align:left;"> Diff </td>
+   <td style="text-align:right;"> -0.06 </td>
+   <td style="text-align:right;"> -0.20 </td>
+   <td style="text-align:right;"> 0.10 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.Diam:sc.log.Clutch </td>
+   <td style="text-align:left;"> Diff </td>
+   <td style="text-align:right;"> -0.05 </td>
+   <td style="text-align:right;"> -0.21 </td>
+   <td style="text-align:right;"> 0.12 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.Diam:sc.sqrt.Pref </td>
+   <td style="text-align:left;"> Diff </td>
+   <td style="text-align:right;"> 0.11 </td>
+   <td style="text-align:right;"> -0.07 </td>
+   <td style="text-align:right;"> 0.31 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.log.Clutch </td>
+   <td style="text-align:left;"> Diff </td>
+   <td style="text-align:right;"> -0.18 </td>
+   <td style="text-align:right;"> -0.35 </td>
+   <td style="text-align:right;"> -0.04 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.log.Clutch:sc.sqrt.Pref </td>
+   <td style="text-align:left;"> Diff </td>
+   <td style="text-align:right;"> -0.02 </td>
+   <td style="text-align:right;"> -0.19 </td>
+   <td style="text-align:right;"> 0.13 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> sc.sqrt.Pref </td>
+   <td style="text-align:left;"> Diff </td>
+   <td style="text-align:right;"> -0.09 </td>
+   <td style="text-align:right;"> -0.30 </td>
+   <td style="text-align:right;"> 0.10 </td>
+  </tr>
+</tbody>
+</table>
+
+
+
+```r
+# Get mean estimates for directional selection gradients
+# Note we already have the mean estimates for the original food web
+
+foodweb_long_extinction_mean_sc.Diam <- filter(tidy_foodweb_long_grads, type == "Extinction", term == "sc.Diam")$mean
+foodweb_long_extinction_sc.log.Clutch <- filter(tidy_foodweb_long_grads, type == "Extinction", term == "sc.log.Clutch")$mean
+foodweb_long_extinction_sc.sqrt.Pref <- filter(tidy_foodweb_long_grads, type == "Extinction", term == "sc.sqrt.Pref")$mean
+
+# Calculate curvatures for original food web
+foodweb_original_raw_curvs <- foodweb_original_raw_gradients %>%
+  transmute(`FoodwebOriginal:C.Diam` = `FoodwebOriginal:I(sc.Diam^2)` - foodweb_original_mean_sc.Diam*foodweb_original_mean_sc.Diam, # `FoodwebOriginal:sc.Diam`*`FoodwebOriginal:sc.Diam`,
+         `FoodwebOriginal:C.Clutch` = `FoodwebOriginal:I(sc.log.Clutch^2)` - foodweb_original_mean_sc.log.Clutch*foodweb_original_mean_sc.log.Clutch, #`FoodwebOriginal:sc.log.Clutch`*`FoodwebOriginal:sc.log.Clutch`,
+         `FoodwebOriginal:C.Pref` = `FoodwebOriginal:I(sc.sqrt.Pref^2)` - foodweb_original_mean_sc.sqrt.Pref*foodweb_original_mean_sc.sqrt.Pref, #`FoodwebOriginal:sc.sqrt.Pref`*`FoodwebOriginal:sc.sqrt.Pref`,
+         `FoodwebOriginal:C.Diam:Clutch` = `FoodwebOriginal:sc.Diam:sc.log.Clutch` - foodweb_original_mean_sc.Diam*foodweb_original_mean_sc.log.Clutch, #`FoodwebOriginal:sc.Diam`*`FoodwebOriginal:sc.log.Clutch`,
+         `FoodwebOriginal:C.Diam:Pref` = `FoodwebOriginal:sc.Diam:sc.sqrt.Pref` - foodweb_original_mean_sc.Diam*foodweb_original_mean_sc.sqrt.Pref, #`FoodwebOriginal:sc.Diam`*`FoodwebOriginal:sc.sqrt.Pref`,
+         `FoodwebOriginal:C.Clutch:Pref` = `FoodwebOriginal:sc.log.Clutch:sc.sqrt.Pref` - foodweb_original_mean_sc.log.Clutch*foodweb_original_mean_sc.sqrt.Pref)# `FoodwebOriginal:sc.log.Clutch`*`FoodwebOriginal:sc.sqrt.Pref`)
+
+# Calculate long-term curvatures for extinction food web
+foodweb_long_extinction_raw_curvs <- foodweb_long_extinction_raw_gradients %>%
+  transmute(`FoodwebExtinction:C.Diam` = `FoodwebExtinction:I(sc.Diam^2)` - foodweb_long_extinction_mean_sc.Diam*foodweb_long_extinction_mean_sc.Diam, #`FoodwebExtinction:sc.Diam`*`FoodwebExtinction:sc.Diam`,
+         `FoodwebExtinction:C.Clutch` = `FoodwebExtinction:I(sc.log.Clutch^2)` - foodweb_long_extinction_sc.log.Clutch*foodweb_long_extinction_sc.log.Clutch, # `FoodwebExtinction:sc.log.Clutch`*`FoodwebExtinction:sc.log.Clutch`,
+         `FoodwebExtinction:C.Pref` = `FoodwebExtinction:I(sc.sqrt.Pref^2)` - foodweb_long_extinction_sc.sqrt.Pref*foodweb_long_extinction_sc.sqrt.Pref, # `FoodwebExtinction:sc.sqrt.Pref`*`FoodwebExtinction:sc.sqrt.Pref`,
+         `FoodwebExtinction:C.Diam:Clutch` = `FoodwebExtinction:sc.Diam:sc.log.Clutch` - foodweb_long_extinction_mean_sc.Diam*foodweb_long_extinction_sc.log.Clutch, #`FoodwebExtinction:sc.Diam`*`FoodwebExtinction:sc.log.Clutch`,
+         `FoodwebExtinction:C.Diam:Pref` = `FoodwebExtinction:sc.Diam:sc.sqrt.Pref` - foodweb_long_extinction_mean_sc.Diam*foodweb_long_extinction_sc.sqrt.Pref, #`FoodwebExtinction:sc.Diam`*`FoodwebExtinction:sc.sqrt.Pref`,
+         `FoodwebExtinction:C.Clutch:Pref` = `FoodwebExtinction:sc.log.Clutch:sc.sqrt.Pref` - foodweb_long_extinction_sc.log.Clutch*foodweb_long_extinction_sc.sqrt.Pref) # `FoodwebExtinction:sc.log.Clutch`*`FoodwebExtinction:sc.sqrt.Pref`)
+         
+
+# Calculate differences between food-web treatments, then estimate means and confidence intervals
+foodweb_long_curvs <- bind_cols(foodweb_original_raw_curvs, foodweb_long_extinction_raw_curvs) %>%
+  mutate(`FoodwebDiff:C.Diam` = `FoodwebExtinction:C.Diam` - `FoodwebOriginal:C.Diam`,
+         `FoodwebDiff:C.Clutch` = `FoodwebExtinction:C.Clutch` - `FoodwebOriginal:C.Clutch`,
+         `FoodwebDiff:C.Pref` = `FoodwebExtinction:C.Pref` - `FoodwebOriginal:C.Pref`,
+         `FoodwebDiff:C.Diam:Clutch` = `FoodwebExtinction:C.Diam:Clutch` - `FoodwebOriginal:C.Diam:Clutch`,
+         `FoodwebDiff:C.Diam:Pref` = `FoodwebExtinction:C.Diam:Pref` - `FoodwebOriginal:C.Diam:Pref`,
+         `FoodwebDiff:C.Clutch:Pref` = `FoodwebExtinction:C.Clutch:Pref` - `FoodwebOriginal:C.Clutch:Pref`) %>%
+  summarise_all(funs(mean, conf.high, conf.low))
+
+
+# Tidy up estimates
+tidy_foodweb_long_curvs <- foodweb_long_curvs %>%
+  t() %>%
+  as.data.frame() %>%
+  transmute(rows = rownames(.), value=V1) %>%
+  separate(col = rows, into = c("term","estimate"), sep="_") %>%
+  separate(col = term, into = c("type","term_1","term_2"), sep=":", extra="drop") %>%
+  mutate(term = ifelse(is.na(term_2), term_1, paste(term_1,term_2,sep=":"))) %>%
+  separate(col = type, into = c("extra","type"), sep = 7) %>%
+  select(type, term, estimate, value) %>%
+  mutate(type = factor(type, levels = c("Original", "Extinction", "Diff"))) %>%
+  spread(estimate, value) %>%
+  mutate(P_cutoff = ifelse(conf.high*conf.low < 0, "","*"))#,
+         #gradient_type = ifelse(grepl("\\^2", .$term)==TRUE, "Quadratic",
+         #                       ifelse(grepl(":", .$term)==TRUE, "Correlational","Directional")),
+         #mean = ifelse(gradient_type=="Quadratic", 2*mean, mean),
+         #conf.low = ifelse(gradient_type=="Quadratic", 2*conf.low, conf.low),
+         #conf.high = ifelse(gradient_type=="Quadratic", 2*conf.high, conf.high))
+```
+
+
+<table>
+<caption>Table of long-term curvatures on gall traits in each food-web treatment.</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> term </th>
+   <th style="text-align:left;"> type </th>
+   <th style="text-align:right;"> mean </th>
+   <th style="text-align:right;"> conf.low </th>
+   <th style="text-align:right;"> conf.high </th>
+   <th style="text-align:left;"> P_cutoff </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> C.Clutch </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> -0.03 </td>
+   <td style="text-align:right;"> -0.14 </td>
+   <td style="text-align:right;"> 0.09 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Clutch:Pref </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> 0.04 </td>
+   <td style="text-align:right;"> -0.10 </td>
+   <td style="text-align:right;"> 0.18 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> -0.05 </td>
+   <td style="text-align:right;"> -0.15 </td>
+   <td style="text-align:right;"> 0.05 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam:Clutch </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> -0.06 </td>
+   <td style="text-align:right;"> -0.18 </td>
+   <td style="text-align:right;"> 0.06 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam:Pref </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> -0.09 </td>
+   <td style="text-align:right;"> -0.25 </td>
+   <td style="text-align:right;"> 0.06 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Pref </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> 0.15 </td>
+   <td style="text-align:right;"> 0.02 </td>
+   <td style="text-align:right;"> 0.30 </td>
+   <td style="text-align:left;"> * </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Clutch </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> -0.09 </td>
+   <td style="text-align:right;"> -0.21 </td>
+   <td style="text-align:right;"> 0.01 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Clutch:Pref </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> -0.02 </td>
+   <td style="text-align:right;"> -0.13 </td>
+   <td style="text-align:right;"> 0.07 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> -0.01 </td>
+   <td style="text-align:right;"> -0.10 </td>
+   <td style="text-align:right;"> 0.08 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam:Clutch </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> -0.06 </td>
+   <td style="text-align:right;"> -0.18 </td>
+   <td style="text-align:right;"> 0.06 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam:Pref </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> 0.04 </td>
+   <td style="text-align:right;"> -0.08 </td>
+   <td style="text-align:right;"> 0.16 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Pref </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> -0.04 </td>
+   <td style="text-align:right;"> -0.15 </td>
+   <td style="text-align:right;"> 0.07 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+</tbody>
+</table>
+
+
+<table>
+<caption>Table of differences in long-term curvatures on gall traits between food-web treatment.</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> term </th>
+   <th style="text-align:right;"> mean </th>
+   <th style="text-align:right;"> conf.low </th>
+   <th style="text-align:right;"> conf.high </th>
+   <th style="text-align:left;"> P_cutoff </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> C.Clutch </td>
+   <td style="text-align:right;"> -0.06 </td>
+   <td style="text-align:right;"> -0.21 </td>
+   <td style="text-align:right;"> 0.09 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Clutch:Pref </td>
+   <td style="text-align:right;"> -0.06 </td>
+   <td style="text-align:right;"> -0.22 </td>
+   <td style="text-align:right;"> 0.10 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam </td>
+   <td style="text-align:right;"> 0.04 </td>
+   <td style="text-align:right;"> -0.09 </td>
+   <td style="text-align:right;"> 0.17 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam:Clutch </td>
+   <td style="text-align:right;"> 0.01 </td>
+   <td style="text-align:right;"> -0.16 </td>
+   <td style="text-align:right;"> 0.18 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam:Pref </td>
+   <td style="text-align:right;"> 0.13 </td>
+   <td style="text-align:right;"> -0.05 </td>
+   <td style="text-align:right;"> 0.33 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Pref </td>
+   <td style="text-align:right;"> -0.19 </td>
+   <td style="text-align:right;"> -0.36 </td>
+   <td style="text-align:right;"> -0.02 </td>
+   <td style="text-align:left;"> * </td>
+  </tr>
+</tbody>
+</table>
+
+
+As before, we can visualize the table output as a figure.
+
+<div class="figure">
+<p class="caption">Plot of long-term standardized selection gradients acting on gall midges in each food-web treatment.</p><img src="reproduce_analyses_files/figure-html/Plot long-term food-web gradients-1.png" alt="Plot of long-term standardized selection gradients acting on gall midges in each food-web treatment." width="672"  /></div>
 
 \  
 
@@ -1149,6 +1968,237 @@ and as a figure.
 <p class="caption">Plot of selection gradients imposed by egg and larval parasitoids on gall midges.</p><img src="reproduce_analyses_files/figure-html/Plot egg vs. larval ptoid gradients-1.png" alt="Plot of selection gradients imposed by egg and larval parasitoids on gall midges." width="672"  /></div>
 
 
+
+```r
+# Get mean estimates for directional selection gradients
+egglarval_original_mean_sc.Diam <- filter(tidy_egglarval_grads, type == "Original", term == "sc.Diam")$mean
+egglarval_original_mean_sc.log.Clutch <- filter(tidy_egglarval_grads, type == "Original", term == "sc.log.Clutch")$mean
+egglarval_original_mean_sc.sqrt.Pref <- filter(tidy_egglarval_grads, type == "Original", term == "sc.sqrt.Pref")$mean
+
+egglarval_extinction_mean_sc.Diam <- filter(tidy_egglarval_grads, type == "Extinction", term == "sc.Diam")$mean
+egglarval_extinction_mean_sc.log.Clutch <- filter(tidy_egglarval_grads, type == "Extinction", term == "sc.log.Clutch")$mean
+egglarval_extinction_mean_sc.sqrt.Pref <- filter(tidy_egglarval_grads, type == "Extinction", term == "sc.sqrt.Pref")$mean
+
+# Calculate curvatures for original food web
+egglarval_original_raw_curvs <- egglarval_original_raw_gradients %>%
+  transmute(`FoodwebOriginal:C.Diam` = `FoodwebOriginal:I(sc.Diam^2)` - egglarval_original_mean_sc.Diam*egglarval_original_mean_sc.Diam, #`FoodwebOriginal:sc.Diam`*`FoodwebOriginal:sc.Diam`,
+         `FoodwebOriginal:C.Clutch` = `FoodwebOriginal:I(sc.log.Clutch^2)` - egglarval_original_mean_sc.log.Clutch*egglarval_original_mean_sc.log.Clutch, # `FoodwebOriginal:sc.log.Clutch`*`FoodwebOriginal:sc.log.Clutch`,
+         `FoodwebOriginal:C.Pref` = `FoodwebOriginal:I(sc.sqrt.Pref^2)` - egglarval_original_mean_sc.sqrt.Pref*egglarval_original_mean_sc.sqrt.Pref, #`FoodwebOriginal:sc.sqrt.Pref`*`FoodwebOriginal:sc.sqrt.Pref`,
+         `FoodwebOriginal:C.Diam:Clutch` = `FoodwebOriginal:sc.Diam:sc.log.Clutch` - egglarval_original_mean_sc.Diam*egglarval_original_mean_sc.log.Clutch, # `FoodwebOriginal:sc.Diam`*`FoodwebOriginal:sc.log.Clutch`,
+         `FoodwebOriginal:C.Diam:Pref` = `FoodwebOriginal:sc.Diam:sc.sqrt.Pref` - egglarval_original_mean_sc.Diam*egglarval_original_mean_sc.sqrt.Pref, # `FoodwebOriginal:sc.Diam`*`FoodwebOriginal:sc.sqrt.Pref`,
+         `FoodwebOriginal:C.Clutch:Pref` = `FoodwebOriginal:sc.log.Clutch:sc.sqrt.Pref` - egglarval_original_mean_sc.log.Clutch*egglarval_original_mean_sc.sqrt.Pref) # `FoodwebOriginal:sc.log.Clutch`*`FoodwebOriginal:sc.sqrt.Pref`)
+
+# Calculate curvatures for extinction food web
+egglarval_extinction_raw_curvs <- egglarval_extinction_raw_gradients %>%
+  transmute(`FoodwebExtinction:C.Diam` = `FoodwebExtinction:I(sc.Diam^2)` - egglarval_extinction_mean_sc.Diam*egglarval_extinction_mean_sc.Diam, #`FoodwebExtinction:sc.Diam`*`FoodwebExtinction:sc.Diam`,
+         `FoodwebExtinction:C.Clutch` = `FoodwebExtinction:I(sc.log.Clutch^2)` - egglarval_extinction_mean_sc.log.Clutch*egglarval_extinction_mean_sc.log.Clutch, # `FoodwebExtinction:sc.log.Clutch`*`FoodwebExtinction:sc.log.Clutch`,
+         `FoodwebExtinction:C.Pref` = `FoodwebExtinction:I(sc.sqrt.Pref^2)` - egglarval_extinction_mean_sc.sqrt.Pref*egglarval_extinction_mean_sc.sqrt.Pref,# `FoodwebExtinction:sc.sqrt.Pref`*`FoodwebExtinction:sc.sqrt.Pref`,
+         `FoodwebExtinction:C.Diam:Clutch` = `FoodwebExtinction:sc.Diam:sc.log.Clutch` - egglarval_extinction_mean_sc.Diam*egglarval_extinction_mean_sc.log.Clutch, # `FoodwebExtinction:sc.Diam`*`FoodwebExtinction:sc.log.Clutch`,
+         `FoodwebExtinction:C.Diam:Pref` = `FoodwebExtinction:sc.Diam:sc.sqrt.Pref` - egglarval_extinction_mean_sc.Diam*egglarval_extinction_mean_sc.sqrt.Pref,# `FoodwebExtinction:sc.Diam`*`FoodwebExtinction:sc.sqrt.Pref`,
+         `FoodwebExtinction:C.Clutch:Pref` = `FoodwebExtinction:sc.log.Clutch:sc.sqrt.Pref` - egglarval_extinction_mean_sc.log.Clutch*egglarval_extinction_mean_sc.sqrt.Pref)# `FoodwebExtinction:sc.log.Clutch`*`FoodwebExtinction:sc.sqrt.Pref`)
+         
+
+# Calculate differences between food-web treatments, then estimate means and confidence intervals
+egglarval_curvs <- bind_cols(egglarval_original_raw_curvs, egglarval_extinction_raw_curvs) %>%
+  mutate(`FoodwebDiff:C.Diam` = `FoodwebExtinction:C.Diam` - `FoodwebOriginal:C.Diam`,
+         `FoodwebDiff:C.Clutch` = `FoodwebExtinction:C.Clutch` - `FoodwebOriginal:C.Clutch`,
+         `FoodwebDiff:C.Pref` = `FoodwebExtinction:C.Pref` - `FoodwebOriginal:C.Pref`,
+         `FoodwebDiff:C.Diam:Clutch` = `FoodwebExtinction:C.Diam:Clutch` - `FoodwebOriginal:C.Diam:Clutch`,
+         `FoodwebDiff:C.Diam:Pref` = `FoodwebExtinction:C.Diam:Pref` - `FoodwebOriginal:C.Diam:Pref`,
+         `FoodwebDiff:C.Clutch:Pref` = `FoodwebExtinction:C.Clutch:Pref` - `FoodwebOriginal:C.Clutch:Pref`) %>%
+  summarise_all(funs(mean, conf.high, conf.low))
+
+
+# Tidy up estimates
+tidy_egglarval_curvs <- egglarval_curvs %>%
+  t() %>%
+  as.data.frame() %>%
+  transmute(rows = rownames(.), value=V1) %>%
+  separate(col = rows, into = c("term","estimate"), sep="_") %>%
+  separate(col = term, into = c("type","term_1","term_2"), sep=":", extra="drop") %>%
+  mutate(term = ifelse(is.na(term_2), term_1, paste(term_1,term_2,sep=":"))) %>%
+  separate(col = type, into = c("extra","type"), sep = 7) %>%
+  select(type, term, estimate, value) %>%
+  mutate(type = factor(type, levels = c("Original", "Extinction", "Diff"))) %>%
+  spread(estimate, value) %>%
+  mutate(P_cutoff = ifelse(conf.high*conf.low < 0, "","*"))#,
+         #gradient_type = ifelse(grepl("\\^2", .$term)==TRUE, "Quadratic",
+         #                       ifelse(grepl(":", .$term)==TRUE, "Correlational","Directional")),
+         #mean = ifelse(gradient_type=="Quadratic", 2*mean, mean),
+         #conf.low = ifelse(gradient_type=="Quadratic", 2*conf.low, conf.low),
+         #conf.high = ifelse(gradient_type=="Quadratic", 2*conf.high, conf.high))
+```
+
+
+<table>
+<caption>Table of curvatures on gall traits due to egg and larval parasitoids.</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> term </th>
+   <th style="text-align:left;"> type </th>
+   <th style="text-align:right;"> mean </th>
+   <th style="text-align:right;"> conf.low </th>
+   <th style="text-align:right;"> conf.high </th>
+   <th style="text-align:left;"> P_cutoff </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> C.Clutch </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> -0.01 </td>
+   <td style="text-align:right;"> -0.09 </td>
+   <td style="text-align:right;"> 0.06 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Clutch:Pref </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> -0.02 </td>
+   <td style="text-align:right;"> -0.12 </td>
+   <td style="text-align:right;"> 0.08 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> -0.02 </td>
+   <td style="text-align:right;"> -0.08 </td>
+   <td style="text-align:right;"> 0.05 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam:Clutch </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> -0.01 </td>
+   <td style="text-align:right;"> -0.10 </td>
+   <td style="text-align:right;"> 0.08 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam:Pref </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> -0.01 </td>
+   <td style="text-align:right;"> -0.14 </td>
+   <td style="text-align:right;"> 0.10 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Pref </td>
+   <td style="text-align:left;"> Original </td>
+   <td style="text-align:right;"> 0.06 </td>
+   <td style="text-align:right;"> -0.04 </td>
+   <td style="text-align:right;"> 0.18 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Clutch </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> -0.09 </td>
+   <td style="text-align:right;"> -0.16 </td>
+   <td style="text-align:right;"> -0.01 </td>
+   <td style="text-align:left;"> * </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Clutch:Pref </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> -0.02 </td>
+   <td style="text-align:right;"> -0.09 </td>
+   <td style="text-align:right;"> 0.05 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> 0.00 </td>
+   <td style="text-align:right;"> -0.05 </td>
+   <td style="text-align:right;"> 0.07 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam:Clutch </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> -0.04 </td>
+   <td style="text-align:right;"> -0.12 </td>
+   <td style="text-align:right;"> 0.04 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam:Pref </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> 0.02 </td>
+   <td style="text-align:right;"> -0.05 </td>
+   <td style="text-align:right;"> 0.10 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Pref </td>
+   <td style="text-align:left;"> Extinction </td>
+   <td style="text-align:right;"> -0.05 </td>
+   <td style="text-align:right;"> -0.14 </td>
+   <td style="text-align:right;"> 0.04 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+</tbody>
+</table>
+
+<table>
+<caption>Table of differences in curvatures on gall traits between egg and larval parasitoids.</caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;"> term </th>
+   <th style="text-align:right;"> mean </th>
+   <th style="text-align:right;"> conf.low </th>
+   <th style="text-align:right;"> conf.high </th>
+   <th style="text-align:left;"> P_cutoff </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> C.Clutch </td>
+   <td style="text-align:right;"> -0.07 </td>
+   <td style="text-align:right;"> -0.17 </td>
+   <td style="text-align:right;"> 0.03 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Clutch:Pref </td>
+   <td style="text-align:right;"> -0.01 </td>
+   <td style="text-align:right;"> -0.13 </td>
+   <td style="text-align:right;"> 0.12 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam </td>
+   <td style="text-align:right;"> 0.02 </td>
+   <td style="text-align:right;"> -0.07 </td>
+   <td style="text-align:right;"> 0.12 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam:Clutch </td>
+   <td style="text-align:right;"> -0.03 </td>
+   <td style="text-align:right;"> -0.14 </td>
+   <td style="text-align:right;"> 0.09 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Diam:Pref </td>
+   <td style="text-align:right;"> 0.03 </td>
+   <td style="text-align:right;"> -0.10 </td>
+   <td style="text-align:right;"> 0.18 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> C.Pref </td>
+   <td style="text-align:right;"> -0.11 </td>
+   <td style="text-align:right;"> -0.26 </td>
+   <td style="text-align:right;"> 0.02 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+</tbody>
+</table>
+
 ## Reproduce Figure 2 in main text
 
 We used the full model to generate predicted estimates of mean larval survival for changes in the mean trait value of the population. I restrict these predictions to +/- 1 SD because we can only reliably estimate the shape of the adaptive landscape near the mean phenotype of the population [(Arnold et al., 2001)](https://link.springer.com/article/10.1023/A:1013373907708). Other trait values are held constant at the mean phenotype (i.e. trait = 0). We then performed 100 bootstraps to illustrate the uncertainty in our estimates.
@@ -1264,6 +2314,51 @@ And gather these predictions to plot two-dimensional views of the adaptive lands
 <p class="caption">Two dimensional view of adaptive landscapes of gall midge phenotypes in the original food web and with the extinction of larval parasitoids. Dotted lines denote fitness for the mean phenotype. Arrows represent the vector of directional selection gradients acting on each phenotype.</p><img src="reproduce_analyses_files/figure-html/Figure-Multivariate-Landscapes-1.png" alt="Two dimensional view of adaptive landscapes of gall midge phenotypes in the original food web and with the extinction of larval parasitoids. Dotted lines denote fitness for the mean phenotype. Arrows represent the vector of directional selection gradients acting on each phenotype." width="672"  /></div>
 
 ## Slope and curvature of the adaptive landscape of gall traits
+
+
+```r
+## Original
+
+# Get curvatures from original food web
+original_curvs_df <- tidy_foodweb_curvs %>%
+  filter(type=="Original") %>%
+  select(term, mean, low=conf.low, high=conf.high)
+
+rownames(original_curvs_df) <- original_curvs_df$term
+
+## Extinction
+
+# Get curvatures from extinction food web
+extinction_curvs_df <- tidy_foodweb_curvs %>%
+  filter(type=="Extinction") %>%
+  select(term, mean, low=conf.low, high=conf.high)
+
+rownames(extinction_curvs_df) <- extinction_curvs_df$term
+
+## Difference
+difference_curvs_df <- tidy_foodweb_curvs %>%
+  filter(type=="Diff") %>%
+  select(term, mean, low=conf.low, high=conf.high)
+
+rownames(difference_curvs_df) <- difference_curvs_df$term
+```
+
+$$\textbf{C}_{\text{Original}} = \begin{pmatrix} 
+-0.05\: [-0.15,0.05] &  &  \\  
+-0.06\: [-0.18,0.06] & -0.03\: [-0.14,0.09] &  \\  
+-0.09\: [-0.25,0.06] & 0.04\: [-0.1,0.18] & \textbf{0.15\: [0.02,0.3]} \end{pmatrix}$$
+
+
+$$\textbf{C}_{\text{Extinction}} = \begin{pmatrix} 
+0.01\: [-0.05,0.07] &  &  \\  
+-0.05\: [-0.13,0.03] & -0.06\: [-0.15,0.01] &  \\  
+0.02\: [-0.07,0.1] & -0.01\: [-0.09,0.06] & -0.02\: [-0.1,0.06] \end{pmatrix}$$
+
+$$\textbf{C}_{\text{Extinction-Original}} = \begin{pmatrix} 
+0.06\: [-0.06,0.18] &  &  \\  
+0.02\: [-0.13,0.16] & -0.03\: [-0.16,0.1] &  \\  
+0.11\: [-0.06,0.29] & -0.05\: [-0.21,0.1] & \textbf{-0.17\: [-0.33,-0.01]} \end{pmatrix}$$
+
 
 Below is the code used to get estimates for the slope ($\beta$) and curvature ($\gamma-\beta\beta^\text{T}$) of the adaptive landscape in each food-web treatment. If 95% confidence intervals of selection gradients overlap zero, then they were set to zero; otherwise, we retain the estimate. 
 
@@ -1486,6 +2581,189 @@ $$\textbf{C}_{\text{Extinction}} = \begin{pmatrix}
 -0.04 &  &  \\  
 0.02 & -0.01 &  \\  
 0.03 & -0.01 & -0.03 \end{pmatrix}$$
+
+\
+
+
+
+
+```r
+## Generate random G-matrices
+n_Gmats <- 10000
+min_variance <- 0
+max_variance <- 0.5
+set.seed(34)
+random_Gmats <- RandomMatrix(num.traits = 3, num.matrices = n_Gmats, min.var = min_variance, max.var = max_variance)
+
+## Get mean estimates for curvature matrix
+
+# Original
+foodweb_original_mean_C.Diam <- filter(tidy_foodweb_curvs, type == "Original", term == "C.Diam")$mean
+foodweb_original_mean_C.Clutch <- filter(tidy_foodweb_curvs, type == "Original", term == "C.Clutch")$mean
+foodweb_original_mean_C.Pref <- filter(tidy_foodweb_curvs, type == "Original", term == "C.Pref")$mean
+foodweb_original_mean_C.Diam.Clutch <- filter(tidy_foodweb_curvs, type == "Original", term == "C.Diam:Clutch")$mean
+foodweb_original_mean_C.Diam.Pref <- filter(tidy_foodweb_curvs, type == "Original", term == "C.Diam:Pref")$mean
+foodweb_original_mean_C.Clutch.Pref <- filter(tidy_foodweb_curvs, type == "Original", term == "C.Clutch:Pref")$mean
+
+mean_curv_original <- matrix(c(foodweb_original_mean_C.Diam, foodweb_original_mean_C.Diam.Clutch, foodweb_original_mean_C.Diam.Pref,
+                               foodweb_original_mean_C.Diam.Clutch, foodweb_original_mean_C.Clutch, foodweb_original_mean_C.Clutch.Pref,
+                               foodweb_original_mean_C.Diam.Pref, foodweb_original_mean_C.Clutch.Pref, foodweb_original_mean_C.Pref),
+                             byrow = T, ncol = 3)
+
+# Extinction
+foodweb_extinction_mean_C.Diam <- filter(tidy_foodweb_curvs, type == "Extinction", term == "C.Diam")$mean
+foodweb_extinction_mean_C.Clutch <- filter(tidy_foodweb_curvs, type == "Extinction", term == "C.Clutch")$mean
+foodweb_extinction_mean_C.Pref <- filter(tidy_foodweb_curvs, type == "Extinction", term == "C.Pref")$mean
+foodweb_extinction_mean_C.Diam.Clutch <- filter(tidy_foodweb_curvs, type == "Extinction", term == "C.Diam:Clutch")$mean
+foodweb_extinction_mean_C.Diam.Pref <- filter(tidy_foodweb_curvs, type == "Extinction", term == "C.Diam:Pref")$mean
+foodweb_extinction_mean_C.Clutch.Pref <- filter(tidy_foodweb_curvs, type == "Extinction", term == "C.Clutch:Pref")$mean
+
+mean_curv_extinction <- matrix(c(foodweb_extinction_mean_C.Diam, foodweb_extinction_mean_C.Diam.Clutch, foodweb_extinction_mean_C.Diam.Pref,
+                               foodweb_extinction_mean_C.Diam.Clutch, foodweb_extinction_mean_C.Clutch, foodweb_extinction_mean_C.Clutch.Pref,
+                               foodweb_extinction_mean_C.Diam.Pref, foodweb_extinction_mean_C.Clutch.Pref, foodweb_extinction_mean_C.Pref),
+                             byrow = T, ncol = 3)
+
+n_random_gradients <- 1000
+
+## Functions to calculate effect of mean curvature on random G-matrices
+curv_original_random_matrices_evolvabilities <- function(x){
+  new_Gmat <- x + x %*% mean_curv_original %*% x
+  try(MeanMatrixStatistics(new_Gmat, iterations = n_random_gradients, parallel = TRUE))["evolvability"]
+}
+
+curv_extinction_random_matrices_evolvabilities <- function(x){
+  new_Gmat <- x + x %*% mean_curv_extinction %*% x
+  try(MeanMatrixStatistics(new_Gmat, iterations = n_random_gradients, parallel = TRUE))["evolvability"]
+}
+
+original_evolvability_list <- plyr::ldply(lapply(X = random_Gmats, FUN = curv_original_random_matrices_evolvabilities)) %>%
+  mutate(Original = as.numeric(evolvability))
+```
+
+```
+## Error in CalcICV(cov.matrix) : covariance matrix must be symmetric.
+## Error in CalcICV(cov.matrix) : covariance matrix must be symmetric.
+## Error in CalcICV(cov.matrix) : covariance matrix must be symmetric.
+## Error in CalcICV(cov.matrix) : covariance matrix must be symmetric.
+## Error in CalcICV(cov.matrix) : covariance matrix must be symmetric.
+```
+
+```r
+extinction_evolvability_list <- plyr::ldply(lapply(X = random_Gmats, FUN = curv_extinction_random_matrices_evolvabilities)) %>% 
+  mutate(Extinction = as.numeric(evolvability))
+```
+
+```
+## Error in CalcICV(cov.matrix) : covariance matrix must be symmetric.
+## Error in CalcICV(cov.matrix) : covariance matrix must be symmetric.
+## Error in CalcICV(cov.matrix) : covariance matrix must be symmetric.
+## Error in CalcICV(cov.matrix) : covariance matrix must be symmetric.
+```
+
+```r
+random_evolvabilities <- bind_cols(original_evolvability_list, extinction_evolvability_list) %>%
+  drop_na() %>%
+  mutate(Diff = Extinction - Original)
+```
+
+We see that for our best estimates of the curvature matrix, that the extinction food web tends to decrease evolvability (71%) of the gall midge population.
+
+<div class="figure">
+<p class="caption">Change in evolvability for `r n_Gmats` random G-matrices using our best (mean) estimates of the curvature matrix.</p><img src="reproduce_analyses_files/figure-html/Delta evolvability-1.png" alt="Change in evolvability for `r n_Gmats` random G-matrices using our best (mean) estimates of the curvature matrix." width="672"  /></div>
+
+
+
+```r
+## Use same random G-matrices as above 
+
+## Get mean estimates for curvature matrix
+
+# Note that original food web is same as before
+
+# Long-term extinction
+foodweb_long_extinction_mean_C.Diam <- filter(tidy_foodweb_long_curvs, type == "Extinction", term == "C.Diam")$mean
+foodweb_long_extinction_mean_C.Clutch <- filter(tidy_foodweb_long_curvs, type == "Extinction", term == "C.Clutch")$mean
+foodweb_long_extinction_mean_C.Pref <- filter(tidy_foodweb_long_curvs, type == "Extinction", term == "C.Pref")$mean
+foodweb_long_extinction_mean_C.Diam.Clutch <- filter(tidy_foodweb_long_curvs, type == "Extinction", term == "C.Diam:Clutch")$mean
+foodweb_long_extinction_mean_C.Diam.Pref <- filter(tidy_foodweb_long_curvs, type == "Extinction", term == "C.Diam:Pref")$mean
+foodweb_long_extinction_mean_C.Clutch.Pref <- filter(tidy_foodweb_long_curvs, type == "Extinction", term == "C.Clutch:Pref")$mean
+
+long_mean_curv_extinction <- matrix(c(foodweb_long_extinction_mean_C.Diam, foodweb_long_extinction_mean_C.Diam.Clutch, foodweb_long_extinction_mean_C.Diam.Pref,
+                               foodweb_long_extinction_mean_C.Diam.Clutch, foodweb_long_extinction_mean_C.Clutch, foodweb_long_extinction_mean_C.Clutch.Pref,
+                               foodweb_long_extinction_mean_C.Diam.Pref, foodweb_long_extinction_mean_C.Clutch.Pref, foodweb_long_extinction_mean_C.Pref),
+                             byrow = T, ncol = 3)
+
+## Functions to calculate effect of mean curvature on random G-matrices
+curv_long_extinction_random_matrices_evolvabilities <- function(x){
+  new_Gmat <- x + x %*% long_mean_curv_extinction %*% x
+  try(MeanMatrixStatistics(new_Gmat, iterations = n_random_gradients, parallel = TRUE))["evolvability"]
+}
+
+long_extinction_evolvability_list <- plyr::ldply(lapply(X = random_Gmats, FUN = curv_long_extinction_random_matrices_evolvabilities)) %>% 
+  mutate(Extinction = as.numeric(evolvability))
+```
+
+```
+## Error in CalcICV(cov.matrix) : covariance matrix must be symmetric.
+## Error in CalcICV(cov.matrix) : covariance matrix must be symmetric.
+## Error in CalcICV(cov.matrix) : covariance matrix must be symmetric.
+```
+
+```r
+long_random_evolvabilities <- bind_cols(original_evolvability_list, long_extinction_evolvability_list) %>%
+  drop_na() %>%
+  mutate(Diff = Extinction - Original)
+```
+
+Over the long-term (after egg parasitoids recover and impose similar fitness impact), we see that for our best estimates of the curvature matrix, that the extinction food web tends to decrease evolvability (78%) of the gall midge population.
+
+<div class="figure">
+<p class="caption">Change in evolvability for 1,000 random G-matrices using our best (mean) estimates of the curvature matrix over the long term.</p><img src="reproduce_analyses_files/figure-html/Long-term delta evolvability-1.png" alt="Change in evolvability for 1,000 random G-matrices using our best (mean) estimates of the curvature matrix over the long term." width="672"  /></div>
+
+Now we look at the curvature effects of larval parasitoids compared to the original food web.
+
+
+```r
+# Extinction
+larvalptoid_mean_C.Diam <- filter(tidy_egglarval_curvs, type == "Original", term == "C.Diam")$mean
+larvalptoid_mean_C.Clutch <- filter(tidy_egglarval_curvs, type == "Original", term == "C.Clutch")$mean
+larvalptoid_mean_C.Pref <- filter(tidy_egglarval_curvs, type == "Original", term == "C.Pref")$mean
+larvalptoid_mean_C.Diam.Clutch <- filter(tidy_egglarval_curvs, type == "Original", term == "C.Diam:Clutch")$mean
+larvalptoid_mean_C.Diam.Pref <- filter(tidy_egglarval_curvs, type == "Original", term == "C.Diam:Pref")$mean
+larvalptoid_mean_C.Clutch.Pref <- filter(tidy_egglarval_curvs, type == "Original", term == "C.Clutch:Pref")$mean
+
+mean_curv_larvalptoid <- matrix(c(larvalptoid_mean_C.Diam, larvalptoid_mean_C.Diam.Clutch, larvalptoid_mean_C.Diam.Pref,
+                               larvalptoid_mean_C.Diam.Clutch, larvalptoid_mean_C.Clutch, larvalptoid_mean_C.Clutch.Pref,
+                               larvalptoid_mean_C.Diam.Pref, larvalptoid_mean_C.Clutch.Pref, larvalptoid_mean_C.Pref),
+                             byrow = T, ncol = 3)
+
+## Functions to calculate effect of mean curvature on random G-matrices
+
+curv_larvalptoid_random_matrices_evolvabilities <- function(x){
+  new_Gmat <- x + x %*% mean_curv_larvalptoid %*% x
+  try(MeanMatrixStatistics(new_Gmat, iterations = n_random_gradients, parallel = TRUE))["evolvability"]
+}
+
+larvalptoid_evolvability_list <- plyr::ldply(lapply(X = random_Gmats, FUN = curv_larvalptoid_random_matrices_evolvabilities)) %>% 
+  mutate(LarvalPtoid = as.numeric(evolvability))
+
+larvalptoid_random_evolvabilities <- bind_cols(original_evolvability_list, larvalptoid_evolvability_list) %>%
+  drop_na() %>%
+  mutate(Diff = LarvalPtoid - Original)
+```
+
+We see that for our best estimates of the curvature matrix, that the larval parasitoids tend decrease evolvability in 57% of the G-matrix scenarios relative to the original food web..
+
+
+<div class="figure">
+<p class="caption">Change in evolvability for 10,000 random G-matrices using our best (mean) estimates of the curvature matrix for larval parasitoids vs original food web.</p><img src="reproduce_analyses_files/figure-html/Larval vs Original delta evolvability-1.png" alt="Change in evolvability for 10,000 random G-matrices using our best (mean) estimates of the curvature matrix for larval parasitoids vs original food web." width="672"  /></div>
+
+
+
+
+
+
+
 
 \ 
 

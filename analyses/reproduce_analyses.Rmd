@@ -1723,7 +1723,7 @@ AF_plot_Clutch.Pref <- RF_Clutch.Pref$absolute_fitness %>%
 AF_landscape_legend <- get_legend(AF_plot_Diam.Pref + theme(legend.text = element_text(size=10)))
 
 # Arrow data
-gradients_Diam.Clutch <- data.frame(Foodweb = c("Original","Extinction"),
+gradients_Diam.Clutch <- data.frame(Foodweb = c("Original","Removal"),
                                     sc.Diam = c(0,0), 
                                     sc.log.Clutch = c(0,0), 
                                     xend = c(filter(tidy_foodweb_grads, type=="Original", term=="sc.Diam")$mean,
@@ -1731,7 +1731,7 @@ gradients_Diam.Clutch <- data.frame(Foodweb = c("Original","Extinction"),
                                     yend = c(filter(tidy_foodweb_grads, type=="Original", term=="sc.log.Clutch")$mean, 
                                              filter(tidy_foodweb_grads, type=="Extinction", term=="sc.log.Clutch")$mean))
 
-gradients_Clutch.Pref <- data.frame(Foodweb = c("Original","Extinction"),
+gradients_Clutch.Pref <- data.frame(Foodweb = c("Original","Removal"),
                                     sc.sqrt.Pref = c(0,0), 
                                     sc.log.Clutch = c(0,0), 
                                     xend = c(filter(tidy_foodweb_grads, type=="Original", term=="sc.sqrt.Pref")$mean, 
@@ -1739,7 +1739,7 @@ gradients_Clutch.Pref <- data.frame(Foodweb = c("Original","Extinction"),
                                     yend = c(filter(tidy_foodweb_grads, type=="Original", term=="sc.log.Clutch")$mean, 
                                              filter(tidy_foodweb_grads, type=="Extinction", term=="sc.log.Clutch")$mean))
 
-gradients_Diam.Pref <- data.frame(Foodweb = c("Original","Extinction"),
+gradients_Diam.Pref <- data.frame(Foodweb = c("Original","Removal"),
                                     sc.Diam = c(0,0), 
                                     sc.sqrt.Pref = c(0,0), 
                                     xend = c(filter(tidy_foodweb_grads, type=="Original", term=="sc.Diam")$mean,
@@ -2793,7 +2793,7 @@ eggptoid_selection_plot <- eggptoid_plot_df %>%
   scale_alpha_manual(values=c(1,0.2), guide=FALSE) +
   scale_size_manual(values=c(1.5,0.25), guide=FALSE) +
   xlab("Gall midge preference (SDs)") + 
-  ylab(expression(paste(Delta," egg parasitoid survival (original - extinction)"))) +
+  ylab(expression(paste(Delta," egg parasitoid survival (original - removal)"))) +
   scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
   geom_hline(yintercept=0, linetype="dotted") +
   theme_cowplot(font_size = 12)
