@@ -69,7 +69,7 @@ $^\ast$ Corresponding author; e-mail: matthew.barbour@ieu.uzh.ch
 
 \bigskip
 
-*Keywords*: adaptive landscape, ecological networks, eco-evolutionary dynamics, natural selection, host-parasitoid; complexity; biodiversity.
+*Keywords*: adaptive landscape, ecological networks, eco-evolutionary dynamics, natural selection, host-parasitoid, complexity, biodiversity, community context.
 
 \bigskip
 
@@ -104,7 +104,11 @@ The loss of biodiversity<!--Global change--> is altering the structure of ecolog
 
 <!-- Authors should provide an approximately 300 word summary, explaining why the article makes an important contribution to Evolutionary Biology. It should be accessible to a wide audience, e.g. journalists, non-expert public interested in evolution, school science teachers. -->
 
-The loss of biodiversity is rewiring the web of life; however, it is uncertain <!--we are currently in a poor position to predict-->how this will affect the ability of remaining populations to evolve and adapt to future environments. To gain insight to these effects, we conducted a field experiment that either maintained a natural community of predators or removed all but one of the predators that was able to impose selection on a common prey. We found that the loss of predators increased the number of prey traits under selection, indicating that the trajectory of evolution was more constrained to a specific combination of traits<!--. This suggests that simpler communities may constrain the trajectory of evolution toward a specific combination of traits-->. Moreover, we found that that the loss of predators could make it more difficult for prey to adapt to future environments. Taken together, our results suggest that the loss of biodiversity may rewire interactions in such a way that constrains the adaptive potential of remaining populations.  
+The loss of biodiversity is rewiring the web of life; however, it is uncertain how this will affect the ability of remaining populations to evolve and adapt to future environments. To gain insight to these effects, we conducted a field experiment that either maintained a natural community of predators or removed all but one of the predators that was able to impose selection on a common prey. We found that the loss of predators acted to constrain prey evolution toward a particular combination of traits. Moreover, we found that the loss of predators could make it more difficult for prey to adapt to uncertain future environments. Taken together, our results suggest that the simplification of the web of life may constrain the adaptive potential of remaining populations. 
+
+<!--
+We found that the loss of predators increased the number of prey traits under selection, indicating that the trajectory of evolution was more constrained to a specific combination of traits<!--. This suggests that simpler communities may constrain the trajectory of evolution toward a specific combination of traits--><!--. In addition, we found that that the loss of predators could make it more difficult for prey to adapt to future environments. Taken together, our results suggest that the loss of biodiversity may rewire interactions in such a way that constrains the adaptive potential of remaining populations.  
+-->
 
 \newpage
 
@@ -116,7 +120,7 @@ The adaptive landscape provides a powerful framework for understanding how natur
 
 Ecological networks, such as food webs describing who-eats-whom, provide an explicit representation of the direct and indirect effects that emerge in a community of interacting species [@Bascompte2014; @McCann2012]. Here, we integrate ecological networks and adaptive landscapes to understand how ecological communities constrain evolutionary change. The direct and indirect effects of natural selection can be inferred by quantifying the slope and curvature of the adaptive landscape [@Arnold1992]. For example, the slope is determined by directional selection gradients acting on each phenotypic trait and influences the trajectory of evolutionary change [@Lande1979;@Arnold1992]. Selective constraints on evolution increase with the number of traits under directional selection, as this diminishes the number of optimal solutions [@Arnold2003]. The curvature of the adaptive landscape is governed by nonlinear selection gradients and acts to indirectly constrain evolution through its effect on genetic constraints [@Arnold1992; @Hansen2008]. Genetic constraints are largely governed by a population's **G**-matrix ---the additive genetic variances and covariances between traits [@Hansen2008]. Stabilizing selection acts to erode genetic variance in traits, which can impose a constraint on the ability of those traits to respond to future selection [@Hansen2008].<!-- In general, genetic constraints will increase with the number of traits under directional or stabilizing selection, as this will decrease the additive genetic variance in those traits [@Hansen2008].--> Correlational selection may alter the genetic covariance between traits, which may facilitate or hinder future adaptation depending on pattern of selection on those traits [@Hansen2008].<!--Genetic constraints may also increase with the number of trait combinations under correlational selection, as this type of selection decreases the evolutionary independence of traits [@Hansen2008].--> If we want to predict how ecological communities shape phenotypic evolution, we must understand how ecological networks shape the adaptive landscape.
 
-The loss of biodiversity is altering the structure of ecological networks<!--communities-->, which may influence evolutionary constraints in a number of ways. For example, in a <!--multitrophic community or -->food web, if different consumers impose directional selection on different traits of a shared resource, then a more diverse consumer community may constrain evolution by increasing the number of traits under selection. Alternatively, if consumers impose selection on different values of a trait, then their selective effects would cancel each other out in more diverse communities. To examine these different possibilities, we conducted a field experiment that removed a consumer guild that directly and indirectly impacts fitness of an abundant insect herbivore (*Iteomyia salicisverruca*, Family Cecidomyiidae; fig. \ref{fig:Conceptual}). The larvae of this herbivore induce tooth-shaped galls when they feed on the developing leaves of willow trees [*Salix* sp., @Russo2006]. These galls protect larva from attack by generalist predators (e.g. ants, spiders), but they suffer high mortality from egg and larval parasitoids [@Barbour2016]. We manipulated food-web structure by either removing larval parasitoids (removal food web) or allowing both egg and larval parasitoids to impose selection on gall midge traits (original food web, fig. \ref{fig:Conceptual}). The relative abundance of these larval parasitoids is much lower than the egg parasitoid [@Barbour2016], and thus represents a plausible extinction scenario for this system. <!--While this manipulation simulates an extreme co-extinction event, the likelihood of such co-extinction events is increasing in the Anthropocene. -->Larval parasitoids also impose indirect effects on gall midge fitness through intraguild predation on the egg parasitoid (fig. \ref{fig:Conceptual}). We applied modern statistical methods to quantify how changes in food-web structure altered the slope and curvature of the gall midge's adaptive landscape. Taken together, our study gives insight to how the loss of biodiversity may constrain the evolution of interacting populations.
+The loss of biodiversity is altering the structure of ecological networks<!--communities-->, which may influence evolutionary constraints in a number of ways. For example, in a <!--multitrophic community or -->food web, if different consumers impose directional selection on different traits of a shared resource, then a more diverse consumer community may constrain evolution by increasing the number of traits under selection. Alternatively, if consumers impose selection on different values of a trait, then their selective effects would cancel each other out in more diverse communities. To examine these different possibilities, we conducted a field experiment that removed a consumer guild that directly and indirectly impacts fitness of an abundant insect herbivore (*Iteomyia salicisverruca*, Family Cecidomyiidae; fig. \ref{fig:Conceptual}). The larvae of this herbivore induce tooth-shaped galls when they feed on the developing leaves of willow trees [*Salix* sp., @Russo2006]. These galls protect larva from attack by generalist predators (e.g. ants, spiders), but they suffer high mortality from egg and larval parasitoids [@Barbour2016]. We manipulated food-web structure by either removing larval parasitoids (removal food web) or allowing both egg and larval parasitoids to impose selection on gall midge traits (original food web, fig. \ref{fig:Conceptual}). <!--The relative abundance of these larval parasitoids is much lower than the egg parasitoid [@Barbour2016], and thus represents a plausible extinction scenario for this system. <!--While this manipulation simulates an extreme co-extinction event, the likelihood of such co-extinction events is increasing in the Anthropocene. -->Larval parasitoids also impose indirect effects on gall midge fitness through intraguild predation on the egg parasitoid (fig. \ref{fig:Conceptual}). We applied modern statistical methods to quantify how changes in food-web structure altered the slope and curvature of the gall midge's adaptive landscape. Taken together, our study gives insight to how the loss of biodiversity may constrain the evolution of interacting populations.
 
 ```{r Conceptual, echo=FALSE, fig.pos="h", fig.cap="\\label{fig:Conceptual}Experimental manipulation of food-web structure associated with a leaf-galling midge (*Iteomyia salicisverruca*) feeding on the willow *Salix hookeriana*. Black arrows denote the flow of energy in this network of trophic interactions. In the original food web, we allowed the full suite of egg and larval parasitoids to impose selection. In the removal food web, we used mesh bags to exclude the guild of larval parasitoids, only allowing the egg parasitoid (*Platygaster* sp.) to impose selection. Note that larval parasitoids also impose indirect effects on gall midge fitness through intraguild predation on the egg parasitoid. Larval parasitoids include the following species (from left to right): *Mesopolobus* sp. (Family: Pteromalidae); *Tetrastichus* sp. (Family: Eulophidae); and *Torymus* sp. (Family: Torymidae)."}
 knitr::include_graphics("../analyses/complex_simple_foodwebs_v3.jpeg")
@@ -130,7 +134,7 @@ We conducted our study within a four-year old common garden experiment of coasta
 
 ## Manipulating Food-web Structure
 
-We setup our food-web manipulation across 128 plants soon after galls began developing on willows in early June of 2013. These 128 plants came from eight different plant genotypes that spanned the range of trait variation observed in this willow population [@Barbour2015]. For the original food web (eight replicates per genotype), we used flagging tape to mark 14 galled leaves per plant (~30 larvae), allowing the full suite of egg and larval parasitoids to impose selection. Marking galls with flagging tape ensured that all galls had similar phenology when we collected galls later in the season. For the removal food web, we enclosed 14 galled leaves with 10x15cm organza bags (ULINE, Pleasant Prairie, WI, USA) to exclude three parasitoid species that attack during larval development. This treatment did not exclude the egg parasitoid *Platygaster* sp., which attacks prior to gall initiation [larva initiate gall development in Cecidomyiid midges: @Gagne1989]. It was not possible to reciprocally manipulate parasitoid attack (i.e. exclude egg parasitoid, but allow larval parasitoids), because it was not possible to identify midge oviposition sites prior to gall formation. In late August, we collected marked and bagged galls from each plant, placed them into 30 mL vials and kept them in the lab for 4 months at room temperature. We then opened galls under a dissecting scope and determined whether larvae survived to pupation (our measure of fitness) or were parasitized. We did not include other sources of mortality, such as early larval death, as they could influence the expression of the gall phenotype and confound estimates of selection. <!--Since we were interested in selection imposed by parasitoids, we excluded other sources of mortality (`r round((mean(full_df$early.larval.death) + mean(full_df$unknown_mortality)), 2)*100`% mortality from other sources). Another reason why we excluded other sources of mortality, such as early larval death, is that they can influence the expression of the gall phenotype and confound estimates of selection.--> For the food-web treatment that excluded larval parasitoids, we further restricted our data by removing any incidental instances of parasitism by a larval parasitoid. This represented less than 3\% of the observations in this food-web treatment and allowed us to focus our inferences of selection on those imposed by the egg parasitoid. Our final dataset contains survival estimates for `r no_larvae` larvae from `r no_galls` galls and `r no_plants` plants.
+We setup our food-web manipulation across 128 plants soon after galls began developing on willows in early June of 2013. These 128 plants came from eight different plant genotypes that spanned the range of trait variation observed in this willow population [@Barbour2015]. For the original food web (eight replicates per genotype), we used flagging tape to mark 14 galled leaves per plant (~30 larvae), allowing the full suite of egg and larval parasitoids to impose selection. Marking galls with flagging tape ensured that all galls had similar phenology when we collected galls later in the season. For the removal food web, we enclosed 14 galled leaves with 10x15cm organza bags (ULINE, Pleasant Prairie, WI, USA) to exclude three parasitoid species that attack during larval development. This treatment did not exclude the egg parasitoid *Platygaster* sp., which attacks prior to gall initiation [larva initiate gall development in Cecidomyiid midges: @Gagne1989]. It was not possible to reciprocally manipulate parasitoid attack (i.e. exclude egg parasitoid, but allow larval parasitoids), because it was not possible to identify midge oviposition sites prior to gall formation. In late August, we collected marked and bagged galls from each plant, placed them into 30 mL vials and kept them in the lab for 4 months at room temperature. We then opened galls under a dissecting scope and determined whether larvae survived to pupation (our measure of fitness) or were parasitized. We did not include other sources of mortality in our analyses, such as early larval death, as they could influence the expression of the gall phenotype and confound estimates of selection. <!--Since we were interested in selection imposed by parasitoids, we excluded other sources of mortality (`r round((mean(full_df$early.larval.death) + mean(full_df$unknown_mortality)), 2)*100`% mortality from other sources). Another reason why we excluded other sources of mortality, such as early larval death, is that they can influence the expression of the gall phenotype and confound estimates of selection.--> For the food-web treatment that excluded larval parasitoids, we further restricted our data by removing any incidental instances of parasitism by a larval parasitoid. This represented less than 3\% of the observations in this food-web treatment and allowed us to focus our inferences of selection on those imposed by the egg parasitoid. Our final dataset contains survival estimates for `r no_larvae` larvae from `r no_galls` galls and `r no_plants` plants.
 
 ## Measuring Phenotypic Traits
 
@@ -178,7 +182,7 @@ Rather than imposing selection, parasitoids may influence the expression of herb
 `r round(filter(biased_foodweb_confint, term=="FoodwebOriginal:sc.Diam")$conf.high,2)`]; removal $\alpha_{\text{Diam}}$=
 `r round(fixef(biased_foodweb_model)["FoodwebExtinction:sc.Diam"],2)` 
 [`r round(filter(biased_foodweb_confint, term=="FoodwebExtinction:sc.Diam")$conf.low,2)`,
-`r round(filter(biased_foodweb_confint, term=="FoodwebExtinction:sc.Diam")$conf.high,2)`]), indicating that unadjusted relationships would overestimate the strength of selection on chamber diameter. To account for this bias, we substracted our mean estimates of bias from our estimates with the full dataset prior to calculating chamber diameter's selection surface and directional selection gradient.
+`r round(filter(biased_foodweb_confint, term=="FoodwebExtinction:sc.Diam")$conf.high,2)`]), indicating that unadjusted relationships would overestimate the strength of selection on chamber diameter. To account for this bias, we subtracted our mean estimates of bias from our estimates with the full dataset prior to calculating chamber diameter's selection surface and directional selection gradient.
 
 ## Measuring selection on egg parasitoids 
 
@@ -194,36 +198,6 @@ All analyses and visualizations were conducted in R [@R2018]. Unless otherwise n
 `r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.log.Clutch")$mean,2)` 
 [`r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.log.Clutch")$conf.low,2)`,
 `r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.log.Clutch")$conf.high,2)`]). This conflicting selection is likely due to trait differences between guilds, as larger clutches may be easier targets for egg parasitoids to find, but the more complex gall structure may be more difficult for larval parasitoids to oviposit through.
-
-We also observed clear evidence of directional selection for midges to avoid ovipositing on plants with high densities of conspecifics when we excluded larval parasitoids (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}B); however, the overall magnitude of selection did not differ between treatments (table \ref{Table:Gradients}). Still, there was no clear evidence of directional selection on oviposition in the original food web (table \ref{Table:Gradients}). <!--This was likely a result of larval parasitoids imposing greater mortality on egg parasitoids at high gall midge densities (see **Selection on egg parasitoids** section), and thus a less than additive effect on gall midges.-->Chamber diameter experienced positive directional selection in both food-web treatments (fig. \ref{fig:UV_Landscape}A). Although the magnitude of selection on chamber diameter was relatively higher in the original food web (table \ref{Table:Gradients}), this was not due to any difference in the relationship between chamber diameter and survival <!--(selection surfaces: original $\alpha_{\text{Diam}}$=
-`r round(filter(tidy_foodweb_alphas, type=="Original", term=="sc.Diam")$mean,2)` 
-[`r round(filter(tidy_foodweb_alphas, type=="Original", term=="sc.Diam")$conf.low,2)`,
-`r round(filter(tidy_foodweb_alphas, type=="Original", term=="sc.Diam")$conf.high,2)`]; extinction $\alpha_{\text{Diam}}$=
-`r round(filter(tidy_foodweb_alphas, type=="Extinction", term=="sc.Diam")$mean,2)` 
-[`r round(filter(tidy_foodweb_alphas, type=="Extinction", term=="sc.Diam")$conf.low,2)`,
-`r round(filter(tidy_foodweb_alphas, type=="Extinction", term=="sc.Diam")$conf.high,2)`])-->
-(selection surfaces: contrast $\alpha_{\text{Diam}}$=
-`r -1*round(filter(tidy_foodweb_alphas, type=="Diff", term=="sc.Diam")$mean,2)` 
-[`r -1*round(filter(tidy_foodweb_alphas, type=="Diff", term=="sc.Diam")$conf.low,2)`,
-`r -1*round(filter(tidy_foodweb_alphas, type=="Diff", term=="sc.Diam")$conf.high,2)`]), but was simply a consequence of the (expected) lower survival of gall midges in the original food web <!--(original $\bar W$=
-`r round(filter(tidy_foodweb_alphas, type=="Original", term=="(Intercept)")$mean,2)` 
-[`r round(filter(tidy_foodweb_alphas, type=="Original", term=="(Intercept)")$conf.low,2)`,
-`r round(filter(tidy_foodweb_alphas, type=="Original", term=="(Intercept)")$conf.high,2)`]; extinction $\bar W$=
-`r round(filter(tidy_foodweb_alphas, type=="Extinction", term=="(Intercept)")$mean,2)` 
-[`r round(filter(tidy_foodweb_alphas, type=="Extinction", term=="(Intercept)")$conf.low,2)`,
-`r round(filter(tidy_foodweb_alphas, type=="Extinction", term=="(Intercept)")$conf.high,2)`])-->
-(contrast $\bar W$=
-`r round(filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$mean,2)` 
-[`r round(filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$conf.low,2)`,
-`r round(filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$conf.high,2)`]). We expect this difference to be transient though, since egg parasitoids would increase in abundance once they are released from intraguild predation, which would make the strength of selection on gall diameter comparable to the original food web (if removal $\bar W$=original $\bar W$, then contrast $\beta_{\text{Diam}}$=
-`r round(filter(tidy_foodweb_long_grads, type=="Diff", term=="sc.Diam")$mean,2)` 
-[`r round(filter(tidy_foodweb_long_grads, type=="Diff", term=="sc.Diam")$conf.low,2)`,
-`r round(filter(tidy_foodweb_long_grads, type=="Diff", term=="sc.Diam")$conf.high,2)`]). It is worth noting that positive selection on chamber diameter in both treatments was unexpected. For example, the fact that larger galls provide more of a refuge from larval parasitoids makes sense since they attack after the gall is formed; however, egg parasitoids attack prior to gall formation, which suggests that chamber diameter is strongly correlated with an unmeasured trait that is under selection (e.g. immune response).<!-- but selection was `r round(((filter(tidy_foodweb_grads, type=="Original", term=="sc.Diam")$mean - filter(tidy_foodweb_grads, type=="Extinction", term=="sc.Diam")$mean) / filter(tidy_foodweb_grads, type=="Extinction", term=="sc.Diam")$mean) * 100, 0)`% higher in complex food webs (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}). This was not due to any difference between egg and larval parasitoids ($\beta_{\text{Diam}}$ contrast = 
-`r round(-1*filter(tidy_egglarval_grads, type=="Diff", term=="sc.Diam")$mean,2)` [
-`r round(-1*filter(tidy_egglarval_grads, type=="Diff", term=="sc.Diam")$conf.low,2)`,
-`r round(-1*filter(tidy_egglarval_grads, type=="Diff", term=="sc.Diam")$conf.high,2)`]), but was due to the lower average survival in complex food webs ($\bar W$ contrast `r round(-1*filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$mean, 2)`
-[`r round(-1*filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$conf.low, 2)`,
-`r round(-1*filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$conf.high, 2)`]).--> 
 
 \bigskip
 
@@ -361,15 +335,50 @@ $\gamma_{\text{Clutch:Pref}}$ &
 {\footnotesize Note: Values in brackets represent 95\% confidence intervals. Bold values indicate that the 95\% CI does not overlap zero. $\beta_{\text{Diam}}$ has been adjusted for bias.}
 \end{table}
 
+
+We also observed clear evidence of directional selection for midges to avoid ovipositing on plants with high densities of conspecifics when we excluded larval parasitoids (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}B); however, the overall magnitude of selection did not differ between treatments (table \ref{Table:Gradients}). Still, there was no clear evidence of directional selection on oviposition in the original food web (table \ref{Table:Gradients}). <!--This was likely a result of larval parasitoids imposing greater mortality on egg parasitoids at high gall midge densities (see **Selection on egg parasitoids** section), and thus a less than additive effect on gall midges.-->Chamber diameter experienced positive directional selection in both food-web treatments (fig. \ref{fig:UV_Landscape}A). Although the magnitude of selection on chamber diameter was relatively higher in the original food web (table \ref{Table:Gradients}), this was not due to any difference in the relationship between chamber diameter and survival <!--(selection surfaces: original $\alpha_{\text{Diam}}$=
+`r round(filter(tidy_foodweb_alphas, type=="Original", term=="sc.Diam")$mean,2)` 
+[`r round(filter(tidy_foodweb_alphas, type=="Original", term=="sc.Diam")$conf.low,2)`,
+`r round(filter(tidy_foodweb_alphas, type=="Original", term=="sc.Diam")$conf.high,2)`]; extinction $\alpha_{\text{Diam}}$=
+`r round(filter(tidy_foodweb_alphas, type=="Extinction", term=="sc.Diam")$mean,2)` 
+[`r round(filter(tidy_foodweb_alphas, type=="Extinction", term=="sc.Diam")$conf.low,2)`,
+`r round(filter(tidy_foodweb_alphas, type=="Extinction", term=="sc.Diam")$conf.high,2)`])-->
+(selection surfaces: contrast $\alpha_{\text{Diam}}$=
+`r -1*round(filter(tidy_foodweb_alphas, type=="Diff", term=="sc.Diam")$mean,2)` 
+[`r -1*round(filter(tidy_foodweb_alphas, type=="Diff", term=="sc.Diam")$conf.low,2)`,
+`r -1*round(filter(tidy_foodweb_alphas, type=="Diff", term=="sc.Diam")$conf.high,2)`]), but was simply a consequence of the (expected) lower survival of gall midges in the original food web <!--(original $\bar W$=
+`r round(filter(tidy_foodweb_alphas, type=="Original", term=="(Intercept)")$mean,2)` 
+[`r round(filter(tidy_foodweb_alphas, type=="Original", term=="(Intercept)")$conf.low,2)`,
+`r round(filter(tidy_foodweb_alphas, type=="Original", term=="(Intercept)")$conf.high,2)`]; extinction $\bar W$=
+`r round(filter(tidy_foodweb_alphas, type=="Extinction", term=="(Intercept)")$mean,2)` 
+[`r round(filter(tidy_foodweb_alphas, type=="Extinction", term=="(Intercept)")$conf.low,2)`,
+`r round(filter(tidy_foodweb_alphas, type=="Extinction", term=="(Intercept)")$conf.high,2)`])-->
+(contrast $\bar W$=
+`r round(filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$mean,2)` 
+[`r round(filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$conf.low,2)`,
+`r round(filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$conf.high,2)`]). We expect this difference to be transient though, since egg parasitoids would increase in abundance once they are released from intraguild predation, which would make the strength of selection on gall diameter comparable to the original food web (if removal $\bar W$=original $\bar W$, then contrast $\beta_{\text{Diam}}$=
+`r round(filter(tidy_foodweb_long_grads, type=="Diff", term=="sc.Diam")$mean,2)` 
+[`r round(filter(tidy_foodweb_long_grads, type=="Diff", term=="sc.Diam")$conf.low,2)`,
+`r round(filter(tidy_foodweb_long_grads, type=="Diff", term=="sc.Diam")$conf.high,2)`]). It is worth noting that positive selection on chamber diameter in both treatments was unexpected. For example, the fact that larger galls provide more of a refuge from larval parasitoids makes sense since they attack after the gall is formed; however, egg parasitoids attack prior to gall formation, which suggests that chamber diameter is strongly correlated with an unmeasured trait that is under selection (e.g. immune response).<!-- but selection was `r round(((filter(tidy_foodweb_grads, type=="Original", term=="sc.Diam")$mean - filter(tidy_foodweb_grads, type=="Extinction", term=="sc.Diam")$mean) / filter(tidy_foodweb_grads, type=="Extinction", term=="sc.Diam")$mean) * 100, 0)`% higher in complex food webs (table \ref{Table:Gradients}; fig. \ref{fig:UV_Landscape}). This was not due to any difference between egg and larval parasitoids ($\beta_{\text{Diam}}$ contrast = 
+`r round(-1*filter(tidy_egglarval_grads, type=="Diff", term=="sc.Diam")$mean,2)` [
+`r round(-1*filter(tidy_egglarval_grads, type=="Diff", term=="sc.Diam")$conf.low,2)`,
+`r round(-1*filter(tidy_egglarval_grads, type=="Diff", term=="sc.Diam")$conf.high,2)`]), but was due to the lower average survival in complex food webs ($\bar W$ contrast `r round(-1*filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$mean, 2)`
+[`r round(-1*filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$conf.low, 2)`,
+`r round(-1*filter(tidy_foodweb_alphas, type=="Diff", term=="(Intercept)")$conf.high, 2)`]).--> 
+
+\bigskip
+
 ```{r UV_Landscape, echo=FALSE, fig.pos="h", fig.cap="\\label{fig:UV_Landscape}Adaptive landscape of gall midge phenotypes in the original food web and with the removal of larval parasitoids. Each panel corresponds to a different phenotypic trait: chamber diameter (A); oviposition preference (B); and clutch size (C). Bold lines represent selection experienced in the original (orange) and removal (blue) food webs (orange). Thin lines represent bootstrapped replicates to show the uncertainty in selection. For clarity, we only display 100 bootstraps even though inferences are based on 1,000 replicates. Note that mean larval survival is plotted on a natural log scale to reflect the mathematical definition of the adaptive landscape."}
 knitr::include_graphics("../analyses/UV_landscapes.pdf")
 ```
+
 
 To visualize the multivariate effects of these selective constraints, we plotted the adaptive landscape for each trait combination in each treatment (fig. \ref{fig:MV_Landscape}). The arrows in fig. \ref{fig:MV_Landscape} represent mean estimates of directional selection gradients, while contours represent predicted survival of the mean phenotype in each food-web treatment. Notice that arrows point more toward a corner of the adaptive landscape for each combination of traits with the removal of larval parasitoids compared to the original food web. This indicates that the loss of consumers more strongly favored a specific combination of traits, rather than allowing for multiple trait combinations to have comparable fitness.
 
 ```{r MV_Landscape, echo=FALSE, fig.pos="h", fig.cap="\\label{fig:MV_Landscape}Two dimensional view of adaptive landscapes of gall midge phenotypes in the original food web and with the removal of larval parasitoids. Each panel corresponds to a different combination of phenotypic traits: clutch size and chamber diameter (A); clutch size and oviposition preference (B); oviposition preference and chamber diameter (C). Arrows represent mean estimates of directional selection gradients, while contours represent predicted larval survival of the mean phenotype in each food-web treatment. Notice that arrows point more toward a corner of the adaptive landscape for each combination of traits with the removal of larval parasitoids compared to the original food web. This indicates that the loss of consumers more strongly favored a specific combination of traits. Note that mean larval survival is plotted on a natural log scale to reflect the mathematical definition of the adaptive landscape."}
 knitr::include_graphics("../analyses/MV_landscapes.pdf")
 ```
+
 
 ## Consumer loss indirectly increases genetic constraints
 
@@ -447,79 +456,9 @@ knitr::include_graphics("../analyses/delta_evolvability.pdf")
 
 ## Selection on egg parasitoids
 
-The removal of larval parasitoids not only had direct effects on gall midge fitness, but also imposed indirect effects that would be felt in the next generation. For example, the removal of larval parasitoids altered the relationship between gall midge preference and the probability of observing egg parasitoids (table \ref{Table:ExtendedGradients}), such that the impact of larval parasitoids increased nonlinearly with higher gall midge densities (fig. \ref{fig:EggPtoid_Selection}).    
-
-\bigskip
-
-\begin{table}[h]
-\caption{Standardized selection gradients acting on egg parasitoids (\textit{Platygaster} sp.)}
-\label{Table:ExtendedGradients}
-\centering
-\begin{tabular}{lc}
-\\ 
-\hline
-\textbf{Selection gradient} & \textbf{Contrast = Original - Removal}  \\ 
-\hline
-$\beta_{\text{Diam}}$ & 
-
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam")$mean,2)` [
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam")$conf.high,2)`] \\
-
-$\beta_{\text{Clutch}}$ & 
-
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch")$mean,2)` [
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch")$conf.high,2)`] \\
-
-$\beta_{\text{Pref}}$ &
-
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$mean,2)` [
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.high,2)`] \\
-
-$\gamma_{\text{Diam:Diam}}$ &
-
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.Diam^2)")$mean,2)` [
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.high,2)`] \\
-
-$\gamma_{\text{Clutch:Clutch}}$ & 
-
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$mean,2)` [
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.high,2)`] \\
-
-$\gamma_{\text{Pref:Pref}}$ & 
-
-\textbf{
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$mean,2)` [
+The removal of larval parasitoids not only had direct effects on gall midge fitness, but also imposed indirect effects that would be felt in the next generation. For example, the removal of larval parasitoids altered the relationship between gall midge preference and the probability of observing egg parasitoids (`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$mean,2)` [
 `r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`] }\\
-
-$\gamma_{\text{Diam:Clutch}}$ & 
-
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$mean,2)` [
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.high,2)`] \\
-
-$\gamma_{\text{Diam:Pref}}$ & 
-
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` [
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`] \\
-
-$\gamma_{\text{Clutch:Pref}}$ & 
-
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$mean,2)` [
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.low,2)`,
-`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.high,2)`] \\ 
-\hline
-\end{tabular}
-\bigskip{}
-\\
-{\footnotesize Note: Values in brackets represent 95\% confidence intervals. Bold values indicate that the 95\% CI does not overlap zero. $\beta_{\text{Diam}}$ has been adjusted for bias.}
-\end{table}
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`] }, Appendix A), such that the impact of larval parasitoids increased nonlinearly with higher gall midge densities (fig. \ref{fig:EggPtoid_Selection}).    
 
 
 ```{r EggPtoid_Selection, echo=FALSE, fig.pos="h", fig.cap="\\label{fig:EggPtoid_Selection}Selection imposed by larval parasitoids on egg parasitoids (*Platygaster* sp.). The bold line represents the average difference in the probability of observing the egg parasitoid (original minus removal of larval parastioids) as a function of gall midge oviposition preference. Thin lines represent bootstrapped replicates to show the uncertainty in selection. For clarity, we only display 100 bootstraps even though inferences are based on 1,000 replicates. The decrease in the probability of observing egg parasitoids at high gall-midge densities indicate that larval parasitoids impose nonlinear selection on egg parasitoids."}
@@ -532,34 +471,34 @@ knitr::include_graphics("../analyses/selection_on_Platygaster.pdf")
 <!--Summary-->
 We found that the removal of larval parasitoids constrained phenotypic evolution in gall midges in two key ways. First, more traits contributed to the slope of the adaptive landscape in the absence of larval parasitoids, suggesting greater constraints on the trajectory of phenotypic evolution. Second, excluding larval parasitoids altered the curvature of the adaptive landscape in such a way that tended to decrease the evolvability of associated traits. Assuming these traits have other ecological functions, then this decrease in evolvability could constrain the gall midge's adaptive potential in the face of novel selection pressures. Our experiment also revealed evidence of indirect selection pressures, suggesting that the loss of consumers may have complex effects on the trajectories of phenotypic evolution. Taken together, our study provides experimental evidence from the field that the loss of consumers may constrain the adaptive potential of remaining populations.
 
-<!--Selective constraints-->
+<!--Selective constraints
 All three phenotypic traits we examined experienced directional selection when we excluded larval parasitoids, indicating that there is an optimal phenotype that maximizes larval survival (i.e. large chamber diameter, small clutch size, and avoidance of conspecifics). In contrast, we did not observe clear evidence of selective constraints on clutch size and oviposition preference in the original food web. This suggests that there are many optimal phenotypes (adaptive peaks), or in this case, a flat adaptive landscape where there are no fitness consequences for phenotypic change in these traits. 
 <!-- need to see if I can salvage this, because as the editor points out, it is not exactly true.-->
-This also implies that as selective constraints dampen in food webs with more consumers, then the trajectory of evolution becomes more determined by how the genetic architecture of traits (G-matrix) interacts with other evolutionary processes (e.g. genetic drift, gene flow, and mutation).<!-- This is made clear if we inspect the 'Lande equation', $\Delta z = \text{G} \beta$, where G corresponds to the population's G-matrix. As the components of $\beta$ go to zero, then $\Delta z$ is more influenced by the G-matrix. [Removing because this statement is simply not true]--> 
-Interestingly, this aligns with @Schluter1996's hypothesis that phenotypic evolution often follows 'genetic lines of least resistance'. @Schluter1996 found support for this hypothesis from data on natural populations of several vertebrate species, including threespine sticklebacks, a few species of songbirds, and mice from the genus *Peromyscus*. All of these species occupy intermediate trophic levels and are likely embedded in complex food webs, which is consistent with our suggestion that genetic constraints may have a stronger influence in food webs with more consumers. 
+<!--This also implies that as selective constraints dampen in food webs with more consumers, then the trajectory of evolution becomes more determined by how the genetic architecture of traits (G-matrix) interacts with other evolutionary processes (e.g. genetic drift, gene flow, and mutation).<!-- This is made clear if we inspect the 'Lande equation', $\Delta z = \text{G} \beta$, where G corresponds to the population's G-matrix. As the components of $\beta$ go to zero, then $\Delta z$ is more influenced by the G-matrix. [Removing because this statement is simply not true]--> 
+<!--Interestingly, this aligns with @Schluter1996's hypothesis that phenotypic evolution often follows 'genetic lines of least resistance'. @Schluter1996 found support for this hypothesis from data on natural populations of several vertebrate species, including threespine sticklebacks, a few species of songbirds, and mice from the genus *Peromyscus*. All of these species occupy intermediate trophic levels and are likely embedded in complex food webs, which is consistent with our suggestion that genetic constraints may have a stronger influence in food webs with more consumers. 
+-->
+<!-- Generality of results -->
+The generality of our results likely depends on the relative abundance and functional differences between consumers in a community. For example, if consumers do not differ from each other, then we do not expect the loss of consumers to modify selective constraints. Also, many consumers may be at too low of abundances to impose selection on their resources. Rank abundance curves [@Preston1948] and the disproportionate number of weak interactions in diverse communities [@Paine1992] support this notion. This logic suggests that we may not have observed the effects we did if we had only removed one larval parasitoid, because each species had relatively low abundance [@Barbour2016] and they likely share similar ecological roles. When consumers are functionally different and abundant though, the effect of consumer loss will depend on whether different species impose conflicting selection pressures or select for distinct traits. When consumers impose conflicting selection on traits, as in our study and others [@Weis1985; @Abrahamson1997; @Start2016; @Start2018], then consumer diversity acts to neutralize selection and relax selective constraints.<!-- For example, parisitoids and birds impose conflicting selection pressures on the size of galls induced by the fly *Eurosta solidaginis* [@Weis1985; @Abrahamson1997]. Recent studies in this system have shown that decreases in the relative abundance of birds, due to either small patch sizes [@Start2016] or proximity to urban areas [@Start2018] causes a shift from neutral to directional selection on gall size.--> On the other hand, different consumers may impose selection on different traits; therefore, a more diverse consumer community may favor a particular combination of traits and increase selective constraints. Examples of this include strong genetic covariances in plant resistance to different insect herbivores [@Maddox1990; @Wise2007; @Wise2013], although there are also examples where these covariances are weak [@Roche1997; @Barbour2015], or vary from year-to-year [@Johnson2007]. We suggest that gaining predictive insight to the evolutionary consequences of food-web disassembly requires an understanding of the mechanisms governing the assembly of trophic interactions [@Bascompte2009]. <!--We suggest that gaining predictive insight to the effects of food-web disassembly requires an understanding of the mechanisms governing the assembly of trophic interactions.-->
 
 <!--Indirect effects of selective constraints-->
-We also found evidence for a general decrease in trait evolvability when we excluded larval parasitoids due to changes in the curvature of the adaptive landscape<!--indirect effects of selection on the population's G-matrix-->. This result was driven by nonlinear selection on gall midge oviposition preference in the original food web, which was due to both increases in intraguild predation and the lower mean survival of gall midges. While these results are intriguing, they still indicate that the indirect effects of selection are contingent on the structure of a population's G-matrix (i.e. consumer removals *increased* evolvability in 29% of the scenarios). This highlights the importance of future studies to characterize the G-matrix in order to accurately predict how changes in network context will alter the evolutionary potential of remaining populations.  <!--The ability of a population to adapt to novel selection pressures (evolvability) is largely governed by the structure of its G-matrix [@Hansen2008]. When selection favors genetic covariance between traits (positive or negative), this results in less autonomy of evolutionary responses to changing environments. Similarly, decreases in genetic variance constrain potential for the trait itself to evolve. Together, this suggests that consumer extinctions may decrease the evolutionary potential of populations by indirectly selecting for decreases in genetic variance in multiple traits and favoring trait integration. -->Indeed, current theory often assumes genetic variances and covariances remain constant over time rather than dynamically changing with the network context [@McPeek2017; @Guimaraes2017]. Our empirical results highlight the need to explore the evolutionary consequences of not only direct effects of selection, but indirect effects on genetic constraints that emerge in a network of interacting species.
-
-<!-- Generality of results -->
-The generality of our results likely depends on the relative abundance and functional differences between consumers in a community. For example, if consumers do not differ from each other, then we do not expect the loss of consumers to modify evolutionary constraints. Also, many consumers may be at too low of abundances to impose selection on their resources. Rank abundance curves [@Preston1948] and the disproportionate number of weak interactions in diverse communities [@Paine1992] support this notion. This logic suggests that we may not have observed the effects we did if we had only removed one larval parasitoid, because each species had relatively low abundance [@Barbour2016] and they likely share similar ecological roles. When consumers are functionally different and abundant though, the effect of consumer loss will depend on whether different species impose conflicting selection pressures or select for distinct traits. For example, parisitoids and birds impose conflicting selection pressures on the size of galls induced by the fly *Eurosta solidaginis* [@Weis1985; @Abrahamson1997]. Recent studies in this system have shown that decreases in the relative abundance of birds, due to either small patch sizes [@Start2016] or proximity to urban areas [@Start2018] causes a shift from neutral to directional selection on gall size. On the other hand, different consumers may impose selection on different traits, favoring a particular combination of traits and thus greater selective constraints. Examples of this include strong genetic covariances in plant resistance to different insect herbivores [@Maddox1990; @Wise2007; @Wise2013], although there are also examples where these covariances are weak [@Roche1997; @Barbour2015], or vary from year-to-year [@Johnson2007]. We suggest that gaining predictive insight to the evolutionary consequences of food-web disassembly requires an understanding of the mechanisms governing the assembly of trophic interactions [@Bascompte2009]. <!--We suggest that gaining predictive insight to the effects of food-web disassembly requires an understanding of the mechanisms governing the assembly of trophic interactions.-->
+We also found evidence for a general decrease in trait evolvability when we excluded larval parasitoids due to changes in the curvature of the adaptive landscape<!--indirect effects of selection on the population's G-matrix-->. This result was driven by nonlinear selection on gall midge oviposition preference in the original food web, which was due to both increases in intraguild predation and the lower mean survival of gall midges. While these results are intriguing, they still indicate that the indirect effects of selection are contingent on the structure of a population's G-matrix (e.g. consumer removals *increased* evolvability in 29% of the scenarios). This highlights the importance of future studies to characterize the G-matrix in order to accurately predict how changes in network context will alter the evolutionary potential of remaining populations.  <!--The ability of a population to adapt to novel selection pressures (evolvability) is largely governed by the structure of its G-matrix [@Hansen2008]. When selection favors genetic covariance between traits (positive or negative), this results in less autonomy of evolutionary responses to changing environments. Similarly, decreases in genetic variance constrain potential for the trait itself to evolve. Together, this suggests that consumer extinctions may decrease the evolutionary potential of populations by indirectly selecting for decreases in genetic variance in multiple traits and favoring trait integration. -->Indeed, current theory often assumes genetic variances and covariances remain constant over time rather than dynamically changing with the network context [@McPeek2017; @Guimaraes2017]. Our empirical results highlight the need to explore the evolutionary consequences of not only direct effects of selection, but indirect effects on genetic constraints that emerge in a network of interacting species.
 
 <!-- Caveats -->
-An important caveat of our study is that we did not due a factorial manipulation of both parasitoid guilds, making it difficult to conclude whether our results would change if we manipulated the presence/absence of the dominant egg parasitoid. If we assume that higher-order interactions [@Levine2017] are weak between parasitoid guilds, then we can gain insight to how the loss of the egg parasitoid would alter selection by isolating the contribution of larval parasitoids to selection in our original food-web treatment. When we do this, we see the same qualitative effects as we do when we removed larval parasitoids. For example, we see clear evidence of all three traits being under directional selection (i.e. greater selective constraints, Appendix A) as well as a decrease, albeit smaller, in trait evolvability under different G-matrix scenarios (`r round(sum(larvalptoid_random_evolvabilities$Diff < 0) / length(larvalptoid_random_evolvabilities$Diff) * 100,0)`%, Appendix A). This suggests that our results could be robust to this caveat, which was simply not possible to manipulate given the biology of our system (see *Manipulating Food-web Structure* section for explanation).
+An important caveat of our study is that we did not do a factorial manipulation of both parasitoid guilds, making it difficult to conclude whether our results would change if we manipulated the presence/absence of the dominant egg parasitoid. If we assume that higher-order interactions [@Levine2017] are weak between parasitoid guilds, then we can gain insight to how the loss of the egg parasitoid would alter selection by isolating the contribution of larval parasitoids to selection in our original food-web treatment. When we do this, we see the same qualitative effects as we do when we removed larval parasitoids. For example, we see clear evidence of all three traits being under directional selection (i.e. greater selective constraints, Appendix A) as well as a decrease, albeit smaller, in trait evolvability under different G-matrix scenarios (`r round(sum(larvalptoid_random_evolvabilities$Diff < 0) / length(larvalptoid_random_evolvabilities$Diff) * 100,0)`%, Appendix A). This suggests that our results could be robust to this caveat, which was simply not possible to manipulate given the biology of our system (see *Manipulating Food-web Structure* section for explanation).
 
 <!--Indirect evolutionary effects-->
-Our results suggest that the loss of consumers may not only directly affect connected species, but also result in indirect evolutionary effects. In our study, this indirect effect arises from egg parasitoids being released from intraguild predation when we excluded larval parasitoids. This release occurs more on trees with high larval densities, which could intensify selection on gall midge oviposition preference. A growing number of experiments over the past two decades have demonstrated the presence and potential importance of indirect evolutionary effects that emerge in a community context [@Pilson1996; @Juenger1998; @Stinchcombe2001; @Lankau2007; @Walsh2008; @Walsh2010; @terHorst2010; @Sahli2011; @Lau2012; @terHorst2015; @Schiestl2018; @Start2019]. If indirect evolutionary effects are common [@Miller1996; @Walsh2013; @Guimaraes2017], then predicting evolutionary trajectories resulting from the loss of consumers will require evolutionary studies to explicitly account for the ecological networks that species are embedded in. 
+Our results suggest that the loss of consumers may not only directly affect connected species, but also result in indirect evolutionary effects. In our study, this indirect effect arises from egg parasitoids being released from intraguild predation when we excluded larval parasitoids. This release occurs more on trees with high larval densities, which could intensify future selection on gall midge oviposition preference. A growing number of experiments over the past two decades have demonstrated the presence and potential importance of indirect evolutionary effects that emerge in ecological communities [@Pilson1996; @Juenger1998; @Stinchcombe2001; @Lankau2007; @Walsh2008; @Walsh2010; @terHorst2010; @Sahli2011; @Lau2012; @terHorst2015; @Schiestl2018; @Start2019]. If indirect evolutionary effects are common [@Miller1996; @Walsh2013; @Guimaraes2017], then predicting evolutionary trajectories resulting from the loss of consumers will require evolutionary studies to explicitly account for the ecological networks that species are embedded in. 
 
-<!-- Community context shaping adaptation to environmental change --> 
-There is a growing number of theoretical studies on adaptation to directional environmental change that incorporate species interactions [e.g. @deMazancourt2008; @Johansson2008; @Norberg2012; @Osmond2017PredatorsHelpPrey]. This work has given insight to the mechanisms by which interactions between species can modify their adaptive potential<!--pairwise interactions modify the adaptive potential of species-->. Our study hints at a novel mechanism, whereby a more diverse consumer community alters the adaptive landscape in such a way that facilitates future adaptation by allowing genetic and phenotypic variation to persist. This mechanism only emerges once we consider selection imposed by multiple species on multiple traits. <!--move beyond pairwise interactions to consider selection on multiple traits in a community context.-->However, a study on competition has highlighted that we may expect the opposite effect of species diversity in competitive communities [@deMazancourt2008]. This negative effect of species diversity on adaptation occurs because there is a greater chance that the optimal phenotype is already occupied by a competitor in a more diverse community. More work is needed to examine how the distribution of different interaction types affects adaptation to environmental change in species-rich communities. 
-
+<!-- Community context shaping adaptation to environmental change
+There is a growing number of theoretical studies on adaptation to directional environmental change that incorporate species interactions [e.g. @deMazancourt2008; @Johansson2008; @Norberg2012; @Osmond2017PredatorsHelpPrey]. This work has given insight to the mechanisms by which interactions between species can modify their adaptive potential<!--pairwise interactions modify the adaptive potential of species--><!--. Our study hints at a novel mechanism, whereby a more diverse consumer community alters the adaptive landscape in such a way that facilitates future adaptation by allowing genetic and phenotypic variation to persist. This mechanism only emerges once we consider selection imposed by multiple species on multiple traits. <!--move beyond pairwise interactions to consider selection on multiple traits in a community context.--><!--However, a study on competition has highlighted that we may expect the opposite effect of species diversity in competitive communities [@deMazancourt2008]. This negative effect of species diversity on adaptation occurs because there is a greater chance that the optimal phenotype is already occupied by a competitor in a more diverse community. More work is needed to examine how the distribution of different interaction types affects adaptation to environmental change in species-rich communities. 
+--> 
 <!-- Caveats 
 Our study has some limitations to consider when relating our findings to the effect of consumer extinctions on evolutionary constraints more generally. First, we removed other sources of mortality prior to our analyses. While this was necessary to avoid confounding estimates of selection with effects on phenotypic expression, we may be overestimating the effects of selection due to consumers. Second, our metrics of evolutionary constraints do not account for variation in the magnitude of selection pressures. While metrics that incorporate the magnitude of selection are possible [@Hansen2008], they were not appropriate for our study as our experimental removal of larval parasitoids artificially increased the mean fitness of gall midges (in the short term), which dampens the magnitude of selection gradients in this treatment [@Hunter2018]. This is why we used more qualitative metrics of evolutionary constraints, which are robust to this artificial effect and simply require sufficient sample sizes to detect evidence of selection.
 -->
 <!--Note though that this should have made it more difficult to detect selection in this treatment, yet it was this extinction treatment that increased the number of traits under selection. <!--results in a transient dynamic in the strength (but not direction) of selection. Such transient dynamics may be common in short-term experimental studies of natural selection, but they can be detected by using natural history information and dissecting the sources of selection (e.g. quantifying selection surfaces and treatment effects on mean fitness) as we did here. -->
 
 <!-- Conclusions -->
-Our study gives insight to how the loss of consumers alters evolutionary constraints on remaining populations. In particular, it hints at a potential insidious effect of local extinctions that compromises the robustness of remaining populations to future environmental change. Our work also highlights some key challenges for predicting phenotypic evolution in rapidly changing communities. First, the simplification of ecological communities may actually reduce the predictability of phenotypic evolution, because knowledge is required of both selective and genetic constraints, rather than potentially just genetic constraints in more complex systems. Second, many theoretical models of eco-evolutionary dynamics focus on phenotypic change in a single trait, yet our results highlight that the number of traits under selection may change with the community context. Importantly, we found that different species/guilds imposed different selection pressures. Knowing these hidden selection pressures is critical for prediction, because the trajectory of evolution will depend on the nature of change in the ecological community. We expect that a continued integration of adaptive landscapes and ecological networks will enhance our ability to predict the evolutionary consequences of changes in ecological communities. 
+Our study gives insight to how the loss of consumers alters evolutionary constraints on remaining populations. In particular, it hints at a potential insidious effect of local extinctions that compromises the robustness of remaining populations to future environmental change. Our work also highlights some key challenges for predicting phenotypic evolution in rapidly changing communities. <!--First, the simplification of ecological communities may increase selective constraints, requiring knowledge of genetic variances and covariances of multiple traits to accurately predict evolutionary change.--><!--actually reduce the predictability of phenotypic evolution, because knowledge is required of both selective and genetic constraints, rather than potentially just genetic constraints in more complex systems.-->For example, many theoretical models of eco-evolutionary dynamics focus on phenotypic change in a single trait, yet our results highlight that the number of traits under selection may change with the network context. Importantly, we found that different species/guilds imposed different selection pressures. Knowing these hidden selection pressures is critical for prediction, because the trajectory of evolution will depend on the nature of change in the ecological community. We expect that a continued integration of adaptive landscapes and ecological networks will enhance our ability to predict the evolutionary consequences of changes in ecological communities. 
 
 
 # Acknowledgements
@@ -712,6 +651,78 @@ $\alpha_{\text{Clutch,Pref}}$ &
 -->
 
 # Appendix A
+
+\bigskip
+
+\begin{table}[h]
+\caption{Standardized selection gradients acting on egg parasitoids (\textit{Platygaster} sp.)}
+\label{Table:ExtendedGradients}
+\centering
+\begin{tabular}{lc}
+\\ 
+\hline
+\textbf{Selection gradient} & \textbf{Contrast = Original - Removal}  \\ 
+\hline
+$\beta_{\text{Diam}}$ & 
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam")$conf.high,2)`] \\
+
+$\beta_{\text{Clutch}}$ & 
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch")$conf.high,2)`] \\
+
+$\beta_{\text{Pref}}$ &
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.high,2)`] \\
+
+$\gamma_{\text{Diam:Diam}}$ &
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.Diam^2)")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.high,2)`] \\
+
+$\gamma_{\text{Clutch:Clutch}}$ & 
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.high,2)`] \\
+
+$\gamma_{\text{Pref:Pref}}$ & 
+
+\textbf{
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`] }\\
+
+$\gamma_{\text{Diam:Clutch}}$ & 
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.high,2)`] \\
+
+$\gamma_{\text{Diam:Pref}}$ & 
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`] \\
+
+$\gamma_{\text{Clutch:Pref}}$ & 
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.high,2)`] \\ 
+\hline
+\end{tabular}
+\bigskip{}
+\\
+{\footnotesize Note: Values in brackets represent 95\% confidence intervals. Bold values indicate that the 95\% CI does not overlap zero. $\beta_{\text{Diam}}$ has been adjusted for bias.}
+\end{table}
 
 \bigskip
 
