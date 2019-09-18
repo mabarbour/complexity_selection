@@ -1,0 +1,262 @@
+---
+# Decided to manually format the title page because I had greater control. Note that you should use put this info in the YAML header for compatability across document formats (e.g. html)
+#title: Phenotypic evolution is more constrained in simpler food webs
+#author: 
+#- Matthew A. Barbour$^{1,2,\ast}$ 
+#- Christopher J. Greyson-Gaito$^{2,3}$ 
+#- Arezoo Sootodeh$^{2}$ 
+#- Brendan Locke$^{4}$ 
+#- Jordi Bascompte$^{1}$ 
+# for compatability across document formats use 'date' for affiliations, as recommended by https://github.com/rstudio/bookdown/issues/348, with | to create new sections.
+#date: | 
+#    | 1. Affiliation
+output:
+  pdf_document:
+    keep_tex: true
+    toc: false
+    number_sections: false
+    df_print: paged
+    fig_caption: true
+    citation_package: natbib
+    includes:  
+      in_header: Am-Nat-preamble-latex.tex
+bibliography: references
+biblio-style: amnat
+fontsize: 11pt
+fontfamily: mathpazo
+documentclass: article
+linkcolor: black
+urlcolor: black
+citecolor: black
+---
+
+```{r setup ms, include=FALSE}
+## Reproduce analyses ----
+#knitr::knit("../analysesreproduce_analyses.Rmd") 
+rmarkdown::render("../analyses/reproduce_analyses.Rmd", clean = FALSE)
+
+## Get sample size info
+no_larvae <- dim(distinct(gall_selection.df, Gall_Number, Gall_ID))[1]
+no_galls <- dim(distinct(gall_selection.df, Gall_Number))[1]
+no_plants <- dim(distinct(gall_selection.df, Plant_Position))[1]
+no_genotypes <- dim(distinct(gall_selection.df, Genotype))[1]
+```
+
+<!-- Begin title page formatting -->
+
+\vspace*{0.1cm} 
+\begin{center} \LARGE Supplementary Material: \\
+Loss of consumers constrains phenotypic evolution in the resulting food web \end{center}
+
+\bigskip
+
+\begin{center} \large Matthew A. Barbour$^{1,2,\ast}$, Christopher J. Greyson-Gaito$^{2,3}$, Arezoo Sootodeh$^{2}$, Brendan Locke$^{4}$, Jordi Bascompte$^{1}$ \normalsize \end{center}
+
+\bigskip
+
+\noindent 1. University of Zurich, Department of Evolutionary Biology and Environmental Studies, Zurich, 8057 ZH, Switzerland;
+
+\noindent 2. University of British Columbia, Department of Zoology, Vancouver, BC V6T 1Z4, Canada; 
+
+\noindent 3. University of Guelph, Department of Integrative Biology, Guelph, ON N1G 2W1, Canada;
+
+\noindent 4. Humboldt State University, Department of Biological Sciences, Arcata, CA 95521, USA.
+
+$^\ast$ Corresponding author; e-mail: matthew.barbour@ieu.uzh.ch
+
+<!-- End title page formatting -->
+
+\linenumbers{}
+\modulolinenumbers[3]
+
+<!-- For Appendix figures and tables 
+http://bytesizebio.net/2013/03/11/adding-supplementary-tables-and-figures-in-latex/
+-->
+
+\newcommand{\beginsupplement}{%
+        \setcounter{table}{0}
+        \renewcommand{\thetable}{S\arabic{table}}%
+        \setcounter{figure}{0}
+        \renewcommand{\thefigure}{S\arabic{figure}}%
+     }
+
+\newpage
+
+\beginsupplement <!-- start numbering for supplementary material -->
+
+
+\begin{table}[h]
+\caption{Standardized selection gradients acting on egg parasitoids (\textit{Platygaster} sp.)}
+\label{Table:ExtendedGradients}
+\centering
+\begin{tabular}{lc}
+\\ 
+\hline
+\textbf{Selection gradient} & \textbf{Contrast = Original - Removal}  \\ 
+\hline
+$\beta_{\text{Diam}}$ & 
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam")$conf.high,2)`] \\
+
+$\beta_{\text{Clutch}}$ & 
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch")$conf.high,2)`] \\
+
+$\beta_{\text{Pref}}$ &
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.sqrt.Pref")$conf.high,2)`] \\
+
+$\gamma_{\text{Diam:Diam}}$ &
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.Diam^2)")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.Diam^2)")$conf.high,2)`] \\
+
+$\gamma_{\text{Clutch:Clutch}}$ & 
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.log.Clutch^2)")$conf.high,2)`] \\
+
+$\gamma_{\text{Pref:Pref}}$ & 
+
+\textbf{
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`] }\\
+
+$\gamma_{\text{Diam:Clutch}}$ & 
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.log.Clutch")$conf.high,2)`] \\
+
+$\gamma_{\text{Diam:Pref}}$ & 
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`] \\
+
+$\gamma_{\text{Clutch:Pref}}$ & 
+
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_eggegg_grads, type=="Diff", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.high,2)`] \\ 
+\hline
+\end{tabular}
+\bigskip{}
+\\
+{\footnotesize Note: Values in brackets represent 95\% confidence intervals. Bold values indicate that the 95\% CI does not overlap zero. $\beta_{\text{Diam}}$ has been adjusted for bias.}
+\end{table}
+
+\newpage
+
+\begin{table}[h]
+\caption{Standardized selection gradients imposed by larval parasitoids on gall midges in the original food web. This gives insight to selection acting on gall midges in the absence of the dominant egg parasitoid.}
+\label{Table:LarvalGradients}
+\centering
+\begin{tabular}{lc}
+\\ 
+\hline
+\textbf{Selection gradient} & \textbf{Larval Parasitoids} \\ % & \textbf{Original} 
+\hline
+$\beta_{\text{Diam}}$ & 
+%\textbf{
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="sc.Diam")$mean,2)` [
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="sc.Diam")$conf.low,2)`,
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="sc.Diam")$conf.high,2)`] } & 
+\textbf{
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.Diam")$mean,2)` [
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.Diam")$conf.low,2)`,
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.Diam")$conf.high,2)`] } \\
+
+$\beta_{\text{Clutch}}$ & 
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="sc.log.Clutch")$mean,2)` [
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="sc.log.Clutch")$conf.low,2)`,
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="sc.log.Clutch")$conf.high,2)`] & 
+\textbf{
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.log.Clutch")$mean,2)` [
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.log.Clutch")$conf.low,2)`,
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.log.Clutch")$conf.high,2)`] }\\
+
+$\beta_{\text{Pref}}$ &
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="sc.sqrt.Pref")$mean,2)` [
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="sc.sqrt.Pref")$conf.low,2)`,
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="sc.sqrt.Pref")$conf.high,2)`] & 
+\textbf{
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.sqrt.Pref")$conf.high,2)`] } \\
+
+$\gamma_{\text{Diam:Diam}}$ &
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="I(sc.Diam^2)")$mean,2)` [
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="I(sc.Diam^2)")$conf.low,2)`,
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="I(sc.Diam^2)")$conf.high,2)`] & 
+
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="I(sc.Diam^2)")$mean,2)` [
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="I(sc.Diam^2)")$conf.low,2)`,
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="I(sc.Diam^2)")$conf.high,2)`]  \\
+
+$\gamma_{\text{Clutch:Clutch}}$ & 
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="I(sc.log.Clutch^2)")$mean,2)` [
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="I(sc.log.Clutch^2)")$conf.low,2)`,
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="I(sc.log.Clutch^2)")$conf.high,2)`] & 
+
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="I(sc.log.Clutch^2)")$mean,2)` [
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="I(sc.log.Clutch^2)")$conf.low,2)`,
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="I(sc.log.Clutch^2)")$conf.high,2)`] \\
+
+$\gamma_{\text{Pref:Pref}}$ & 
+%\textbf{
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="I(sc.sqrt.Pref^2)")$mean,2)` [
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`] }& 
+
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="I(sc.sqrt.Pref^2)")$mean,2)` [
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="I(sc.sqrt.Pref^2)")$conf.low,2)`,
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="I(sc.sqrt.Pref^2)")$conf.high,2)`] \\
+
+$\gamma_{\text{Diam:Clutch}}$ & 
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="sc.Diam:sc.log.Clutch")$mean,2)` [
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="sc.Diam:sc.log.Clutch")$conf.low,2)`,
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="sc.Diam:sc.log.Clutch")$conf.high,2)`] & 
+
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.Diam:sc.log.Clutch")$mean,2)` [
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.Diam:sc.log.Clutch")$conf.low,2)`,
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.Diam:sc.log.Clutch")$conf.high,2)`]  \\
+
+$\gamma_{\text{Diam:Pref}}$ & 
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` [
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`] & 
+
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.Diam:sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.Diam:sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.Diam:sc.sqrt.Pref")$conf.high,2)`]  \\
+
+$\gamma_{\text{Clutch:Pref}}$ & 
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="sc.log.Clutch:sc.sqrt.Pref")$mean,2)` [
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.low,2)`,
+%`r round(filter(tidy_foodweb_grads, type=="Original", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.high,2)`] & 
+
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.log.Clutch:sc.sqrt.Pref")$mean,2)` [
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.low,2)`,
+`r round(filter(tidy_egglarval_grads, type=="Original", term=="sc.log.Clutch:sc.sqrt.Pref")$conf.high,2)`]  \\ 
+\hline
+\end{tabular}
+\bigskip{}
+\\
+{\footnotesize Note: Values in brackets represent 95\% confidence intervals. Bold values indicate that the 95\% CI does not overlap zero. $\beta_{\text{Diam}}$ has been adjusted for bias.}
+\end{table}
+
+\newpage
+
+```{r LarvalPtoid Evolvability, echo=FALSE, fig.pos="h", fig.cap="\\label{fig:LarvalPtoidEvolvability}Change in average evolvability for 10,000 random G-matrices using our best (mean) estimate of the curvature matrix for selection in the absence of egg parasitoids vs. the original food web. We found that the curvature imposed by the loss of egg parasitoids decreased evolvability in 57% of the G-matrices (i.e. the change in evolvability was negative for 57% of the simulations), which is smaller in magnitude, but in the same direction, as the effects of losing larval parasitoids."}
+knitr::include_graphics("../analyses/larvalptoid_delta_evolvability.pdf")
+```
