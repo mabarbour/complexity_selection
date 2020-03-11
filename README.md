@@ -1,7 +1,7 @@
 [![DOI](https://zenodo.org/badge/108833263.svg)](https://zenodo.org/badge/latestdoi/108833263)
 
 # complexity_selection
-This repository contains data and code to reproduce analyses reported in the manuscript "Loss of consumers constrains phenotypic evolution in the resulting food web" (in press at *Evolution Letters*).
+This repository contains data and code to reproduce analyses reported in the manuscript "Loss of consumers constrains phenotypic evolution in the resulting food web" (in press at *Evolution Letters*). The original version of this manuscript was posted on [*bioRxiv*](https://www.biorxiv.org/content/10.1101/527416v1).
 
 For a pretty HTML document displaying all code to reproduce these results, download *reproduce_analyses.html* from the **analyses** folder. For an ugly version that is viewable on GitHub, click on the "reproduce_analyses.md" file.
 
