@@ -1434,7 +1434,8 @@ AF_uni_Diam <- RF_Diam$absolute_fitness %>%
   scale_color_manual(values = treatment_colors, name = "Food web") +
   scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
   scale_y_log10(breaks=uni_breaks, labels=uni_breaks) + annotation_logticks(sides = "l")+
-  coord_cartesian(ylim=c(0.07,1)) 
+  coord_cartesian(ylim=c(0.07,1))  +
+  theme_cowplot()
 
 # Oviposition preference
 AF_uni_Pref <- RF_Pref$absolute_fitness %>% 
@@ -1451,7 +1452,8 @@ AF_uni_Pref <- RF_Pref$absolute_fitness %>%
   scale_color_manual(values = treatment_colors, name = "Food web") +
   scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
   scale_y_log10(breaks=uni_breaks, labels=uni_breaks) + annotation_logticks(sides = "l") +
-  coord_cartesian(ylim=c(0.07,1))
+  coord_cartesian(ylim=c(0.07,1)) +
+  theme_cowplot()
 
 # Clutch size 
 AF_uni_Clutch <- RF_Clutch$absolute_fitness %>% 
@@ -1468,7 +1470,8 @@ AF_uni_Clutch <- RF_Clutch$absolute_fitness %>%
   scale_color_manual(values = treatment_colors, name = "Food web") +
   scale_x_continuous(breaks=c(-1,-0.5,0,0.5,1), labels = c(-1,-0.5,0,0.5,1)) +
   scale_y_log10(breaks=uni_breaks, labels=uni_breaks) + annotation_logticks(sides = "l") +
-  coord_cartesian(ylim=c(0.07,1))
+  coord_cartesian(ylim=c(0.07,1)) +
+  theme_cowplot()
 ```
 
 
@@ -1669,8 +1672,9 @@ AF_plot_Diam.Clutch <- RF_Diam.Clutch$absolute_fitness %>%
   scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
   scale_y_continuous(labels = c(-1,-0.5,0,0.5,1)) +
   scale_fill_viridis(name = "Mean larval\nsurvival", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(AF_range$min, AF_range$max)) +
+  theme_cowplot() +
   theme(strip.background = element_blank(),
-        strip.text.x=element_text(margin=margin(b=4))) 
+        strip.text.x=element_text(margin=margin(b=4)))
 
 # Size x Preference
 RF_Diam.Pref$absolute_fitness <- RF_Diam.Pref$absolute_fitness %>% 
@@ -1689,6 +1693,7 @@ AF_plot_Diam.Pref <- RF_Diam.Pref$absolute_fitness %>%
   scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
   scale_y_continuous(labels = c(-1,-0.5,0,0.5,1)) +
   scale_fill_viridis(name = "Mean larval\nsurvival", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(AF_range$min, AF_range$max)) +
+  theme_cowplot() +
   theme(strip.background = element_blank(),
         strip.text.x=element_text(margin=margin(b=4))) 
 
@@ -1709,6 +1714,7 @@ AF_plot_Clutch.Pref <- RF_Clutch.Pref$absolute_fitness %>%
   scale_x_continuous(labels = c(-1,-0.5,0,0.5,1)) +
   scale_y_continuous(labels = c(-1,-0.5,0,0.5,1)) +
   scale_fill_viridis(name = "Mean larval\nsurvival", trans="log", breaks = my_breaks, labels = my_breaks, limits = c(AF_range$min, AF_range$max)) +
+  theme_cowplot() +
   theme(strip.background = element_blank(),
         strip.text.x=element_text(margin=margin(b=4)))
 
@@ -2183,7 +2189,8 @@ delta_evolvability_plot <- ggplot(random_evolvabilities, aes(x = Diff)) +
   geom_histogram(alpha = 0.5, binwidth = 0.001) +
   geom_vline(xintercept = 0, linetype = "dotted") +
   xlab(expression(paste(Delta," evolvability (removal - original)"))) +
-  ylab("Count")
+  ylab("Count") +
+  theme_cowplot()
 
 delta_evolvability_plot
 save_plot(filename = "delta_evolvability.pdf", plot = delta_evolvability_plot, base_height = 4) # base_height = 6 is to large for PDF of manuscript
@@ -2276,7 +2283,8 @@ larvalptoid_delta_evolvability_plot <- ggplot(larvalptoid_random_evolvabilities,
   geom_histogram(alpha = 0.5, binwidth = 0.001) +
   geom_vline(xintercept = 0, linetype = "dotted") +
   xlab(expression(paste(Delta," evolvability (larval parasitoids - original)"))) +
-  ylab("Count")
+  ylab("Count") +
+  theme_cowplot()
 
 larvalptoid_delta_evolvability_plot
 save_plot(filename = "larvalptoid_delta_evolvability.pdf", plot = larvalptoid_delta_evolvability_plot, base_height = 4) # base_height = 6 is to large for PDF of manuscript
